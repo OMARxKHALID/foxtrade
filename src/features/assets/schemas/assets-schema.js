@@ -1,0 +1,41 @@
+import { z } from "zod";
+import { assets, networks, wallets } from "@/features/assets/data/assets-config";
+
+const walletValues = wallets.map((wallet) => wallet.value);
+const assetValues = assets.map((asset) => asset.symbol);
+
+const assetField = z.enum(assetValues, { error: "Choose an asset" });
+
+const positiveAmount = z.coerce.number({ error: "Enter an amount" }).positive("Enter an amount greater than 0").max(1e12, "Amount is too large");
+
+export const withdrawSchema = z.object({
+  asset: assetField,
+  network: z.enum(networks, { error: "Choose a network" }),
+  address: z.string().trim().min(26, "Enter a valid wallet address").max(64, "Enter a valid wallet address"),
+  amount: positiveAmount,
+  pin: z.string().regex(/^\d{6}$/, "Withdrawal PIN is 6 digits"),
+});
+
+export const convertSchema = z
+  .object({
+    from: assetField,
+    to: assetField,
+    amount: positiveAmount,
+  })
+  .refine((value) => value.from !== value.to, { path: ["to"], message: "Choose a different asset" });
+
+export const transferSchema = z
+  .object({
+    from: z.enum(walletValues),
+    to: z.enum(walletValues),
+    asset: assetField,
+    amount: positiveAmount,
+  })
+  .refine((value) => value.from !== value.to, { path: ["to"], message: "Choose a different wallet" });
+
+export const addressSchema = z.object({
+  label: z.string().trim().min(1, "Enter a label").max(32, "Keep the label under 32 characters"),
+  asset: assetField,
+  network: z.enum(networks, { error: "Choose a network" }),
+  address: z.string().trim().min(26, "Enter a valid wallet address").max(64, "Enter a valid wallet address"),
+});

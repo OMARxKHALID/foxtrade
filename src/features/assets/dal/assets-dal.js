@@ -1,0 +1,173 @@
+import "server-only";
+import { randomUUID } from "node:crypto";
+import { ObjectId } from "mongodb";
+import { CONVERT_SPREAD, DEMO_FAUCET_AMOUNT, FAUCET_COOLDOWN_MS } from "@/lib/demo";
+import { LedgerError, getBalance, getBalances, postEntries, withTransaction } from "@/lib/ledger";
+import { fetchLatestPrices, fetchTickers } from "@/lib/market/binance-rest";
+import { pairBySymbol } from "@/lib/market/pairs";
+import { toAmount, toBig } from "@/lib/money";
+import { collections } from "@/lib/mongo";
+import { verifyPin } from "@/lib/pin";
+import { rateLimit } from "@/lib/rate-limit";
+import { getCurrentUser } from "@/lib/session";
+
+const pairFor = (asset) => (pairBySymbol[`${asset}USDT`] ? `${asset}USDT` : null);
+
+const priceMap = async (assets, latest = false) => {
+  const symbols = [...new Set(assets.map(pairFor).filter(Boolean))];
+  if (!symbols.length) return { USDT: "1" };
+  const prices = latest
+    ? await fetchLatestPrices(symbols)
+    : Object.fromEntries((await fetchTickers(symbols)).map((ticker) => [ticker.symbol, String(ticker.price)]));
+  return { USDT: "1", ...Object.fromEntries(Object.entries(prices).map(([symbol, price]) => [symbol.replace(/USDT$/, ""), price])) };
+};
+
+let securityIndexReady;
+
+const ensureSecurityIndex = () => {
+  securityIndexReady ??= collections.security().createIndex({ userId: 1 }, { unique: true });
+  return securityIndexReady;
+};
+
+export const getAssetsOverview = async (userId) => {
+  const balances = await getBalances(userId);
+  let prices;
+  let pricesStale = false;
+  try {
+    prices = await priceMap(balances.map((item) => item.asset));
+  } catch {
+    prices = { USDT: "1" };
+    pricesStale = true;
+  }
+  const holdings = {};
+  const walletTotals = { spot: toBig(0), timed: toBig(0), perpetual: toBig(0) };
+  let total = toBig(0);
+  for (const item of balances) {
+    const value = item.balance.times(prices[item.asset] ?? 0);
+    holdings[item.asset] ??= { total: toBig(0), byWallet: {} };
+    holdings[item.asset].total = holdings[item.asset].total.plus(item.balance);
+    holdings[item.asset].byWallet[item.wallet] = toAmount(item.balance);
+    walletTotals[item.wallet] = (walletTotals[item.wallet] ?? toBig(0)).plus(value);
+    total = total.plus(value);
+  }
+  return {
+    totalUsdt: toAmount(total),
+    walletTotals: Object.fromEntries(Object.entries(walletTotals).map(([wallet, value]) => [wallet, toAmount(value)])),
+    holdings: Object.fromEntries(Object.entries(holdings).map(([asset, item]) => [asset, { total: toAmount(item.total), byWallet: item.byWallet }])),
+    pricesStale,
+  };
+};
+
+export const listRecords = async (userId, { asset, limit = 500 } = {}) => {
+  const filter = asset ? { userId, asset } : { userId };
+  const docs = await collections.ledger().find(filter).sort({ createdAt: -1 }).limit(limit).toArray();
+  return docs.map((doc) => ({
+    id: doc._id.toString(),
+    time: doc.createdAt.toISOString(),
+    type: doc.type,
+    wallet: doc.wallet,
+    asset: doc.asset,
+    amount: toAmount(doc.amount),
+    balanceAfter: toAmount(doc.balanceAfter),
+    note: doc.note,
+  }));
+};
+
+export const claimFaucet = async (userId) => {
+  const spot = await getBalance(userId, "spot", "USDT");
+  if (spot.gte(DEMO_FAUCET_AMOUNT)) throw new LedgerError("Your Spot Wallet already holds the full demo amount.");
+  await ensureSecurityIndex();
+  const now = new Date();
+  const cutoff = new Date(now.getTime() - FAUCET_COOLDOWN_MS);
+  const lock = await collections
+    .security()
+    .findOneAndUpdate(
+      { userId, $or: [{ faucetClaimedAt: { $exists: false } }, { faucetClaimedAt: { $lte: cutoff } }] },
+      { $set: { faucetClaimedAt: now } },
+      { upsert: true, returnDocument: "after" },
+    )
+    .catch((error) => (error?.code === 11000 ? null : Promise.reject(error)));
+  if (!lock) {
+    const current = await collections.security().findOne({ userId });
+    const hours = Math.max(1, Math.ceil((current.faucetClaimedAt.getTime() + FAUCET_COOLDOWN_MS - now.getTime()) / 3600000));
+    throw new LedgerError(`You can claim demo assets again in about ${hours}h.`);
+  }
+  await withTransaction(async (session) => {
+    const fresh = await getBalance(userId, "spot", "USDT", session);
+    const topUp = toBig(DEMO_FAUCET_AMOUNT).minus(fresh);
+    if (topUp.lte(0)) return;
+    await postEntries([{ userId, wallet: "spot", asset: "USDT", type: "faucet", amount: topUp, note: "Demo top-up" }], session);
+    const credited = await getBalance(userId, "spot", "USDT", session);
+    if (credited.gt(DEMO_FAUCET_AMOUNT)) {
+      await postEntries([{ userId, wallet: "spot", asset: "USDT", type: "faucet", amount: credited.minus(DEMO_FAUCET_AMOUNT).times(-1), note: "Cap clamp" }], session);
+    }
+  });
+};
+
+export const convertAssets = async (userId, { from, to, amount }) => {
+  const prices = await priceMap([from, to], true);
+  if (!prices[from] || !prices[to]) throw new LedgerError("Live price unavailable for this pair. Try again shortly.");
+  const receive = toBig(amount).times(prices[from]).div(prices[to]).times(1 - CONVERT_SPREAD);
+  const refId = randomUUID();
+  await withTransaction((session) =>
+    postEntries(
+      [
+        { userId, wallet: "spot", asset: from, type: "convert", amount: toBig(amount).times(-1), refId, note: `To ${to}` },
+        { userId, wallet: "spot", asset: to, type: "convert", amount: receive, refId, note: `From ${from}` },
+      ],
+      session,
+    ),
+  );
+  return { receive: toAmount(receive) };
+};
+
+export const transferAssets = async (userId, { from, to, asset, amount }) => {
+  const refId = randomUUID();
+  await withTransaction((session) =>
+    postEntries(
+      [
+        { userId, wallet: from, asset, type: "transfer", amount: toBig(amount).times(-1), refId, note: `To ${to}` },
+        { userId, wallet: to, asset, type: "transfer", amount, refId, note: `From ${from}` },
+      ],
+      session,
+    ),
+  );
+};
+
+export const checkWithdrawal = async (userId, { asset, amount, pin }) => {
+  const limit = await rateLimit(`withdraw-pin:${userId}`, { limit: 5, windowSeconds: 900 });
+  if (!limit.allowed) throw new LedgerError(`Too many PIN attempts. Try again in ${Math.ceil(limit.retryAfter / 60)} min.`);
+  if (!(await verifyPin(userId, pin))) throw new LedgerError("Withdrawal PIN is incorrect or not set. Set it in Security first.");
+  const spot = await getBalance(userId, "spot", asset);
+  if (spot.lt(amount)) throw new LedgerError(`Insufficient ${asset} in your Spot Wallet.`);
+  throw new LedgerError("Demo balances cannot be sent to external wallets. Your details were checked successfully.");
+};
+
+export const listAddresses = async (userId) => {
+  const docs = await collections.addresses().find({ userId }).sort({ createdAt: -1 }).toArray();
+  return docs.map((doc) => ({ id: doc._id.toString(), label: doc.label, asset: doc.asset, network: doc.network, address: doc.address, createdAt: doc.createdAt.toISOString() }));
+};
+
+export const saveAddress = async (userId, input) => {
+  const limit = await rateLimit(`address-save:${userId}`, { limit: 30, windowSeconds: 3600 });
+  if (!limit.allowed) throw new LedgerError("Too many changes. Try again later.");
+  const count = await collections.addresses().countDocuments({ userId });
+  if (count >= 20) throw new LedgerError("You can save up to 20 addresses.");
+  await collections.addresses().insertOne({ userId, ...input, createdAt: new Date() });
+};
+
+export const deleteAddress = async (userId, id) => {
+  if (!ObjectId.isValid(id)) return;
+  await collections.addresses().deleteOne({ _id: new ObjectId(id), userId });
+};
+
+export const loadAssetsPage = async ({ records = false, addresses = false, asset } = {}) => {
+  const user = await getCurrentUser();
+  if (!user) return { signedIn: false, overview: null, records: null, addresses: [] };
+  const [overview, recordList, addressList] = await Promise.all([
+    getAssetsOverview(user.id),
+    records ? listRecords(user.id, { asset }) : null,
+    addresses ? listAddresses(user.id) : [],
+  ]);
+  return { signedIn: true, overview, records: recordList, addresses: addressList };
+};
