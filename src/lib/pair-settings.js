@@ -1,4 +1,5 @@
 import "server-only";
+import { cacheLife, cacheTag, revalidateTag } from "next/cache";
 import { collections } from "@/lib/mongo";
 import { allSymbols } from "@/lib/market/pairs";
 import { perpetualRules } from "@/lib/market/trading-rules";
@@ -6,6 +7,9 @@ import { perpetualRules } from "@/lib/market/trading-rules";
 const defaultPairSetting = { timedEnabled: true, perpetualEnabled: true, maxLeverage: perpetualRules.maxLeverage };
 
 export const getPairSettings = async () => {
+  "use cache";
+  cacheTag("pair-settings");
+  cacheLife({ stale: 60, revalidate: 300, expire: 3600 });
   const defaults = Object.fromEntries(allSymbols.map((symbol) => [symbol, { ...defaultPairSetting }]));
   if (!process.env.MONGODB_URI) return defaults;
   const docs = await collections.pairSettings().find({ symbol: { $in: allSymbols } }).toArray();
@@ -21,5 +25,10 @@ export const getPairSettings = async () => {
 
 export const getPairSetting = async (symbol) => (await getPairSettings())[symbol] ?? { ...defaultPairSetting };
 
-export const savePairSetting = async (symbol, setting) =>
-  collections.pairSettings().findOneAndUpdate({ symbol }, { $set: { ...setting, symbol, updatedAt: new Date() } }, { upsert: true, returnDocument: "after" });
+export const savePairSetting = async (symbol, setting) => {
+  const result = collections
+    .pairSettings()
+    .findOneAndUpdate({ symbol }, { $set: { ...setting, symbol, updatedAt: new Date() } }, { upsert: true, returnDocument: "after" });
+  revalidateTag("pair-settings");
+  return result;
+};

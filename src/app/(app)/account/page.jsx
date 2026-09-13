@@ -13,6 +13,8 @@ export const metadata = {
   title: "Account",
 };
 
+export const instant = false;
+
 const verificationLabels = { none: "Unverified", pending: "Under review", approved: "Verified", rejected: "Rejected" };
 
 const buildGroups = (verification) => [

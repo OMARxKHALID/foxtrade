@@ -1,13 +1,10 @@
 import { Suspense } from "react";
-import { connection } from "next/server";
 import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
 import { Container } from "@/components/ui/container";
 import { PageLoader } from "@/components/ui/page-loader";
 import { PageHeader } from "@/components/ui/page-header";
 import { MarketsTable } from "@/features/market/components/markets-table";
 import { TickerTrio } from "@/features/market/components/ticker-trio";
-import { tickersQuery } from "@/lib/market/market-queries";
-import { allSymbols, featuredSymbols } from "@/lib/market/pairs";
 import { getPairSettings } from "@/lib/pair-settings";
 import { getQueryClient } from "@/lib/query-client";
 
@@ -16,10 +13,7 @@ export const metadata = {
 };
 
 const MarketsPage = async () => {
-  await connection();
   const queryClient = getQueryClient();
-  void queryClient.prefetchQuery(tickersQuery(allSymbols));
-  void queryClient.prefetchQuery(tickersQuery(featuredSymbols));
   const settings = await getPairSettings();
 
   return (

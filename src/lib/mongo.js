@@ -5,7 +5,12 @@ const globalForMongo = globalThis;
 
 export const getMongoClient = () => {
   if (!globalForMongo.mongoClient) {
-    globalForMongo.mongoClient = new MongoClient(getEnv().MONGODB_URI, { appName: "foxtrade" });
+    globalForMongo.mongoClient = new MongoClient(getEnv().MONGODB_URI, {
+      appName: "foxtrade",
+      maxPoolSize: 10,
+      minPoolSize: 1,
+      connectTimeoutMS: 5000,
+    });
   }
   return globalForMongo.mongoClient;
 };

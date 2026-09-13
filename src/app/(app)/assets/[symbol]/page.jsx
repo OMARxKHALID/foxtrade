@@ -19,6 +19,8 @@ export const generateMetadata = async ({ params }) => {
   return { title: findAsset(symbol)?.symbol ?? "Asset" };
 };
 
+export const instant = false;
+
 const AssetPage = async ({ params }) => {
   const { symbol } = await params;
   const asset = findAsset(symbol);

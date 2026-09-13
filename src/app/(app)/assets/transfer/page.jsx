@@ -8,6 +8,8 @@ export const metadata = {
   title: "Transfer",
 };
 
+export const instant = false;
+
 const TransferPage = async () => {
   const { overview } = await loadAssetsPage();
 

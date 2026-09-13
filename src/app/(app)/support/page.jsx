@@ -13,6 +13,8 @@ export const metadata = {
   title: "Support",
 };
 
+export const instant = false;
+
 const channels = [
   { icon: MessagesSquare, title: "Support tickets", text: "Replies inside your account, usually within a few hours." },
   { icon: Mail, title: "Email", text: "support@foxtrade.app" },

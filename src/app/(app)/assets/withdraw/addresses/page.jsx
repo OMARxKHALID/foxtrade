@@ -7,6 +7,8 @@ export const metadata = {
   title: "Withdrawal Addresses",
 };
 
+export const instant = false;
+
 const AddressesPage = async () => {
   const { signedIn, addresses } = await loadAssetsPage({ addresses: true });
 

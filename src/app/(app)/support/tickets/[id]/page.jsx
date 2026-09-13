@@ -10,6 +10,8 @@ export const metadata = {
   title: "Support Ticket",
 };
 
+export const instant = false;
+
 const TicketPage = async ({ params }) => {
   const { id } = await params;
   const user = await requireUser(`/support/tickets/${id}`);

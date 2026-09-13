@@ -30,11 +30,11 @@ export const TickerTrio = () => {
                   </span>
                   <ChangePill value={ticker.changePercent} size="sm" className="self-start sm:self-auto" />
                 </div>
-                <p className={cn("truncate font-heading text-sm font-semibold tabular-nums sm:text-2xl", up ? "text-up" : "text-down")}>
+                <p suppressHydrationWarning className={cn("truncate font-heading text-sm font-semibold tabular-nums sm:text-2xl", up ? "text-up" : "text-down")}>
                   {formatPrice(ticker.price)}
                 </p>
                 <p className="hidden text-xs text-neutral-500 sm:block">
-                  24h Vol <span className="text-neutral-300">{formatCompact(ticker.quoteVolume)}</span>
+                  24h Vol <span suppressHydrationWarning className="text-neutral-300">{formatCompact(ticker.quoteVolume)}</span>
                 </p>
               </Link>
             </GlowCard>

@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { connection } from "next/server";
 import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
 import { Container } from "@/components/ui/container";
 import { PageLoader } from "@/components/ui/page-loader";
@@ -11,8 +10,6 @@ import { MarketList } from "@/features/market/components/market-list";
 import { TickerTrio } from "@/features/market/components/ticker-trio";
 import { getActiveBanners, getPublishedNotices } from "@/lib/content-store";
 import { getPairSettings } from "@/lib/pair-settings";
-import { defaultPairs, featuredSymbols } from "@/lib/market/pairs";
-import { tickersQuery } from "@/lib/market/market-queries";
 import { getQueryClient } from "@/lib/query-client";
 
 export const metadata = {
@@ -20,10 +17,7 @@ export const metadata = {
 };
 
 const HomePage = async () => {
-  await connection();
   const queryClient = getQueryClient();
-  void queryClient.prefetchQuery(tickersQuery(featuredSymbols));
-  void queryClient.prefetchQuery(tickersQuery(defaultPairs.map((pair) => pair.symbol)));
   const [banners, notices, settings] = await Promise.all([getActiveBanners(), getPublishedNotices(), getPairSettings()]);
 
   return (

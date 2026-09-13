@@ -5,6 +5,8 @@ export const metadata = {
   title: "Reset Password",
 };
 
+export const instant = false;
+
 const ResetPasswordPage = async ({ searchParams }) => {
   const { email } = await searchParams;
 

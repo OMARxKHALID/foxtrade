@@ -16,6 +16,8 @@ export const generateMetadata = async ({ params }) => {
   return { title: tradingGuides[market]?.title ?? "Trading Rules" };
 };
 
+export const instant = false;
+
 const tableHead = "h-10 px-4 text-left text-xs font-normal text-neutral-500 sm:px-6";
 const tableCell = "h-12 px-4 text-sm text-white tabular-nums sm:px-6";
 

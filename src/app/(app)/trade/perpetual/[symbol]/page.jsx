@@ -2,6 +2,8 @@ import { tradePageMetadata, TradePage } from "@/features/trading/components/trad
 
 export const generateMetadata = (page) => tradePageMetadata(page, "perpetual");
 
+export const instant = false;
+
 const PerpetualTradePage = (page) => <TradePage {...page} market="perpetual" />;
 
 export default PerpetualTradePage;

@@ -10,6 +10,8 @@ export const metadata = {
   title: "Identity Verification",
 };
 
+export const instant = false;
+
 const statusBadges = {
   none: { tone: "warning", label: "Not submitted" },
   pending: { tone: "brand", label: "Under review" },

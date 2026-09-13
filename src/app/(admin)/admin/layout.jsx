@@ -2,6 +2,8 @@ import { requireAdmin } from "@/lib/session";
 import { AdminSidebar } from "@/features/admin/components/admin-sidebar";
 import { SignOutButton } from "@/features/auth/components/sign-out-button";
 
+export const instant = false;
+
 export const metadata = {
   title: {
     default: "Admin",

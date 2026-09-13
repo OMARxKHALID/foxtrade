@@ -9,6 +9,8 @@ export const metadata = {
   title: "Trade Detail",
 };
 
+export const instant = false;
+
 const TimedOrderPage = async ({ params }) => {
   const { id } = await params;
   const user = await getCurrentUser();

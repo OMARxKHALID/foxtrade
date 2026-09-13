@@ -7,6 +7,8 @@ export const metadata = {
   title: "Records",
 };
 
+export const instant = false;
+
 const RecordsPage = async () => {
   const { records } = await loadAssetsPage({ records: true });
 

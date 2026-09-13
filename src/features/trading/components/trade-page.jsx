@@ -6,13 +6,13 @@ import { Container } from "@/components/ui/container";
 import { PageLoader } from "@/components/ui/page-loader";
 import { OrderBook } from "@/features/market/components/order-book";
 import { PairHeader } from "@/features/market/components/pair-header";
-import { PriceChart } from "@/features/market/components/price-chart";
+import PriceChart from "@/features/trading/components/price-chart-loader";
 import { TradeFeed } from "@/features/market/components/trade-feed";
 import { OrdersPanel } from "@/features/trading/components/orders-panel";
 import { PerpetualOrderForm } from "@/features/trading/components/perpetual-order-form";
 import { TimedTradePanel } from "@/features/trading/components/timed-trade-panel";
 import { TradeScreen } from "@/features/trading/components/trade-screen";
-import { tickersQuery } from "@/lib/market/market-queries";
+import { tickersQuery, klinesQuery } from "@/lib/market/market-queries";
 import { findPair } from "@/lib/market/pairs";
 import { getPairSetting } from "@/lib/pair-settings";
 import { getQueryClient } from "@/lib/query-client";
@@ -36,6 +36,7 @@ export const TradePage = async ({ params, market }) => {
   await connection();
   const queryClient = getQueryClient();
   void queryClient.prefetchQuery(tickersQuery([pair.symbol]));
+  void queryClient.prefetchQuery(klinesQuery(pair.symbol, "15m"));
   const setting = await getPairSetting(pair.symbol);
 
   const orderPanel =

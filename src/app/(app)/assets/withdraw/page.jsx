@@ -10,6 +10,8 @@ export const metadata = {
   title: "Withdraw",
 };
 
+export const instant = false;
+
 const notes = [
   "Demo balances have no monetary value and are never sent to external wallets.",
   "The withdrawal flow mirrors a live exchange so you can practice address and network checks.",

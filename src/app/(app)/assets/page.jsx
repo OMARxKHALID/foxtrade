@@ -14,6 +14,8 @@ export const metadata = {
   title: "Assets",
 };
 
+export const instant = false;
+
 const AssetsPage = async () => {
   await connection();
   const queryClient = getQueryClient();

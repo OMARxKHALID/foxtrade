@@ -5,6 +5,8 @@ import { LogoMark } from "@/components/ui/logo-mark";
 import { getCurrentUser } from "@/lib/session";
 import { site } from "@/lib/site";
 
+export const instant = false;
+
 const AuthLayout = async ({ children }) => {
   if (await getCurrentUser()) redirect("/");
 

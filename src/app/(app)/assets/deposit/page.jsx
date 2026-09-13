@@ -7,6 +7,8 @@ export const metadata = {
   title: "Deposit",
 };
 
+export const instant = false;
+
 const DepositPage = async () => {
   const { overview } = await loadAssetsPage();
 

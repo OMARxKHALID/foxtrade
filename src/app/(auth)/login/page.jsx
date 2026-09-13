@@ -6,6 +6,8 @@ export const metadata = {
   title: "Login",
 };
 
+export const instant = false;
+
 const LoginPage = async ({ searchParams }) => {
   const { next, reset } = await searchParams;
 

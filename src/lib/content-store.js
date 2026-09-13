@@ -1,4 +1,5 @@
 import "server-only";
+import { cacheLife, cacheTag, revalidateTag } from "next/cache";
 import { ObjectId } from "mongodb";
 import { banners as defaultBanners } from "@/lib/content/banners";
 import { notices as defaultNotices } from "@/lib/content/notices";
@@ -81,6 +82,9 @@ const fallbackNotices = () => defaultNotices.map((notice) => ({ ...notice, slug:
 const fallbackBanners = () => defaultBanners.map((banner, order) => ({ ...banner, active: true, order }));
 
 export const getPublishedNotices = async () => {
+  "use cache";
+  cacheTag("notices");
+  cacheLife({ stale: 60, revalidate: 300, expire: 3600 });
   if (!configured()) return fallbackNotices();
   await ensureNotices();
   const docs = await collections.notices().find({ published: true }).sort({ publishedAt: -1 }).limit(100).toArray();
@@ -95,6 +99,9 @@ export const getNoticeBySlug = async (slug) => {
 };
 
 export const getActiveBanners = async () => {
+  "use cache";
+  cacheTag("banners");
+  cacheLife({ stale: 60, revalidate: 300, expire: 3600 });
   if (!configured()) return fallbackBanners();
   await ensureBanners();
   const docs = await collections.banners().find({ active: true }).sort({ order: 1, createdAt: 1 }).toArray();
@@ -128,6 +135,7 @@ export const saveNotice = async ({ id, title, category, summary, body, published
   if (!_id) {
     const doc = { ...fields, slug: await uniqueSlug(title), createdAt: now, publishedAt: published ? now : null };
     const { insertedId } = await collections.notices().insertOne(doc);
+    revalidateTag("notices");
     return noticeDTO({ ...doc, _id: insertedId });
   }
   const current = await collections.notices().findOne({ _id });
@@ -135,10 +143,15 @@ export const saveNotice = async ({ id, title, category, summary, body, published
   const updated = await collections
     .notices()
     .findOneAndUpdate({ _id }, { $set: { ...fields, publishedAt: published ? current.publishedAt ?? now : current.publishedAt } }, { returnDocument: "after" });
+  revalidateTag("notices");
   return noticeDTO(updated);
 };
 
-export const deleteNotice = async (id) => collections.notices().findOneAndDelete({ _id: new ObjectId(id) });
+export const deleteNotice = async (id) => {
+  const result = collections.notices().findOneAndDelete({ _id: new ObjectId(id) });
+  revalidateTag("notices");
+  return result;
+};
 
 export const saveBanner = async ({ id, eyebrow, title, text, ctaLabel, ctaHref, active, order }) => {
   await ensureBanners();

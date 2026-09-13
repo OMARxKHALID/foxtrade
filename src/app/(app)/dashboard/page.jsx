@@ -19,6 +19,8 @@ export const metadata = {
   title: "Dashboard",
 };
 
+export const instant = false;
+
 const actions = [
   { label: "Deposit", href: "/assets/deposit", icon: ArrowDownToLine },
   { label: "Transfer", href: "/assets/transfer", icon: ArrowRightLeft },

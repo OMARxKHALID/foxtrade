@@ -15,6 +15,8 @@ export const metadata = {
   title: "Convert",
 };
 
+export const instant = false;
+
 const ConvertPage = async () => {
   await connection();
   const queryClient = getQueryClient();

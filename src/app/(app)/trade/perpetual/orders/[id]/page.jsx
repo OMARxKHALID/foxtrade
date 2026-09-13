@@ -9,6 +9,8 @@ export const metadata = {
   title: "Position Detail",
 };
 
+export const instant = false;
+
 const PerpetualOrderPage = async ({ params }) => {
   const { id } = await params;
   const user = await getCurrentUser();
