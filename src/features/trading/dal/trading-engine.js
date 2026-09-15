@@ -110,6 +110,9 @@ export const placePerpetualOrder = async (userId, { symbol, side, type, price, a
   if (!setting.perpetualEnabled) throw new LedgerError(`Option trading on ${pair.base}/USDT is paused.`);
   if (leverage > setting.maxLeverage) throw new LedgerError(`Maximum leverage for ${pair.base}/USDT is ${setting.maxLeverage}x.`);
   const market = await latestPrice(pair.symbol);
+  if (type === "limit" && (side === "long" ? price >= market : price <= market)) {
+    throw new LedgerError(`A ${side} limit price must be ${side === "long" ? "below" : "above"} the market price. Use a market order to fill now.`);
+  }
   const entryPrice = type === "limit" ? price : market;
   const notional = toBig(amount).times(leverage);
   const size = toAmount(notional.div(entryPrice));
@@ -240,10 +243,18 @@ export const settleAll = async () => {
 
 const settleGates = new Map();
 
+const pruneSettleGates = (now) => {
+  settleGates.forEach((at, userId) => {
+    if (now - at >= SETTLE_DEBOUNCE_MS) settleGates.delete(userId);
+  });
+};
+
 const settleIfDue = async (userId) => {
+  const now = Date.now();
   const last = settleGates.get(userId) ?? 0;
-  if (Date.now() - last < SETTLE_DEBOUNCE_MS) return;
-  settleGates.set(userId, Date.now());
+  if (now - last < SETTLE_DEBOUNCE_MS) return;
+  if (settleGates.size > 1000) pruneSettleGates(now);
+  settleGates.set(userId, now);
   await settleUser(userId);
 };
 
@@ -266,7 +277,9 @@ export const closeAllPositions = async (userId) => {
   if (!positions.length) throw new LedgerError("You have no open positions.");
   const symbols = [...new Set(positions.map((item) => item.symbol))];
   const prices = await fetchLatestPrices(symbols);
-  const results = await Promise.allSettled(positions.map((position) => closePositionAt(position, Number(prices[position.symbol]), "manual")));
+  const priced = positions.filter((position) => Number(prices[position.symbol]) > 0);
+  if (!priced.length) throw new LedgerError("Live price unavailable. Try again in a moment.");
+  const results = await Promise.allSettled(priced.map((position) => closePositionAt(position, Number(prices[position.symbol]), "manual")));
   return results.filter((item) => item.status === "fulfilled").length;
 };
 
