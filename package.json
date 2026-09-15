@@ -23,6 +23,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "db:seed": "bun scripts/seed-database.js",
     "check": "bun run lint && bun run build"
   },
   "dependencies": {
