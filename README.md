@@ -195,15 +195,17 @@ Authorization: Bearer <CRON_SECRET>
 
 Without it, a trade only settles when its owner comes back to the app, and the leaderboard and admin stats go stale in the meantime.
 
-**On Vercel**, add a `vercel.json`. Vercel sends `CRON_SECRET` as the bearer token automatically:
+**On Vercel**, `vercel.json` already declares the job. Vercel sends `CRON_SECRET` as the bearer token automatically:
 
 ```json
 {
-  "crons": [{ "path": "/api/cron/settle", "schedule": "* * * * *" }]
+  "crons": [{ "path": "/api/cron/settle", "schedule": "0 0 * * *" }]
 }
 ```
 
-Vercel Hobby only allows daily cron jobs. For per-minute settlement use Vercel Pro, or an external scheduler (cron-job.org, GitHub Actions, Upstash QStash) that sends the same header.
+**The schedule is daily because Vercel Hobby allows only one cron run per day**, and a more frequent schedule makes the deployment fail outright. A daily sweep is a backstop, not real-time settlement. For settlement every minute, either:
+- upgrade to Vercel Pro and change the schedule to `* * * * *`, or
+- keep the daily job and add an external scheduler (cron-job.org, GitHub Actions, Upstash QStash) that calls the same URL every minute with the `Authorization: Bearer <CRON_SECRET>` header.
 
 ## Deployment (Vercel)
 
