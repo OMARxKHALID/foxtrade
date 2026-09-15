@@ -14,7 +14,7 @@ vi.mock("@/lib/market/binance-rest", () => ({
 vi.mock("next/cache", () => ({
   cacheTag: () => {},
   cacheLife: () => {},
-  revalidateTag: () => {},
+  updateTag: () => {},
 }));
 
 const { fetchLatestPrices, fetchKlineRange } = await import("@/lib/market/binance-rest");

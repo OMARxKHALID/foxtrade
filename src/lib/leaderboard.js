@@ -1,4 +1,5 @@
 import "server-only";
+import { cacheLife, cacheTag } from "next/cache";
 import { ObjectId } from "mongodb";
 import { collections } from "@/lib/mongo";
 
@@ -12,6 +13,8 @@ const maskEmail = (email = "") => {
 
 export const getLeaderboard = async () => {
   "use cache";
+  cacheTag("leaderboard");
+  cacheLife({ stale: 300, revalidate: 900, expire: 3600 });
   if (!process.env.MONGODB_URI) return [];
   const since = new Date(Date.now() - 30 * DAY);
   const [timed, positions] = await Promise.all([

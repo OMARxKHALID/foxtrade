@@ -1,5 +1,5 @@
 import "server-only";
-import { cacheLife, cacheTag, revalidateTag } from "next/cache";
+import { cacheLife, cacheTag, updateTag } from "next/cache";
 import { ObjectId } from "mongodb";
 import { banners as defaultBanners } from "@/lib/content/banners";
 import { notices as defaultNotices } from "@/lib/content/notices";
@@ -135,7 +135,7 @@ export const saveNotice = async ({ id, title, category, summary, body, published
   if (!_id) {
     const doc = { ...fields, slug: await uniqueSlug(title), createdAt: now, publishedAt: published ? now : null };
     const { insertedId } = await collections.notices().insertOne(doc);
-    revalidateTag("notices");
+    updateTag("notices");
     return noticeDTO({ ...doc, _id: insertedId });
   }
   const current = await collections.notices().findOne({ _id });
@@ -143,13 +143,13 @@ export const saveNotice = async ({ id, title, category, summary, body, published
   const updated = await collections
     .notices()
     .findOneAndUpdate({ _id }, { $set: { ...fields, publishedAt: published ? current.publishedAt ?? now : current.publishedAt } }, { returnDocument: "after" });
-  revalidateTag("notices");
+  updateTag("notices");
   return noticeDTO(updated);
 };
 
 export const deleteNotice = async (id) => {
-  const result = collections.notices().findOneAndDelete({ _id: new ObjectId(id) });
-  revalidateTag("notices");
+  const result = await collections.notices().findOneAndDelete({ _id: new ObjectId(id) });
+  updateTag("notices");
   return result;
 };
 
@@ -159,10 +159,16 @@ export const saveBanner = async ({ id, eyebrow, title, text, ctaLabel, ctaHref, 
   const fields = { eyebrow, title, text, ctaLabel, ctaHref, active, order, updatedAt: now };
   if (!id) {
     const { insertedId } = await collections.banners().insertOne({ ...fields, createdAt: now });
+    updateTag("banners");
     return bannerDTO({ ...fields, _id: insertedId });
   }
   const updated = await collections.banners().findOneAndUpdate({ _id: new ObjectId(id) }, { $set: fields }, { returnDocument: "after" });
+  updateTag("banners");
   return updated ? bannerDTO(updated) : null;
 };
 
-export const deleteBanner = async (id) => collections.banners().findOneAndDelete({ _id: new ObjectId(id) });
+export const deleteBanner = async (id) => {
+  const result = await collections.banners().findOneAndDelete({ _id: new ObjectId(id) });
+  updateTag("banners");
+  return result;
+};

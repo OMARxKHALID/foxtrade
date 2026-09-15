@@ -1,5 +1,5 @@
 import "server-only";
-import { cacheLife, cacheTag, revalidateTag } from "next/cache";
+import { cacheLife, cacheTag, updateTag } from "next/cache";
 import { collections } from "@/lib/mongo";
 import { allSymbols } from "@/lib/market/pairs";
 import { perpetualRules } from "@/lib/market/trading-rules";
@@ -26,9 +26,9 @@ export const getPairSettings = async () => {
 export const getPairSetting = async (symbol) => (await getPairSettings())[symbol] ?? { ...defaultPairSetting };
 
 export const savePairSetting = async (symbol, setting) => {
-  const result = collections
+  const result = await collections
     .pairSettings()
     .findOneAndUpdate({ symbol }, { $set: { ...setting, symbol, updatedAt: new Date() } }, { upsert: true, returnDocument: "after" });
-  revalidateTag("pair-settings");
+  updateTag("pair-settings");
   return result;
 };
