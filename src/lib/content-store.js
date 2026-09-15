@@ -92,6 +92,9 @@ export const getPublishedNotices = async () => {
 };
 
 export const getNoticeBySlug = async (slug) => {
+  "use cache";
+  cacheTag("notices");
+  cacheLife({ stale: 60, revalidate: 300, expire: 3600 });
   if (!configured()) return fallbackNotices().find((notice) => notice.slug === slug) ?? null;
   await ensureNotices();
   const doc = await collections.notices().findOne({ slug: String(slug), published: true });

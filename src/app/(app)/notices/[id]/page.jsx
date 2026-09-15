@@ -3,7 +3,9 @@ import { Container } from "@/components/ui/container";
 import { GlowCard } from "@/components/ui/glow-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { getNoticeBySlug } from "@/lib/content-store";
+import { getNoticeBySlug, getPublishedNotices } from "@/lib/content-store";
+
+export const generateStaticParams = async () => (await getPublishedNotices()).map((notice) => ({ id: notice.slug }));
 
 export const generateMetadata = async ({ params }) => {
   const { id } = await params;
