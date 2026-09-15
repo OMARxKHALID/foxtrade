@@ -3,9 +3,10 @@ import { CardBody, CardHeader, GlowCard } from "@/components/ui/glow-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { collections } from "@/lib/mongo";
-import { kycStatus } from "@/lib/status";
+import { documentStatus, kycStatus } from "@/lib/status";
 import { getCurrentUser } from "@/lib/session";
-import { BasicVerificationForm, DocumentUploads } from "@/features/account/components/verification-forms";
+import { isDocumentStorageConfigured } from "@/lib/document-storage";
+import { BasicVerificationForm, DocumentUploadForm } from "@/features/account/components/verification-forms";
 
 export const metadata = {
   title: "Identity Verification",
@@ -19,6 +20,11 @@ const VerificationPage = async () => {
   const status = record?.status ?? "none";
   const badge = kycStatus[status];
   const locked = status === "pending" || status === "approved";
+  const documents = record?.documents ?? null;
+  const documentsState = documents?.status ?? "none";
+  const storageReady = isDocumentStorageConfigured();
+  const documentsBadge = status !== "approved" ? { tone: "neutral", label: "Locked" } : !storageReady ? { tone: "neutral", label: "Unavailable" } : documentStatus[documentsState];
+  const documentDate = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" });
 
   return (
     <Container className="flex flex-col gap-4 lg:gap-6">
@@ -53,11 +59,22 @@ const VerificationPage = async () => {
           <CardHeader
             id="advanced-title"
             title="Advanced verification"
-            description="Document upload opens once file storage is configured and basic verification is approved."
-            actions={<StatusBadge>Locked</StatusBadge>}
+            description="Upload clear photos of the front and back of the ID you used for basic verification."
+            actions={<StatusBadge tone={documentsBadge.tone}>{documentsBadge.label}</StatusBadge>}
           />
-          <CardBody>
-            <DocumentUploads />
+          <CardBody className="flex flex-col gap-5">
+            {status !== "approved" && <p className="text-sm leading-6 text-neutral-400">Available once your basic verification is approved.</p>}
+            {status === "approved" && !storageReady && <p className="text-sm leading-6 text-neutral-400">Document upload is not available yet. Please check back later.</p>}
+            {status === "approved" && storageReady && documentsState === "pending" && (
+              <p className="text-sm leading-6 text-neutral-400">Your documents were submitted on {documentDate.format(documents.submittedAt)} and are under review.</p>
+            )}
+            {status === "approved" && storageReady && documentsState === "approved" && <p className="text-sm leading-6 text-neutral-400">Your identity documents are verified.</p>}
+            {status === "approved" && storageReady && documentsState === "rejected" && documents?.reason && (
+              <p className="rounded-lg border border-down/30 bg-down/10 px-3 py-2.5 text-xs text-down">Reason: {documents.reason}. Upload new photos and submit again.</p>
+            )}
+            {status === "approved" && storageReady && ["none", "draft", "rejected"].includes(documentsState) && (
+              <DocumentUploadForm uploaded={{ front: Boolean(documents?.front), back: Boolean(documents?.back) }} />
+            )}
           </CardBody>
         </GlowCard>
       </div>

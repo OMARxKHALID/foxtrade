@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { walletLabels } from "@/lib/demo";
 import { formatQuantity } from "@/lib/format";
-import { kycStatus, ticketStatus } from "@/lib/status";
+import { documentStatus, kycStatus, ticketStatus } from "@/lib/status";
 import { toRecordRow } from "@/features/assets/components/record-rows";
 import { getClientDetail } from "@/features/admin/dal/admin-dal";
 import { ClientAccessPanel, ClientBalanceForm, ClientPasswordForm, ClientProfileForm } from "@/features/admin/components/client-detail-panels";
@@ -151,6 +151,7 @@ const ClientPage = async ({ params }) => {
                   ["City", verification.city],
                   ["ID number", verification.idNumber],
                   ["Status", kycStatus[verification.status].label],
+                  ["Documents", documentStatus[verification.documentsStatus].label],
                   ["Reason", verification.reason ?? "—"],
                 ].map(([label, value]) => (
                   <div key={label}>

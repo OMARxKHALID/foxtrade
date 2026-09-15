@@ -94,6 +94,14 @@ export const platformSettingsSchema = z
     message: "Each duration must be unique",
   });
 
+export const documentsReviewSchema = z
+  .object({
+    id: objectIdSchema,
+    decision: z.enum(["approved", "rejected"]),
+    reason: z.string().trim().max(200).optional(),
+  })
+  .refine((value) => value.decision === "approved" || (value.reason?.length ?? 0) >= 3, { path: ["reason"], message: "Add a reason for rejection" });
+
 export const clientProfileSchema = z.object({
   userId: objectIdSchema,
   name: z.string().trim().min(1, "Enter a name").max(60),

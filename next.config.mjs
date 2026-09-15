@@ -25,6 +25,9 @@ const securityHeaders = [
 
 const nextConfig = {
   cacheComponents: true,
+  experimental: {
+    serverActions: { bodySizeLimit: "5mb" },
+  },
   poweredByHeader: false,
   headers: async () => [{ source: "/(.*)", headers: securityHeaders }],
 };

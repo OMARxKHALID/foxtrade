@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { formFailure, validationFailure } from "@/lib/action-result";
 import { getAuth } from "@/lib/auth";
+import { deletePrivateImages } from "@/lib/document-storage";
 import { getEnv } from "@/lib/env";
 import { readPlatformSettings } from "@/lib/platform-settings";
 import { getBalances, postEntries, withTransaction } from "@/lib/ledger";
@@ -10,7 +11,7 @@ import { readPairs } from "@/lib/market/pair-store";
 import { assetsOf } from "@/lib/market/pairs";
 import { collections } from "@/lib/mongo";
 import { addTicketMessage, setTicketStatus } from "@/lib/ticket-store";
-import { asAdmin, findClient, findUser, reviewVerification, writeAudit } from "@/features/admin/dal/admin-dal";
+import { asAdmin, findClient, findUser, reviewVerification, reviewVerificationDocuments, writeAudit } from "@/features/admin/dal/admin-dal";
 import { closeAllPositions } from "@/features/trading/dal/trading-engine";
 import {
   balanceAdjustSchema,
@@ -18,6 +19,7 @@ import {
   clientPasswordSchema,
   clientProfileSchema,
   clientRoleSchema,
+  documentsReviewSchema,
   objectIdSchema,
   reviewSchema,
   ticketReplySchema,
@@ -74,6 +76,20 @@ export const reviewClientVerification = async (input) => {
     const updated = await reviewVerification(parsed.data.id, parsed.data.decision, parsed.data.reason);
     if (!updated) return formFailure(`This submission is already ${parsed.data.decision}.`);
     await writeAudit(admin, `kyc.${parsed.data.decision}`, updated.email, parsed.data.reason ?? null);
+  });
+};
+
+export const reviewClientDocuments = async (input) => {
+  const parsed = documentsReviewSchema.safeParse(input);
+  if (!parsed.success) return validationFailure(parsed.error);
+  return asAdmin(async (admin) => {
+    const previous = await reviewVerificationDocuments(parsed.data.id, parsed.data.decision, parsed.data.reason);
+    if (!previous) return formFailure(`These documents are already ${parsed.data.decision} or were not submitted.`);
+    if (parsed.data.decision === "rejected") {
+      await deletePrivateImages([previous.documents.front.publicId, previous.documents.back.publicId]);
+      await collections.verifications().updateOne({ _id: previous._id }, { $unset: { "documents.front": "", "documents.back": "" } });
+    }
+    await writeAudit(admin, `kyc.documents_${parsed.data.decision}`, previous.email, parsed.data.reason ?? null);
   });
 };
 
@@ -191,6 +207,8 @@ export const deleteClient = async (userId) => {
     if (failure) return failure;
     if (user.role === "admin") return formFailure("Remove the admin role before deleting this account.");
     const owned = { userId: parsed.data };
+    const verification = await collections.verifications().findOne(owned);
+    await deletePrivateImages([verification?.documents?.front?.publicId, verification?.documents?.back?.publicId].filter(Boolean));
     await Promise.all(
       [collections.wallets(), collections.ledger(), collections.orders(), collections.positions(), collections.tickets(), collections.verifications(), collections.addresses(), collections.security()].map(
         (collection) => collection.deleteMany(owned),

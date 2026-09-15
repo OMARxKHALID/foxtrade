@@ -142,6 +142,7 @@ export const getClientDetail = async (userId) => {
           city: verification.city,
           idNumber: `•••• ${String(verification.idNumber).slice(-4)}`,
           reason: verification.reason ?? null,
+          documentsStatus: verification.documents?.status ?? "none",
           submittedAt: verification.submittedAt.toISOString(),
         }
       : null,
@@ -174,7 +175,24 @@ export const listVerifications = async () => {
     status: doc.status,
     reason: doc.reason,
     submittedAt: doc.submittedAt.toISOString(),
+    documents: {
+      status: doc.documents?.status ?? "none",
+      reason: doc.documents?.reason ?? null,
+      hasFront: Boolean(doc.documents?.front),
+      hasBack: Boolean(doc.documents?.back),
+      submittedAt: doc.documents?.submittedAt?.toISOString() ?? null,
+    },
   }));
+};
+
+export const reviewVerificationDocuments = async (id, decision, reason) => {
+  if (!ObjectId.isValid(id)) return null;
+  const filter = { _id: new ObjectId(id), "documents.status": { $in: decision === "approved" ? ["pending", "rejected"] : ["pending", "approved"] }, "documents.front": { $exists: true }, "documents.back": { $exists: true } };
+  const update =
+    decision === "approved"
+      ? { $set: { "documents.status": "approved", "documents.reason": null, "documents.reviewedAt": new Date() } }
+      : { $set: { "documents.status": "rejected", "documents.reason": reason, "documents.reviewedAt": new Date() } };
+  return collections.verifications().findOneAndUpdate(filter, update, { returnDocument: "before" });
 };
 
 export const reviewVerification = async (id, decision, reason) => {
