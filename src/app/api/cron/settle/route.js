@@ -1,5 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
-import { NextResponse } from "next/server";
+import { NextResponse, connection } from "next/server";
 import { getEnv } from "@/lib/env";
 import { settleAll } from "@/features/trading/dal/trading-engine";
 
@@ -11,6 +11,7 @@ const authorized = (request) => {
 };
 
 export const GET = async (request) => {
+  await connection();
   if (!authorized(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const users = await settleAll();
   return NextResponse.json({ ok: true, users });

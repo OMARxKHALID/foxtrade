@@ -8,10 +8,8 @@ const signatures = {
   pdf: [0x25, 0x50, 0x44, 0x46, 0x2d],
 };
 
-export const isDocumentStorageConfigured = () => {
-  const env = getEnv();
-  return Boolean(env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET);
-};
+export const isDocumentStorageConfigured = () =>
+  Boolean(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET);
 
 const client = () => {
   const env = getEnv();
