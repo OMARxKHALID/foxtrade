@@ -48,9 +48,10 @@ export const contentByKey = Object.fromEntries(contentDocuments.map((doc) => [do
 
 export const documentsInGroup = (group) => contentDocuments.filter((doc) => doc.group === group);
 
-export const fillPlaceholders = (text, { siteName, takerFeeRate, demoAmount }) =>
+export const fillPlaceholders = (text, { siteName, supportEmail, takerFeeRate, demoAmount }) =>
   String(text ?? "")
     .replaceAll("{siteName}", siteName)
+    .replaceAll("{supportEmail}", supportEmail)
     .replaceAll("{takerFee}", `${+(takerFeeRate * 100).toFixed(4)}%`)
     .replaceAll("{demoAmount}", `${Number(demoAmount).toLocaleString("en-US")} USDT`);
 
