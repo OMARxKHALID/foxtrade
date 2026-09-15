@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { HydrationBoundary } from "@tanstack/react-query";
 import { Container } from "@/components/ui/container";
 import { PageLoader } from "@/components/ui/page-loader";
 import { BannerCarousel } from "@/features/home/components/banner-carousel";
@@ -8,6 +9,8 @@ import { QuickTradeBanner } from "@/features/home/components/quick-trade-banner"
 import { MarketList } from "@/features/market/components/market-list";
 import { TickerTrio } from "@/features/market/components/ticker-trio";
 import { getActiveBanners, getPublishedNotices } from "@/lib/content-store";
+import { allSymbols, featuredSymbols } from "@/lib/market/pairs";
+import { getTickerHydrationState } from "@/lib/market/ticker-snapshot";
 import { getPairSettings } from "@/lib/pair-settings";
 
 export const metadata = {
@@ -15,20 +18,27 @@ export const metadata = {
 };
 
 const HomePage = async () => {
-  const [banners, notices, settings] = await Promise.all([getActiveBanners(), getPublishedNotices(), getPairSettings()]);
+  const [banners, notices, settings, tickerState] = await Promise.all([
+    getActiveBanners(),
+    getPublishedNotices(),
+    getPairSettings(),
+    getTickerHydrationState([featuredSymbols, allSymbols]),
+  ]);
 
   return (
     <Container className="flex flex-col gap-4 lg:gap-6">
       <BannerCarousel banners={banners} />
       <NoticeBar notices={notices.slice(0, 5)} />
-      <Suspense fallback={<PageLoader className="min-h-[40vh]" />}>
-        <TickerTrio />
-        <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr] lg:gap-6">
-          <QuickActions />
-          <QuickTradeBanner />
-        </div>
-        <MarketList settings={settings} />
-      </Suspense>
+      <HydrationBoundary state={tickerState}>
+        <Suspense fallback={<PageLoader className="min-h-[40vh]" />}>
+          <TickerTrio />
+          <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr] lg:gap-6">
+            <QuickActions />
+            <QuickTradeBanner />
+          </div>
+          <MarketList settings={settings} />
+        </Suspense>
+      </HydrationBoundary>
     </Container>
   );
 };

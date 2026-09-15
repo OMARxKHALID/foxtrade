@@ -7,7 +7,6 @@ export const ChangePill = ({ value, size = "md", className }) => {
   const flat = !value;
   return (
     <span
-      suppressHydrationWarning
       className={cn(
         "inline-flex shrink-0 items-center justify-center gap-0.5 rounded-md font-medium whitespace-nowrap tabular-nums",
         size === "md" ? "h-8 min-w-[84px] px-2 text-xs" : "h-6 px-1.5 text-[11px]",

@@ -24,23 +24,11 @@ export const tickerSortValues = (ticker) => ({
   turnover: ticker.quoteVolume,
 });
 
-export const priceText = (value) => (
-  <span suppressHydrationWarning className="text-white">
-    {formatPrice(value)}
-  </span>
-);
+export const priceText = (value) => <span className="text-white">{formatPrice(value)}</span>;
 
-export const mutedPrice = (value) => (
-  <span suppressHydrationWarning className="text-neutral-300">
-    {formatPrice(value)}
-  </span>
-);
+export const mutedPrice = (value) => <span className="text-neutral-300">{formatPrice(value)}</span>;
 
-export const compactText = (value) => (
-  <span suppressHydrationWarning className="text-neutral-300">
-    {formatCompact(value)}
-  </span>
-);
+export const compactText = (value) => <span className="text-neutral-300">{formatCompact(value)}</span>;
 
 export const marketColumns = [
   { key: "pair", header: "Pair", sortable: true },
