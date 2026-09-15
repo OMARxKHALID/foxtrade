@@ -63,7 +63,7 @@ const DashboardPage = async () => {
     <Container className="flex flex-col gap-4 lg:gap-6">
       <PageHeader title="Dashboard" description={`Welcome back, ${user.email}.`} />
 
-      <div className="grid gap-4 lg:gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-4 lg:gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <GlowCard variant="warm">
           <CardBody>
             <p className="text-sm text-neutral-400">Total Assets (USDT)</p>

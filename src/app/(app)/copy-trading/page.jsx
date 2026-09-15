@@ -47,7 +47,7 @@ const CopyTradingPage = async () => {
   return (
     <Container className="flex flex-col gap-4 lg:gap-6">
       <PageHeader title="Copy Trading" description="Discover consistent traders ranked by their real settled results." />
-      <div className="grid gap-4 md:grid-cols-3 lg:gap-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:gap-6">
         {steps.map((step) => (
           <GlowCard key={step.title}>
             <CardBody>

@@ -71,7 +71,7 @@ export const RegisterForm = () => {
       <Field id="register-email" label="Email" error={errors.email?.message}>
         <input id="register-email" type="email" autoComplete="email" aria-invalid={Boolean(errors.email)} className={controlClass} {...register("email")} />
       </Field>
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <Field id="register-password" label="Password" error={errors.password?.message}>
           <PasswordInput id="register-password" autoComplete="new-password" invalid={Boolean(errors.password)} registration={register("password")} />
         </Field>

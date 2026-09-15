@@ -49,7 +49,7 @@ const NoticeForm = ({ notice, onDone }) => {
 
   return (
     <form onSubmit={handleSubmit(submit)} noValidate className="flex flex-col gap-5">
-      <div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_12rem]">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-[minmax(0,1fr)_12rem]">
         <Field id="notice-title" label="Title" error={errors.title?.message}>
           <input id="notice-title" aria-invalid={Boolean(errors.title)} className={controlClass} {...register("title")} />
         </Field>

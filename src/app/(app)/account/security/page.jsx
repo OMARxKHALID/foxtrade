@@ -33,7 +33,7 @@ const SecurityPage = async () => {
   return (
     <Container className="flex flex-col gap-4 lg:gap-6">
       <PageHeader title="Security Center" description="Keep your account protected." backHref="/account" />
-      <div className="grid gap-4 lg:gap-6 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:gap-6 xl:grid-cols-2">
         <GlowCard as="section" aria-labelledby="password-title">
           <CardHeader id="password-title" title="Login password" description="Changing your password signs out your other devices." />
           <CardBody>
@@ -56,7 +56,7 @@ const SecurityPage = async () => {
         <CardHeader id="sessions-title" title="Active sessions" description="Devices currently signed in to your account." />
         <CardBody>
           {sessions.length ? (
-            <ul className="grid gap-3 md:grid-cols-2">
+            <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
               {sessions.map((item) => {
                 const device = describeAgent(item.userAgent ?? "");
                 const DeviceIcon = device.mobile ? Smartphone : Laptop;

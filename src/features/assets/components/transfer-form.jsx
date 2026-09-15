@@ -41,7 +41,7 @@ export const TransferForm = ({ holdings }) => {
 
   return (
     <form onSubmit={handleSubmit(submit)} noValidate className="flex flex-col gap-5">
-      <div className="grid items-end gap-3 sm:grid-cols-[1fr_auto_1fr]">
+      <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-[1fr_auto_1fr]">
         <Field id="transfer-from" label="From">
           <Controller name="from" control={control} render={({ field }) => <SelectMenu id="transfer-from" options={walletOptions} value={field.value} onChange={field.onChange} onBlur={field.onBlur} />} />
         </Field>
@@ -52,7 +52,7 @@ export const TransferForm = ({ holdings }) => {
           <Controller name="to" control={control} render={({ field }) => <SelectMenu id="transfer-to" options={walletOptions} value={field.value} onChange={field.onChange} onBlur={field.onBlur} invalid={Boolean(errors.to)} />} />
         </Field>
       </div>
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <Field id="transfer-asset" label="Asset">
           <Controller name="asset" control={control} render={({ field }) => <SelectMenu id="transfer-asset" options={assetOptions} value={field.value} onChange={field.onChange} onBlur={field.onBlur} />} />
         </Field>

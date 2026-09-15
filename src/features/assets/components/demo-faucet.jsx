@@ -21,7 +21,7 @@ export const DemoFaucet = ({ usdtTotal }) => {
   const handleClaim = () => submit();
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-6">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-6">
       <GlowCard variant="warm">
         <CardBody>
           <IconTile icon={Gift} size="lg" />

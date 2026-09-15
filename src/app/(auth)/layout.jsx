@@ -11,7 +11,7 @@ const AuthLayout = async ({ children }) => {
   if (await getCurrentUser()) redirect("/");
 
   return (
-    <div className="grid min-h-screen flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+    <div className="grid grid-cols-1 min-h-screen flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
       <div className="flex flex-col px-5 py-6 md:px-12 md:py-10">
         <Link href="/" className="flex items-center gap-2.5 self-start" aria-label={`${site.name} home`}>
           <LogoMark />

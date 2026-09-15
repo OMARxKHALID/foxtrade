@@ -82,7 +82,7 @@ export const OrderDetail = ({ market, order, signedIn }) => {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-3 lg:gap-6">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
       {groupsFor(market, order).map((group) => (
         <GlowCard key={group.title} as="section" aria-labelledby={`detail-${group.title}`}>
           <CardHeader id={`detail-${group.title}`} title={group.title} />

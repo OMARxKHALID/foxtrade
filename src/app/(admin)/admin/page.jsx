@@ -40,7 +40,7 @@ const AdminDashboardPage = async () => {
           return <li key={card.label}>{card.href ? <Link href={card.href} className="block h-full">{content}</Link> : content}</li>;
         })}
       </ul>
-      <div className="grid gap-4 lg:gap-6 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:gap-6 xl:grid-cols-2">
         <GlowCard as="section" aria-labelledby="recent-clients">
           <CardHeader id="recent-clients" title="Newest clients" actions={<Link href="/admin/users" className="text-xs text-brand">View all</Link>} />
           <CardBody>

@@ -33,7 +33,7 @@ const DownloadPage = () => (
   <Container className="flex flex-col gap-4 lg:gap-6">
     <PageHeader title="Download App" description="Use Foxtrade as an installed app on any device." />
     <InstallCard />
-    <div className="grid gap-4 md:grid-cols-3 lg:gap-6">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:gap-6">
       {platforms.map((platform) => (
         <GlowCard key={platform.title} as="section" aria-labelledby={`install-${platform.id}`}>
           <CardHeader

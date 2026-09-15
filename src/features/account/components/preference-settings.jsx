@@ -18,7 +18,7 @@ export const LanguageList = () => {
   };
 
   return (
-    <ul role="radiogroup" aria-label="Language" className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+    <ul role="radiogroup" aria-label="Language" className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
       {locales.map((item) => {
         const active = item.code === locale;
         return (

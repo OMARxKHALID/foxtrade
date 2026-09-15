@@ -40,7 +40,7 @@ const WithdrawPage = async () => {
           </>
         }
       />
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-6">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-6">
         <GlowCard as="section" aria-labelledby="withdraw-title">
           <CardHeader id="withdraw-title" title="Withdrawal details" />
           <CardBody>

@@ -22,7 +22,7 @@ const HelpPage = () => (
         </GradientButton>
       }
     />
-    <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-6">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-6">
       <GlowCard as="nav" aria-label="Help topics" className="h-fit p-2 lg:sticky lg:top-24">
         <ul className="scrollbar-none flex gap-1 overflow-x-auto lg:flex-col">
           {helpTopics.map((topic) => (

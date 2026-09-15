@@ -63,7 +63,7 @@ export const AddressBook = ({ addresses, signedIn }) => {
   }));
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] lg:gap-6">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] lg:gap-6">
       <GlowCard as="section" aria-labelledby="add-address-title" className="h-fit">
         <CardHeader id="add-address-title" title="Add address" description="Saved addresses can be picked when you withdraw." />
         <CardBody>
@@ -71,7 +71,7 @@ export const AddressBook = ({ addresses, signedIn }) => {
             <Field id="address-label" label="Label" error={errors.label?.message}>
               <input id="address-label" placeholder="e.g. Hardware wallet" aria-invalid={Boolean(errors.label)} className={controlClass} {...register("label")} />
             </Field>
-            <div className="grid gap-5 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <Field id="address-asset" label="Asset" error={errors.asset?.message}>
                 <Controller
                   name="asset"

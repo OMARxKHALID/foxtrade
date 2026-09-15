@@ -60,7 +60,7 @@ export const AssetDetail = ({ asset, pairSymbol, holding, records }) => {
 
   return (
     <div className="flex flex-col gap-4 lg:gap-6">
-      <div className="grid gap-4 lg:gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-4 lg:gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <GlowCard variant="warm">
           <CardBody>
             <div className="flex items-center gap-3">

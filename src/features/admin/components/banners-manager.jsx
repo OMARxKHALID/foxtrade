@@ -43,7 +43,7 @@ const BannerForm = ({ banner, nextOrder, onDone }) => {
 
   return (
     <form onSubmit={handleSubmit(submit)} noValidate className="flex flex-col gap-5">
-      <div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_6rem]">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-[minmax(0,1fr)_6rem]">
         <Field id="banner-eyebrow" label="Label" error={errors.eyebrow?.message}>
           <input id="banner-eyebrow" aria-invalid={Boolean(errors.eyebrow)} className={controlClass} {...register("eyebrow")} />
         </Field>
@@ -57,7 +57,7 @@ const BannerForm = ({ banner, nextOrder, onDone }) => {
       <Field id="banner-text" label="Description" error={errors.text?.message}>
         <input id="banner-text" aria-invalid={Boolean(errors.text)} className={controlClass} {...register("text")} />
       </Field>
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <Field id="banner-cta-label" label="Button label" error={errors.ctaLabel?.message}>
           <input id="banner-cta-label" aria-invalid={Boolean(errors.ctaLabel)} className={controlClass} {...register("ctaLabel")} />
         </Field>

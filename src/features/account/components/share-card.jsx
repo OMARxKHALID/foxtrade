@@ -16,7 +16,7 @@ export const ShareCard = ({ inviteUrl }) => {
   };
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-6">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-6">
       <GlowCard variant="warm">
         <CardBody className="flex flex-col gap-6 sm:flex-row sm:items-center">
           <div className="self-center rounded-xl bg-white p-3 sm:self-auto">

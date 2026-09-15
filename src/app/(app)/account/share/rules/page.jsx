@@ -23,7 +23,7 @@ const rules = [
 const ShareRulesPage = () => (
   <Container className="flex flex-col gap-4 lg:gap-6">
     <PageHeader title="Invite Rules" description="How inviting friends works on Foxtrade." backHref="/account/share" />
-    <ol className="grid gap-4 md:grid-cols-3 lg:gap-6">
+    <ol className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:gap-6">
       {steps.map((step, i) => (
         <li key={step.title}>
           <GlowCard variant={i === 0 ? "warm" : "plain"} className="h-full">

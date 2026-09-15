@@ -23,7 +23,7 @@ const VerificationPage = async () => {
   return (
     <Container className="flex flex-col gap-4 lg:gap-6">
       <PageHeader title="Identity Verification" description="Verify your identity to appear on the copy trading leaderboard." backHref="/account" />
-      <div className="grid gap-4 lg:gap-6 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:gap-6 xl:grid-cols-2">
         <GlowCard as="section" aria-labelledby="basic-title">
           <CardHeader id="basic-title" title="Basic verification" actions={<StatusBadge tone={badge.tone}>{badge.label}</StatusBadge>} />
           <CardBody className="flex flex-col gap-5">
@@ -31,7 +31,7 @@ const VerificationPage = async () => {
               <p className="rounded-lg border border-down/30 bg-down/10 px-3 py-2.5 text-xs text-down">Reason: {record.reason}. Update your details and submit again.</p>
             )}
             {locked ? (
-              <dl className="grid gap-3 text-sm sm:grid-cols-2">
+              <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
                 {[
                   ["Country / Region", record.country],
                   ["Full legal name", record.fullName],

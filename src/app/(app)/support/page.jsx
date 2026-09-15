@@ -28,7 +28,7 @@ const SupportPage = async () => {
   return (
     <Container className="flex flex-col gap-4 lg:gap-6">
       <PageHeader title="Customer Support" description="Tell us what you need help with and our team will get back to you." />
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-6">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-6">
         <GlowCard as="section" aria-labelledby="new-ticket">
           <CardHeader id="new-ticket" title="New ticket" />
           <CardBody>

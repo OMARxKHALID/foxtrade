@@ -30,7 +30,7 @@ export const TickerTrio = () => {
                   </span>
                   <ChangePill value={ticker.changePercent} size="sm" className="self-start sm:self-auto" />
                 </div>
-                <p className={cn("truncate font-heading text-sm font-semibold tabular-nums sm:text-2xl", up ? "text-up" : "text-down")}>
+                <p className={cn("truncate font-heading text-xs font-semibold tabular-nums min-[360px]:text-sm sm:text-2xl", up ? "text-up" : "text-down")}>
                   {formatPrice(ticker.price)}
                 </p>
                 <p className="hidden text-xs text-neutral-500 sm:block">

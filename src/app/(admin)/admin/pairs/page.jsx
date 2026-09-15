@@ -19,7 +19,7 @@ const PairsPage = async () => {
   return (
     <>
       <PageHeader title="Trading Pairs" description="Pause markets or cap leverage per pair. Prices always come from Binance and cannot be edited." />
-      <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
         <GlowCard as="section" aria-labelledby="payout-title">
           <CardHeader id="payout-title" title="Timed trade payout table" />
           <CardBody>

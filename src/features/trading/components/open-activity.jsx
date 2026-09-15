@@ -17,7 +17,7 @@ export const OpenActivity = ({ positions, timed }) => {
   const totalPnl = positions.filter((item) => item.status === "open").reduce((sum, item) => sum + unrealizedPnl(item, marks[item.symbol]), 0);
 
   return (
-    <div className="grid gap-4 lg:gap-6 xl:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 lg:gap-6 xl:grid-cols-2">
       <GlowCard as="section" aria-labelledby="open-positions-title" className="overflow-hidden">
         <CardHeader
           id="open-positions-title"

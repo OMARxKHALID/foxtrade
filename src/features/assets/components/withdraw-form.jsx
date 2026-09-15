@@ -37,7 +37,7 @@ export const WithdrawForm = ({ holdings, addresses = [] }) => {
 
   return (
     <form onSubmit={handleSubmit(submit)} noValidate className="flex flex-col gap-5">
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <Field id="withdraw-asset" label="Asset" error={errors.asset?.message}>
           <Controller
             name="asset"
@@ -61,7 +61,7 @@ export const WithdrawForm = ({ holdings, addresses = [] }) => {
       <Field id="withdraw-address" label="Withdrawal address" error={errors.address?.message}>
         <input id="withdraw-address" autoComplete="off" spellCheck={false} placeholder="Paste wallet address" aria-invalid={Boolean(errors.address)} className={controlClass} {...register("address")} />
       </Field>
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <Field id="withdraw-amount" label="Amount" error={errors.amount?.message} hint={`Available: ${holdings ? formatQuantity(available) : "--"} ${asset}`}>
           <input id="withdraw-amount" type="number" step="any" inputMode="decimal" aria-invalid={Boolean(errors.amount)} className={controlClass} {...register("amount")} />
         </Field>

@@ -56,7 +56,7 @@ const AccountPage = async () => {
   return (
     <Container className="flex flex-col gap-4 lg:gap-6">
       <PageHeader title="Account" />
-      <div className="grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)] lg:gap-6">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[340px_minmax(0,1fr)] lg:gap-6">
         <GlowCard variant="warm" className="h-fit p-4 sm:p-6">
           <div className="flex items-center gap-4">
             <span className="flex size-14 items-center justify-center rounded-full border border-white/10 bg-white/5">

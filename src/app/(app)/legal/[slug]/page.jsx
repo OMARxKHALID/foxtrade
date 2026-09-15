@@ -21,7 +21,7 @@ const LegalPage = async ({ params }) => {
   return (
     <Container className="flex flex-col gap-4 lg:gap-6">
       <PageHeader title={page.title} description={`Last updated ${page.updated}`} />
-      <div className="grid gap-4 lg:gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-4 lg:gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
         <GlowCard as="nav" aria-label="Legal documents" className="h-fit p-2">
           <ul className="scrollbar-none flex gap-1 overflow-x-auto lg:flex-col">
             {Object.entries(legalPages).map(([key, item]) => (
