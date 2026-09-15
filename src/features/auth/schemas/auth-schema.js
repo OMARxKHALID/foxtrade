@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const password = z
+export const passwordSchema = z
   .string()
   .min(8, "Use at least 8 characters")
   .regex(/[A-Z]/, "Add an uppercase letter")
@@ -21,7 +21,7 @@ export const loginSchema = z.object({
 export const registerSchema = z
   .object({
     email: z.email("Enter a valid email"),
-    password,
+    password: passwordSchema,
     confirmPassword: z.string(),
     terms: z.literal(true, { error: "Accept the terms to continue" }),
   })
@@ -35,7 +35,7 @@ export const resetPasswordSchema = z
   .object({
     email: z.email("Enter a valid email"),
     code: z.string().regex(/^\d{6}$/, "Enter the 6-digit code"),
-    password,
+    password: passwordSchema,
     confirmPassword: z.string(),
   })
   .refine((value) => value.password === value.confirmPassword, { path: ["confirmPassword"], message: "Passwords do not match" });

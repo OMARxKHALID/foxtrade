@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { passwordSchema } from "@/features/auth/schemas/auth-schema";
 
 export const basicVerificationSchema = z.object({
   country: z.string().min(2, "Choose your country"),
@@ -10,11 +11,7 @@ export const basicVerificationSchema = z.object({
 export const changePasswordSchema = z
   .object({
     currentPassword: z.string().min(1, "Enter your current password"),
-    newPassword: z
-      .string()
-      .min(8, "Use at least 8 characters")
-      .regex(/[A-Z]/, "Add an uppercase letter")
-      .regex(/\d/, "Add a number"),
+    newPassword: passwordSchema,
     confirmPassword: z.string(),
   })
   .refine((value) => value.newPassword === value.confirmPassword, { path: ["confirmPassword"], message: "Passwords do not match" });
