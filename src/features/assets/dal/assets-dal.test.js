@@ -40,27 +40,27 @@ describe("Insufficient-balance rollback", () => {
 });
 
 describe("Faucet cap invariant", () => {
-  it("faucet credit never exceeds the cap, even with a concurrent transfer into spot", async () => {
-    const results = await Promise.all(
+  it("tops up total USDT to the cap, even with a concurrent transfer between wallets", async () => {
+    const totals = await Promise.all(
       Array.from({ length: 20 }, async (_, i) => {
         const userId = `u-faucet-${i}`;
-        await postEntries([{ userId, wallet: "spot", asset: "USDT", type: "faucet", amount: 90000 }], null);
-        await postEntries([{ userId, wallet: "timed", asset: "USDT", type: "faucet", amount: 50000 }], null);
+        await postEntries([{ userId, wallet: "spot", asset: "USDT", type: "faucet", amount: 40000 }], null);
+        await postEntries([{ userId, wallet: "timed", asset: "USDT", type: "faucet", amount: 30000 }], null);
         await Promise.all([
-          transferAssets(userId, { from: "timed", to: "spot", asset: "USDT", amount: 30000 }),
+          transferAssets(userId, { from: "timed", to: "spot", asset: "USDT", amount: 20000 }),
           claimFaucet(userId),
         ]);
-        const wallet = await collections.wallets().findOne({ userId, wallet: "spot", asset: "USDT" });
-        const faucetEntries = await collections.ledger().find({ userId, type: "faucet" }).toArray();
-        return { finalBalance: Number(wallet.balance), faucetBalanceAfters: faucetEntries.map((e) => Number(e.balanceAfter)) };
+        const wallets = await collections.wallets().find({ userId, asset: "USDT" }).toArray();
+        return wallets.reduce((sum, wallet) => sum + Number(wallet.balance), 0);
       }),
     );
-    for (const { finalBalance, faucetBalanceAfters } of results) {
-      for (const balanceAfter of faucetBalanceAfters) {
-        expect(balanceAfter).toBeLessThanOrEqual(100000);
-      }
-      expect(finalBalance).toBeLessThanOrEqual(130000);
-    }
+    totals.forEach((total) => expect(total).toBe(100000));
+  });
+
+  it("rejects a claim when USDT was moved out of spot into a trading wallet", async () => {
+    const userId = "u-faucet-moved";
+    await postEntries([{ userId, wallet: "perpetual", asset: "USDT", type: "faucet", amount: 100000 }], null);
+    await expect(claimFaucet(userId)).rejects.toThrow(/full demo/i);
   });
 
   it("does not burn the cooldown when spot is already at the cap", async () => {

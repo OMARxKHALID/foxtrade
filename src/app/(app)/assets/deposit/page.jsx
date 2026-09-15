@@ -15,7 +15,7 @@ const DepositPage = async () => {
   return (
     <Container className="flex flex-col gap-4 lg:gap-6">
       <PageHeader title="Deposit" description="Foxtrade runs on demo funds. Claim USDT to start trading." backHref="/assets" />
-      <DemoFaucet spotUsdt={overview ? overview.holdings.USDT?.byWallet.spot ?? 0 : null} />
+      <DemoFaucet usdtTotal={overview ? overview.holdings.USDT?.total ?? 0 : null} />
     </Container>
   );
 };

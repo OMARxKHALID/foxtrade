@@ -16,6 +16,7 @@ export const timedStatus = {
   won: { tone: "success", label: "Won" },
   lost: { tone: "danger", label: "Lost" },
   draw: { tone: "neutral", label: "Draw" },
+  cancelled: { tone: "neutral", label: "Cancelled" },
 };
 
 export const positionStatus = {
@@ -31,6 +32,7 @@ export const closeReasons = {
   take_profit: "Take profit",
   stop_loss: "Stop loss",
   liquidation: "Liquidated",
+  admin_reset: "Balance reset",
 };
 
 export const Status = ({ map, value }) => <StatusBadge tone={map[value]?.tone ?? "neutral"}>{map[value]?.label ?? value}</StatusBadge>;

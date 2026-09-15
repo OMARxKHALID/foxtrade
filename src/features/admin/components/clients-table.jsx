@@ -105,7 +105,7 @@ export const ClientsTable = ({ clients }) => {
         description={
           dialog?.type === "ban"
             ? `${dialog?.client.email} will be signed out and blocked from signing in.`
-            : `All wallets of ${dialog?.client.email} will be cleared and refilled with the starting demo USDT.`
+            : `Open trades of ${dialog?.client.email} will be cancelled, and all wallets cleared and refilled with the starting demo USDT.`
         }
         reasonLabel={dialog?.type === "ban" ? "Reason (shown to the client)" : undefined}
         confirmLabel={dialog?.type === "ban" ? "Ban Client" : "Reset Balance"}

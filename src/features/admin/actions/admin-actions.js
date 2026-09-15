@@ -5,6 +5,7 @@ import { formFailure, validationFailure } from "@/lib/action-result";
 import { getAuth } from "@/lib/auth";
 import { DEMO_FAUCET_AMOUNT } from "@/lib/demo";
 import { getBalances, postEntries, withTransaction } from "@/lib/ledger";
+import { collections } from "@/lib/mongo";
 import { addTicketMessage, setTicketStatus } from "@/lib/ticket-store";
 import { asAdmin, findClient, reviewVerification, writeAudit } from "@/features/admin/dal/admin-dal";
 import { banSchema, objectIdSchema, reviewSchema, ticketReplySchema, ticketStatusSchema } from "@/features/admin/schemas/admin-schema";
@@ -38,6 +39,9 @@ export const resetClientBalance = async (userId) => {
     const client = await findClient(parsed.data);
     if (!client) return formFailure("Client not found.");
     await withTransaction(async (session) => {
+      const now = new Date();
+      await collections.positions().updateMany({ userId: parsed.data, status: { $in: ["open", "pending"] } }, { $set: { status: "cancelled", closeReason: "admin_reset", closedAt: now } }, { session });
+      await collections.orders().updateMany({ userId: parsed.data, status: "open" }, { $set: { status: "cancelled", payout: 0, settledAt: now } }, { session });
       const balances = await getBalances(parsed.data, session);
       const clearing = balances
         .filter((item) => !item.balance.eq(0))

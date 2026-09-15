@@ -33,7 +33,7 @@ const groupsFor = (market, order) =>
           rows: [
             ["Outcome", <Status key="s" map={timedStatus} value={order.status} />],
             ["Payout", order.payout === null ? "--" : `${formatPrice(order.payout)} USDT`],
-            ["Profit", order.status === "open" ? "--" : <SignedAmount key="p" value={(order.payout ?? 0) - order.amount} />],
+            ["Profit", ["open", "cancelled"].includes(order.status) ? "--" : <SignedAmount key="p" value={(order.payout ?? 0) - order.amount} />],
           ],
         },
       ]

@@ -11,11 +11,11 @@ import { DEMO_FAUCET_AMOUNT } from "@/features/assets/data/assets-config";
 
 const rules = [
   "Demo assets are credited to your Spot Wallet in USDT.",
-  "You can top up once every 24 hours while your Spot USDT is below the demo amount.",
+  "You can top up once every 24 hours while your total USDT across all wallets is below the demo amount.",
   "Demo funds have no monetary value and cannot be withdrawn.",
 ];
 
-export const DemoFaucet = ({ spotUsdt }) => {
+export const DemoFaucet = ({ usdtTotal }) => {
   const { pending, submit } = useActionSubmit({ action: claimDemoAssets, successMessage: "Demo assets added to your Spot Wallet." });
 
   const handleClaim = () => submit();
@@ -29,7 +29,7 @@ export const DemoFaucet = ({ spotUsdt }) => {
           <p className="mt-3 max-w-md text-sm leading-6 text-neutral-400">
             Refill your demo Spot Wallet and keep practicing timed trades and leveraged positions with live market prices.
           </p>
-          {spotUsdt !== null && <p className="mt-4 text-sm text-neutral-300">Spot USDT: <span className="text-white tabular-nums">{formatPrice(spotUsdt)}</span></p>}
+          {usdtTotal !== null && <p className="mt-4 text-sm text-neutral-300">USDT across wallets: <span className="text-white tabular-nums">{formatPrice(usdtTotal)}</span></p>}
           <GradientButton onClick={handleClaim} disabled={pending} className="mt-6">
             {pending ? "Claiming…" : "Claim Demo Assets"}
           </GradientButton>

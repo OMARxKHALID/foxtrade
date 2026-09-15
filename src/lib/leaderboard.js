@@ -35,7 +35,12 @@ export const getLeaderboard = async () => {
     current.staked += row.staked;
     current.pnl += row.pnl;
   });
-  const qualified = Object.entries(totals).filter(([, stats]) => stats.trades >= MIN_TRADES && stats.staked > 0);
+  const active = Object.entries(totals).filter(([, stats]) => stats.trades >= MIN_TRADES && stats.staked > 0);
+  if (!active.length) return [];
+  const verified = new Set(
+    await collections.verifications().distinct("userId", { userId: { $in: active.map(([id]) => id) }, status: "approved" }),
+  );
+  const qualified = active.filter(([id]) => verified.has(id) && ObjectId.isValid(id));
   if (!qualified.length) return [];
   const users = await collections
     .users()

@@ -47,10 +47,10 @@ const DashboardPage = async () => {
     hasPin(user.id),
   ]);
 
-  const settledTimed = summary.recentTimed.filter((item) => item.status !== "draw");
+  const settledTimed = summary.recentTimed.filter((item) => ["won", "lost"].includes(item.status));
   const wins = settledTimed.filter((item) => item.status === "won").length;
   const winRate = settledTimed.length ? Math.round((wins / settledTimed.length) * 100) : null;
-  const timedProfit = summary.recentTimed.reduce((sum, item) => sum + (item.payout ?? 0) - item.amount, 0);
+  const timedProfit = summary.recentTimed.filter((item) => item.status !== "cancelled").reduce((sum, item) => sum + (item.payout ?? 0) - item.amount, 0);
   const positionProfit = summary.recentPositions.reduce((sum, item) => sum + (item.pnl ?? 0), 0);
   const realised = timedProfit + positionProfit;
   const checklist = [

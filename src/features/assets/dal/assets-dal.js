@@ -58,7 +58,9 @@ export const getAssetsOverview = async (userId) => {
   };
 };
 
-export const listRecords = async (userId, { asset, limit = 500 } = {}) => {
+export const RECORDS_LIMIT = 500;
+
+export const listRecords = async (userId, { asset, limit = RECORDS_LIMIT } = {}) => {
   const filter = asset ? { userId, asset } : { userId };
   const docs = await collections.ledger().find(filter).sort({ createdAt: -1 }).limit(limit).toArray();
   return docs.map((doc) => ({
@@ -73,9 +75,21 @@ export const listRecords = async (userId, { asset, limit = 500 } = {}) => {
   }));
 };
 
+const sumField = async (collection, filter, field, session) => {
+  const [row] = await collection.aggregate([{ $match: filter }, { $group: { _id: null, total: { $sum: `$${field}` } } }], { session }).toArray();
+  return toBig(row?.total ?? 0);
+};
+
+const totalUsdt = async (userId, session) => {
+  const balances = await getBalances(userId, session);
+  const positionMargin = await sumField(collections.positions(), { userId, status: { $in: ["open", "pending"] } }, "margin", session);
+  const timedStakes = await sumField(collections.orders(), { userId, status: "open" }, "amount", session);
+  const wallets = balances.filter((item) => item.asset === "USDT").reduce((sum, item) => sum.plus(item.balance), toBig(0));
+  return wallets.plus(positionMargin).plus(timedStakes);
+};
+
 export const claimFaucet = async (userId) => {
-  const spot = await getBalance(userId, "spot", "USDT");
-  if (spot.gte(DEMO_FAUCET_AMOUNT)) throw new LedgerError("Your Spot Wallet already holds the full demo amount.");
+  if ((await totalUsdt(userId)).gte(DEMO_FAUCET_AMOUNT)) throw new LedgerError("Your wallets already hold the full demo amount of USDT.");
   await ensureSecurityIndex();
   const now = new Date();
   const cutoff = new Date(now.getTime() - FAUCET_COOLDOWN_MS);
@@ -93,14 +107,9 @@ export const claimFaucet = async (userId) => {
     throw new LedgerError(`You can claim demo assets again in about ${hours}h.`);
   }
   await withTransaction(async (session) => {
-    const fresh = await getBalance(userId, "spot", "USDT", session);
-    const topUp = toBig(DEMO_FAUCET_AMOUNT).minus(fresh);
+    const topUp = toBig(DEMO_FAUCET_AMOUNT).minus(await totalUsdt(userId, session));
     if (topUp.lte(0)) return;
     await postEntries([{ userId, wallet: "spot", asset: "USDT", type: "faucet", amount: topUp, note: "Demo top-up" }], session);
-    const credited = await getBalance(userId, "spot", "USDT", session);
-    if (credited.gt(DEMO_FAUCET_AMOUNT)) {
-      await postEntries([{ userId, wallet: "spot", asset: "USDT", type: "faucet", amount: credited.minus(DEMO_FAUCET_AMOUNT).times(-1), note: "Cap clamp" }], session);
-    }
   });
 };
 
@@ -108,6 +117,7 @@ export const convertAssets = async (userId, { from, to, amount }) => {
   const prices = await priceMap([from, to], true);
   if (!prices[from] || !prices[to]) throw new LedgerError("Live price unavailable for this pair. Try again shortly.");
   const receive = toBig(amount).times(prices[from]).div(prices[to]).times(1 - CONVERT_SPREAD);
+  if (toBig(toAmount(receive)).lte(0)) throw new LedgerError(`Amount is too small to convert into ${to}.`);
   const refId = randomUUID();
   await withTransaction((session) =>
     postEntries(

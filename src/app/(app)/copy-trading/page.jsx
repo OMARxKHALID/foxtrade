@@ -14,7 +14,7 @@ export const metadata = {
 };
 
 const steps = [
-  { icon: ChartColumn, title: "Verified track records", text: "Rankings are calculated only from settled trades on the platform over the last 30 days." },
+  { icon: ChartColumn, title: "Verified track records", text: "Only identity-verified traders are ranked, using settled trades from the last 30 days." },
   { icon: Users, title: "Privacy first", text: "Traders are shown with masked emails. Only settled results are counted." },
   { icon: ShieldCheck, title: "No one trades for you", text: "Nobody can place orders on your account. Use the rankings to learn from consistent traders." },
 ];
@@ -65,7 +65,7 @@ const CopyTradingPage = async () => {
         columns={columns}
         rows={rows}
         initialSort={{ key: "rank", direction: "asc" }}
-        emptyState={<EmptyState icon={Trophy} title="No ranked traders yet" text="Traders appear here after at least 5 settled trades in the last 30 days." />}
+        emptyState={<EmptyState icon={Trophy} title="No ranked traders yet" text="Verified traders appear here after at least 5 settled trades in the last 30 days." />}
       />
     </Container>
   );
