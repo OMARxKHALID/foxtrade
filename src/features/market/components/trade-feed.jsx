@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CardHeader } from "@/components/ui/glow-card";
+import { fetchRecentTrades, toAggTrade } from "@/lib/market/binance-rest";
 import { subscribeStream } from "@/lib/market/binance-socket";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -18,12 +19,20 @@ export const TradeFeed = ({ symbol, className }) => {
   const frame = useRef(0);
 
   useEffect(() => {
-    const unsubscribe = subscribeStream(`${symbol.toLowerCase()}@aggTrade`, (data) => {
-      buffer.current = [{ id: data.a, price: +data.p, quantity: +data.q, time: data.T, sell: data.m }, ...buffer.current].slice(0, LIMIT);
+    let active = true;
+    const publish = (incoming) => {
+      const byId = new Map([...incoming, ...buffer.current].map((trade) => [trade.id, trade]));
+      buffer.current = [...byId.values()].sort((a, b) => b.id - a.id).slice(0, LIMIT);
       cancelAnimationFrame(frame.current);
       frame.current = requestAnimationFrame(() => setTrades(buffer.current));
-    });
+    };
+    const unsubscribe = subscribeStream(`${symbol.toLowerCase()}@aggTrade`, (data) => publish([toAggTrade(data)]));
+    fetchRecentTrades(symbol, LIMIT)
+      .then((recent) => active && publish(recent))
+      .catch(() => {});
     return () => {
+      active = false;
+      buffer.current = [];
       cancelAnimationFrame(frame.current);
       unsubscribe();
     };

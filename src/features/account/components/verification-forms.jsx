@@ -2,7 +2,7 @@
 
 import { ImagePlus } from "lucide-react";
 import { SchemaForm } from "@/components/forms/schema-form";
-import { countries } from "@/lib/content/locales";
+import { countries } from "@/lib/content/countries";
 import { submitBasicVerification } from "@/features/account/actions/account-actions";
 import { basicVerificationSchema } from "@/features/account/schemas/account-schema";
 

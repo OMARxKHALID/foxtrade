@@ -89,6 +89,12 @@ const totalUsdt = async (userId, session) => {
   return wallets.plus(positionMargin).plus(timedStakes);
 };
 
+export const getFaucetStatus = async (userId) => {
+  const [total, security] = await Promise.all([totalUsdt(userId), collections.security().findOne({ userId })]);
+  const nextClaim = security?.faucetClaimedAt ? security.faucetClaimedAt.getTime() + FAUCET_COOLDOWN_MS : 0;
+  return { usdtTotal: toAmount(total), nextClaimAt: nextClaim > Date.now() ? new Date(nextClaim).toISOString() : null };
+};
+
 export const claimFaucet = async (userId) => {
   const { demoAmount } = await readPlatformSettings();
   if ((await totalUsdt(userId)).gte(demoAmount)) throw new LedgerError("Your wallets already hold the full demo amount of USDT.");

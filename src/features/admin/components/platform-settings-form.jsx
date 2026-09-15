@@ -87,11 +87,11 @@ export const PlatformSettingsForm = ({ settings }) => {
         />
         <CardBody className="flex flex-col gap-3">
           {durations.fields.map((field, index) => (
-            <div key={field.id} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-3">
+            <div key={field.id} className="grid grid-cols-2 items-end gap-3 border-b border-white/5 pb-3 last:border-b-0 last:pb-0 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto] sm:border-b-0 sm:pb-0">
               <TextField id={`timedDurations.${index}.seconds`} label="Seconds" type="number" error={errors.timedDurations?.[index]?.seconds?.message} register={register} />
               <TextField id={`timedDurations.${index}.payoutPercent`} label="Payout (%)" type="number" error={errors.timedDurations?.[index]?.payoutPercent?.message} register={register} />
               <TextField id={`timedDurations.${index}.minAmount`} label="Min stake" type="number" error={errors.timedDurations?.[index]?.minAmount?.message} register={register} />
-              <IconButton label={`Remove duration ${index + 1}`} onClick={() => durations.remove(index)} disabled={durations.fields.length === 1} className="mb-1">
+              <IconButton label={`Remove duration ${index + 1}`} onClick={() => durations.remove(index)} disabled={durations.fields.length === 1} className="mb-1 justify-self-start sm:justify-self-auto">
                 <Trash2 className="size-4 text-down" />
               </IconButton>
             </div>

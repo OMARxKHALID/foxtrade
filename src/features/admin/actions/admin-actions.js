@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { formFailure, validationFailure } from "@/lib/action-result";
 import { getAuth } from "@/lib/auth";
+import { getEnv } from "@/lib/env";
 import { readPlatformSettings } from "@/lib/platform-settings";
 import { getBalances, postEntries, withTransaction } from "@/lib/ledger";
 import { readPairs } from "@/lib/market/pair-store";
@@ -125,11 +126,11 @@ export const setClientPassword = async (input) => {
   const parsed = clientPasswordSchema.safeParse(input);
   if (!parsed.success) return validationFailure(parsed.error);
   return asAdmin(async (admin) => {
-    const { user, failure } = await targetUser(admin, parsed.data.userId, { allowSelf: true });
+    const { user, failure } = await targetUser(admin, parsed.data.userId);
     if (failure) return failure;
     const requestHeaders = await headers();
     await getAuth().api.setUserPassword({ body: { userId: parsed.data.userId, newPassword: parsed.data.password }, headers: requestHeaders });
-    if (user._id.toString() !== admin.id) await getAuth().api.revokeUserSessions({ body: { userId: parsed.data.userId }, headers: requestHeaders });
+    await getAuth().api.revokeUserSessions({ body: { userId: parsed.data.userId }, headers: requestHeaders });
     await writeAudit(admin, "client.set_password", user.email, "Password replaced and sessions signed out");
   });
 };
@@ -140,6 +141,7 @@ export const setClientRole = async (input) => {
   return asAdmin(async (admin) => {
     const { user, failure } = await targetUser(admin, parsed.data.userId);
     if (failure) return failure;
+    if (parsed.data.role === "user" && user.email === getEnv().ADMIN_EMAIL?.toLowerCase()) return formFailure("This account is ADMIN_EMAIL and is made admin again on every login. Change ADMIN_EMAIL first.");
     await getAuth().api.setRole({ body: { userId: parsed.data.userId, role: parsed.data.role }, headers: await headers() });
     await writeAudit(admin, parsed.data.role === "admin" ? "client.promote" : "client.demote", user.email);
   });

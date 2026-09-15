@@ -20,8 +20,8 @@ import { pairSchema } from "@/features/admin/schemas/admin-schema";
 
 const columns = [
   { key: "pair", header: "Pair", sortable: true },
-  { key: "perpetual", header: "Futures" },
-  { key: "timed", header: "Options" },
+  { key: "perpetual", header: "Futures", hideBelow: "sm" },
+  { key: "timed", header: "Options", hideBelow: "sm" },
   { key: "leverage", header: "Max Leverage", align: "right", sortable: true, hideBelow: "sm" },
   { key: "featured", header: "Home card", hideBelow: "md" },
   { key: "actions", header: <span className="sr-only">Actions</span>, align: "right" },

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getEnv } from "@/lib/env";
+import { requireAdmin } from "@/lib/session";
 import { CardBody, CardHeader, GlowCard } from "@/components/ui/glow-card";
 import { DataTable } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -39,9 +41,11 @@ const Row = ({ children }) => <li className="flex items-center justify-between g
 
 const ClientPage = async ({ params }) => {
   const { id } = await params;
-  const detail = await getClientDetail(id);
+  const [admin, detail] = await Promise.all([requireAdmin(), getClientDetail(id)]);
   if (!detail) notFound();
   const { user, balances, trading, records, tickets, verification, sessions } = detail;
+  const isSelf = admin.id === user.id;
+  const isConfiguredAdmin = user.email === getEnv().ADMIN_EMAIL?.toLowerCase();
   const openCount = trading.openPositions.length + trading.openTimed.length;
 
   return (
@@ -62,15 +66,25 @@ const ClientPage = async ({ params }) => {
           </CardBody>
         </GlowCard>
         <GlowCard as="section" aria-labelledby="password-title">
-          <CardHeader id="password-title" title="Set new password" description="Their other sessions are signed out." />
+          <CardHeader id="password-title" title="Set new password" description={isSelf ? undefined : "All their sessions are signed out."} />
           <CardBody>
-            <ClientPasswordForm userId={user.id} />
+            {isSelf ? (
+              <p className="text-sm leading-6 text-neutral-400">
+                This is your account. Change your password from{" "}
+                <Link href="/account/security" className="text-brand">
+                  Security
+                </Link>{" "}
+                with your current password.
+              </p>
+            ) : (
+              <ClientPasswordForm userId={user.id} />
+            )}
           </CardBody>
         </GlowCard>
         <GlowCard as="section" aria-labelledby="access-title">
           <CardHeader id="access-title" title="Access" />
           <CardBody>
-            <ClientAccessPanel user={user} openCount={trading.openPositions.filter((item) => item.status === "open").length} sessionCount={sessions.length} />
+            <ClientAccessPanel user={user} isSelf={isSelf} isConfiguredAdmin={isConfiguredAdmin} openCount={trading.openPositions.filter((item) => item.status === "open").length} sessionCount={sessions.length} />
           </CardBody>
         </GlowCard>
       </div>

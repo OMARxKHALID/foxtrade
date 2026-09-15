@@ -7,7 +7,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { getAuth } from "@/lib/auth";
 import { hasPin } from "@/lib/pin";
 import { getSession } from "@/lib/session";
-import { ChangePasswordForm, WithdrawalPinForm } from "@/features/account/components/security-forms";
+import { ChangePasswordForm, SignOutOtherDevicesButton, WithdrawalPinForm } from "@/features/account/components/security-forms";
 
 export const metadata = {
   title: "Security",
@@ -53,7 +53,7 @@ const SecurityPage = async () => {
         </GlowCard>
       </div>
       <GlowCard as="section" aria-labelledby="sessions-title">
-        <CardHeader id="sessions-title" title="Active sessions" description="Devices currently signed in to your account." />
+        <CardHeader id="sessions-title" title="Active sessions" description="Devices currently signed in to your account." actions={sessions.length > 1 ? <SignOutOtherDevicesButton count={sessions.length - 1} /> : null} />
         <CardBody>
           {sessions.length ? (
             <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">

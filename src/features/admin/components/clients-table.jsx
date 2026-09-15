@@ -27,9 +27,9 @@ const tabs = [
 const columns = [
   { key: "email", header: "Client", sortable: true },
   { key: "usdt", header: "USDT Balance", align: "right", sortable: true, hideBelow: "sm" },
-  { key: "kyc", header: "KYC", hideBelow: "md" },
+  { key: "kyc", header: "KYC", hideBelow: "lg" },
   { key: "status", header: "Status", hideBelow: "sm" },
-  { key: "createdAt", header: "Joined", sortable: true, hideBelow: "lg" },
+  { key: "createdAt", header: "Joined", sortable: true, hideBelow: "xl" },
   { key: "actions", header: <span className="sr-only">Actions</span>, align: "right" },
 ];
 
@@ -61,7 +61,7 @@ export const ClientsTable = ({ clients }) => {
     cells: {
       email: (
         <span className="block min-w-0">
-          <Link href={`/admin/users/${client.id}`} className="block max-w-[14rem] truncate text-white hover:text-brand sm:max-w-xs">
+          <Link href={`/admin/users/${client.id}`} className="block max-w-[9rem] truncate text-white hover:text-brand sm:max-w-[12rem] xl:max-w-xs">
             {client.email}
           </Link>
           {client.role === "admin" && <StatusBadge tone="brand" className="mt-1">Admin</StatusBadge>}
@@ -78,7 +78,7 @@ export const ClientsTable = ({ clients }) => {
             <Eye className="size-4" />
           </IconButton>
           {client.role !== "admin" && (
-            <>
+            <span className="hidden gap-2 sm:inline-flex">
               <IconButton label={`Reset balance for ${client.email}`} onClick={() => setDialog({ type: "reset", client })}>
                 <RotateCcw className="size-4" />
               </IconButton>
@@ -91,7 +91,7 @@ export const ClientsTable = ({ clients }) => {
                   <Ban className="size-4 text-down" />
                 </IconButton>
               )}
-            </>
+            </span>
           )}
         </span>
       ),

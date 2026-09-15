@@ -71,3 +71,11 @@ export const fetchKlineRange = async ({ symbol, interval, startTime, endTime, li
   const data = await fetchJson(`/klines?${params}`, { cache: "no-store" });
   return data.map(([openTime, open, high, low, close]) => ({ openTime, open: Number(open), high: Number(high), low: Number(low), close: Number(close) }));
 };
+
+export const toAggTrade = ({ a, p, q, T, m }) => ({ id: a, price: Number(p), quantity: Number(q), time: T, sell: m });
+
+export const fetchRecentTrades = async (symbol, limit = 40) => {
+  const params = new URLSearchParams({ symbol, limit: String(limit) });
+  const data = await fetchJson(`/aggTrades?${params}`, { cache: "no-store" });
+  return data.map(toAggTrade).reverse();
+};

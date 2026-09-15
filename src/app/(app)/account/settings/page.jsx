@@ -3,6 +3,7 @@ import { GlowCard } from "@/components/ui/glow-card";
 import { MenuRow } from "@/components/ui/menu-row";
 import { PageHeader } from "@/components/ui/page-header";
 import { ScrollText } from "lucide-react";
+import packageJson from "../../../../../package.json";
 
 export const metadata = {
   title: "Settings",
@@ -15,7 +16,7 @@ const SettingsPage = () => (
       <MenuRow href="/legal/terms" icon={ScrollText} label="Terms & Policies" description="Terms, privacy and risk disclosure" />
       <div className="flex items-center justify-between px-4 py-3.5 text-sm">
         <span className="text-white">Version</span>
-        <span className="text-neutral-500">1.0.0</span>
+        <span className="text-neutral-500">{packageJson.version}</span>
       </div>
     </GlowCard>
   </Container>

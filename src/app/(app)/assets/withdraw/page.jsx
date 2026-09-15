@@ -1,9 +1,12 @@
+import Link from "next/link";
 import { BookUser, Info, ReceiptText } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { CardBody, CardHeader, GlowCard } from "@/components/ui/glow-card";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { PageHeader } from "@/components/ui/page-header";
 import { WithdrawForm } from "@/features/assets/components/withdraw-form";
+import { hasPin } from "@/lib/pin";
+import { getCurrentUser } from "@/lib/session";
 import { loadAssetsPage } from "@/features/assets/dal/assets-dal";
 
 export const metadata = {
@@ -19,7 +22,8 @@ const notes = [
 ];
 
 const WithdrawPage = async () => {
-  const { overview, addresses } = await loadAssetsPage({ addresses: true });
+  const [{ overview, addresses }, user] = await Promise.all([loadAssetsPage({ addresses: true }), getCurrentUser()]);
+  const pinMissing = user ? !(await hasPin(user.id)) : false;
 
   return (
     <Container className="flex flex-col gap-4 lg:gap-6">
@@ -44,6 +48,15 @@ const WithdrawPage = async () => {
         <GlowCard as="section" aria-labelledby="withdraw-title">
           <CardHeader id="withdraw-title" title="Withdrawal details" />
           <CardBody>
+            {pinMissing && (
+              <p className="mb-5 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2.5 text-xs text-warning">
+                Set a withdrawal PIN in{" "}
+                <Link href="/account/security#withdrawal-pin" className="underline">
+                  Security
+                </Link>{" "}
+                before withdrawing.
+              </p>
+            )}
             <WithdrawForm holdings={overview?.holdings} addresses={addresses} />
           </CardBody>
         </GlowCard>

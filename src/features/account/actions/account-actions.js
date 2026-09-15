@@ -63,3 +63,16 @@ export const setWithdrawalPin = async (input) => {
     return serverFailure(error);
   }
 };
+
+export const signOutOtherDevices = async () => {
+  const user = await getCurrentUser();
+  if (!user) return signInRequired("Log in to manage your sessions.");
+  try {
+    const limit = await rateLimit(`sessions-revoke:${user.id}`, { limit: 5, windowSeconds: 900 });
+    if (!limit.allowed) return tooManyAttempts(limit.retryAfter);
+    await getAuth().api.revokeOtherSessions({ headers: await headers() });
+    return { ok: true };
+  } catch (error) {
+    return serverFailure(error);
+  }
+};

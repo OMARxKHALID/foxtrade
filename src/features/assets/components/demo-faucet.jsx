@@ -15,11 +15,16 @@ const rules = [
   "Demo funds have no monetary value and cannot be withdrawn.",
 ];
 
-export const DemoFaucet = ({ usdtTotal }) => {
+const dateFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+
+export const DemoFaucet = ({ status }) => {
   const { demoAmount } = usePlatform().settings;
   const { pending, submit } = useActionSubmit({ action: claimDemoAssets, successMessage: "Demo assets added to your Spot Wallet." });
 
   const handleClaim = () => submit();
+  const full = Boolean(status) && status.usdtTotal >= demoAmount;
+  const coolingDown = Boolean(status?.nextClaimAt);
+  const blockedReason = full ? "Your USDT (including funds in open trades) already reaches the demo amount." : coolingDown ? `Next claim available ${dateFormat.format(new Date(status.nextClaimAt))}.` : null;
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-6">
@@ -30,10 +35,11 @@ export const DemoFaucet = ({ usdtTotal }) => {
           <p className="mt-3 max-w-md text-sm leading-6 text-neutral-400">
             Refill your demo Spot Wallet and keep practicing timed trades and leveraged positions with live market prices.
           </p>
-          {usdtTotal !== null && <p className="mt-4 text-sm text-neutral-300">USDT across wallets: <span className="text-white tabular-nums">{formatUsdt(usdtTotal)}</span></p>}
-          <GradientButton onClick={handleClaim} disabled={pending} className="mt-6">
+          {status && <p className="mt-4 text-sm text-neutral-300">USDT across wallets and open trades: <span className="text-white tabular-nums">{formatUsdt(status.usdtTotal)}</span></p>}
+          <GradientButton onClick={handleClaim} disabled={pending || Boolean(blockedReason)} className="mt-6">
             {pending ? "Claiming…" : "Claim Demo Assets"}
           </GradientButton>
+          {blockedReason && <p className="mt-3 text-xs text-neutral-500">{blockedReason}</p>}
         </CardBody>
       </GlowCard>
       <GlowCard as="section" aria-labelledby="faucet-rules">

@@ -17,6 +17,7 @@ import {
   banClient,
   closeClientPositions,
   deleteClient,
+  resetClientBalance,
   revokeClientSessions,
   setClientPassword,
   setClientRole,
@@ -114,10 +115,11 @@ const dialogs = {
   sessions: { title: "Sign out everywhere", confirmLabel: "Sign Out", tone: "orange" },
   positions: { title: "Close open positions", confirmLabel: "Close All", tone: "down" },
   ban: { title: "Ban account", confirmLabel: "Ban", tone: "down", reasonLabel: "Reason (shown to the client)" },
+  reset: { title: "Reset demo balance", confirmLabel: "Reset Balance", tone: "orange" },
   delete: { title: "Delete account", confirmLabel: "Delete", tone: "down" },
 };
 
-export const ClientAccessPanel = ({ user, openCount, sessionCount }) => {
+export const ClientAccessPanel = ({ user, isSelf, isConfiguredAdmin, openCount, sessionCount }) => {
   const router = useRouter();
   const [dialog, setDialog] = useState(null);
   const handleClose = () => setDialog(null);
@@ -132,6 +134,7 @@ export const ClientAccessPanel = ({ user, openCount, sessionCount }) => {
   });
   const ban = useActionSubmit({ action: banClient, successMessage: "Account banned.", onSuccess: handleClose });
   const unban = useActionSubmit({ action: unbanClient, successMessage: "Account unbanned." });
+  const reset = useActionSubmit({ action: resetClientBalance, successMessage: "Balance reset.", onSuccess: handleClose });
   const remove = useActionSubmit({
     action: deleteClient,
     successMessage: "Account deleted.",
@@ -145,6 +148,7 @@ export const ClientAccessPanel = ({ user, openCount, sessionCount }) => {
     sessions: `All ${sessionCount} session(s) of ${user.email} will be signed out.`,
     positions: `${openCount} open position(s) will be closed at the live market price.`,
     ban: `${user.email} will be signed out and blocked from logging in.`,
+    reset: `Open trades of ${user.email} will be cancelled, and all wallets cleared and refilled with the starting demo USDT.`,
     delete: `${user.email} and all their wallets, trades, tickets and KYC data will be permanently deleted.`,
   };
 
@@ -153,22 +157,34 @@ export const ClientAccessPanel = ({ user, openCount, sessionCount }) => {
     if (dialog === "sessions") sessions.submit(user.id);
     if (dialog === "positions") positions.submit(user.id);
     if (dialog === "ban") ban.submit({ userId: user.id, reason });
+    if (dialog === "reset") reset.submit(user.id);
     if (dialog === "delete") remove.submit(user.id);
   };
 
-  const pending = role.pending || sessions.pending || positions.pending || ban.pending || remove.pending;
+  const pending = role.pending || sessions.pending || positions.pending || ban.pending || reset.pending || remove.pending;
 
   return (
     <div className="flex flex-col gap-3">
-      <GradientButton variant="dark" size="sm" onClick={() => setDialog("role")}>
-        {isAdmin ? "Remove Admin Role" : "Make Admin"}
-      </GradientButton>
-      <GradientButton variant="dark" size="sm" onClick={() => setDialog("sessions")} disabled={!sessionCount}>
-        Sign Out Everywhere
-      </GradientButton>
+      {isSelf && <p className="text-sm leading-6 text-neutral-400">This is your account. Role, sessions, ban and delete are not available for yourself.</p>}
+      {!isSelf && isConfiguredAdmin && <p className="text-sm leading-6 text-neutral-400">This account is ADMIN_EMAIL, so it stays an admin. Change ADMIN_EMAIL to remove its role.</p>}
+      {!isSelf && !isConfiguredAdmin && (
+        <GradientButton variant="dark" size="sm" onClick={() => setDialog("role")}>
+          {isAdmin ? "Remove Admin Role" : "Make Admin"}
+        </GradientButton>
+      )}
+      {!isSelf && (
+        <GradientButton variant="dark" size="sm" onClick={() => setDialog("sessions")} disabled={!sessionCount}>
+          Sign Out Everywhere
+        </GradientButton>
+      )}
       <GradientButton variant="dark" size="sm" onClick={() => setDialog("positions")} disabled={!openCount}>
         Close Open Positions
       </GradientButton>
+      {!isAdmin && (
+        <GradientButton variant="dark" size="sm" onClick={() => setDialog("reset")}>
+          Reset Demo Balance
+        </GradientButton>
+      )}
       {!isAdmin &&
         (user.banned ? (
           <GradientButton variant="dark" size="sm" disabled={unban.pending} onClick={() => unban.submit(user.id)}>
