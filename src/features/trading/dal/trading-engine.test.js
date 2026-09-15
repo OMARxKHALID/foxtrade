@@ -122,6 +122,17 @@ describe("Cancel pending order after unseen fill + liquidation", () => {
     expect(Number(wallet.balance)).toBe(balanceAfterPlace);
     expect(await collections.ledger().countDocuments({ userId, note: "Order cancelled" })).toBe(0);
   });
+
+  it("keeps the order pending with a clear error when market data is unavailable", async () => {
+    const userId = "u-cancel-outage";
+    const { positionId, balanceAfterPlace } = await placeBackdatedLimitLong(userId);
+    fetchKlineRange.mockRejectedValue(new Error("Binance request failed: 503"));
+    await expect(cancelPendingOrder(userId, positionId)).rejects.toThrow("Market data is unavailable");
+    const order = await collections.positions().findOne({ _id: new ObjectId(positionId) });
+    expect(order.status).toBe("pending");
+    const wallet = await collections.wallets().findOne({ userId, wallet: "perpetual" });
+    expect(Number(wallet.balance)).toBe(balanceAfterPlace);
+  });
 });
 
 describe("Trigger on the fill candle", () => {
@@ -197,6 +208,46 @@ describe("Leverage at or above 1 / maintenance margin", () => {
     const positionId = await placePerpetualOrder(userId, { ...order, leverage: 199 });
     const position = await collections.positions().findOne({ _id: new ObjectId(positionId) });
     expect(position.liquidationPrice).toBeLessThan(position.entryPrice);
+  });
+});
+
+describe("Active position cap", () => {
+  it("rejects new orders once a user has 50 open or pending positions", async () => {
+    const userId = "u-position-cap";
+    await postEntries([{ userId, wallet: "perpetual", asset: "USDT", type: "faucet", amount: 1000 }], null);
+    const now = new Date();
+    await collections.positions().insertMany(
+      Array.from({ length: 50 }, (_, index) => ({ userId, symbol: "BTCUSDT", status: index % 2 ? "open" : "pending", createdAt: now, lastCheckedAt: now })),
+    );
+    fetchLatestPrices.mockResolvedValue({ BTCUSDT: "65000" });
+    const order = { symbol: "BTCUSDT", side: "long", type: "market", amount: 10, leverage: 5 };
+    await expect(placePerpetualOrder(userId, order)).rejects.toThrow("up to 50 open positions");
+    const wallet = await collections.wallets().findOne({ userId, wallet: "perpetual" });
+    expect(Number(wallet.balance)).toBe(1000);
+    await collections.positions().updateOne({ userId, status: "pending" }, { $set: { status: "cancelled" } });
+    await expect(placePerpetualOrder(userId, order)).resolves.toEqual(expect.any(String));
+  });
+});
+
+describe("Settlement concurrency", () => {
+  it("replays a user's positions in bounded batches", async () => {
+    const userId = "u-batched-settle";
+    const checkedFrom = new Date(Math.floor((Date.now() - 3 * MINUTE) / MINUTE) * MINUTE);
+    await collections.positions().insertMany(
+      Array.from({ length: 25 }, () => ({ userId, symbol: "BTCUSDT", side: "long", status: "pending", limitPrice: 1, createdAt: checkedFrom, lastCheckedAt: checkedFrom })),
+    );
+    let inFlight = 0;
+    let peak = 0;
+    fetchKlineRange.mockImplementation(async () => {
+      inFlight += 1;
+      peak = Math.max(peak, inFlight);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      inFlight -= 1;
+      return [];
+    });
+    await settleUser(userId);
+    expect(fetchKlineRange).toHaveBeenCalledTimes(25);
+    expect(peak).toBeLessThanOrEqual(10);
   });
 });
 

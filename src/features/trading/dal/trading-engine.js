@@ -15,6 +15,16 @@ const SETTLE_FALLBACK_MS = 5 * MINUTE;
 const SETTLE_DEBOUNCE_MS = 5000;
 const CHECK_OVERLAP_MS = 2 * SECOND;
 const SETTLE_BATCH_SIZE = 10;
+const MAX_ACTIVE_POSITIONS = 50;
+
+const inBatches = async (items, run, onRejected) => {
+  for (let index = 0; index < items.length; index += SETTLE_BATCH_SIZE) {
+    const results = await Promise.allSettled(items.slice(index, index + SETTLE_BATCH_SIZE).map(run));
+    results.forEach((result) => {
+      if (result.status === "rejected") onRejected(result.reason);
+    });
+  }
+};
 
 let indexesReady;
 
@@ -114,6 +124,8 @@ export const placePerpetualOrder = async (userId, { symbol, side, type, price, a
   const maxLeverage = Math.min(pair.maxLeverage, settings.maxLeverage);
   if (leverage > maxLeverage) throw new LedgerError(`Maximum leverage for ${pair.base}/USDT is ${maxLeverage}x.`);
   if (leverage * settings.maintenanceMarginRate >= 1) throw new LedgerError(`Leverage must be below ${Math.ceil(1 / settings.maintenanceMarginRate)}x at the current maintenance margin.`);
+  const active = await collections.positions().countDocuments({ userId, status: { $in: ["open", "pending"] } });
+  if (active >= MAX_ACTIVE_POSITIONS) throw new LedgerError(`You can have up to ${MAX_ACTIVE_POSITIONS} open positions and pending orders. Close or cancel some first.`);
   const market = await latestPrice(pair.symbol);
   if (type === "limit" && (side === "long" ? price >= market : price <= market)) {
     throw new LedgerError(`A ${side} limit price must be ${side === "long" ? "below" : "above"} the market price. Use a market order to fill now.`);
@@ -239,10 +251,8 @@ export const settleUser = async (userId) => {
     collections.orders().find({ userId, status: "open", expiresAt: { $lte: new Date(Date.now() - SETTLE_DELAY) } }).toArray(),
     collections.positions().find({ userId, status: { $in: ["open", "pending"] } }).toArray(),
   ]);
-  const results = await Promise.allSettled([...dueOrders.map(settleTimedOrder), ...activePositions.map(evaluatePosition)]);
-  results.forEach((result) => {
-    if (result.status === "rejected") console.error(`Settlement failed for user ${userId}:`, result.reason);
-  });
+  const work = [...dueOrders.map((order) => () => settleTimedOrder(order)), ...activePositions.map((position) => () => evaluatePosition(position))];
+  await inBatches(work, (run) => run(), (reason) => console.error(`Settlement failed for user ${userId}:`, reason));
 };
 
 export const settleAll = async () => {
@@ -252,12 +262,7 @@ export const settleAll = async () => {
     collections.positions().distinct("userId", { status: { $in: ["open", "pending"] } }),
   ]);
   const users = [...new Set([...orderUsers, ...positionUsers])];
-  for (let index = 0; index < users.length; index += SETTLE_BATCH_SIZE) {
-    const results = await Promise.allSettled(users.slice(index, index + SETTLE_BATCH_SIZE).map(settleUser));
-    results.forEach((result) => {
-      if (result.status === "rejected") console.error("Settlement sweep failed for a user:", result.reason);
-    });
-  }
+  await inBatches(users, settleUser, (reason) => console.error("Settlement sweep failed for a user:", reason));
   return users.length;
 };
 
@@ -306,7 +311,11 @@ export const closeAllPositions = async (userId) => {
 };
 
 export const cancelPendingOrder = async (userId, id) => {
-  await evaluatePosition(await ownPosition(userId, id, "pending"));
+  await evaluatePosition(await ownPosition(userId, id, "pending")).catch((error) => {
+    if (error instanceof LedgerError) throw error;
+    console.error(`Could not replay pending order ${id} before cancelling:`, error);
+    throw new LedgerError("Market data is unavailable, so this order can't be checked for a fill yet. Try again in a moment.");
+  });
   const position = await ownPosition(userId, id, "pending");
   await withTransaction(async (session) => {
     const claimed = await collections.positions().findOneAndUpdate({ _id: position._id, status: "pending" }, { $set: { status: "cancelled", closedAt: new Date() } }, { session });
