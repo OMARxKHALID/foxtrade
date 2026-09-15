@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { serverFailure, validationFailure } from "@/lib/action-result";
 import { getAuth } from "@/lib/auth";
 import { clientIp, rateLimit, tooManyAttempts } from "@/lib/rate-limit";
+import { recordSignup } from "@/lib/referrals";
 import { emailSchema, loginSchema, registerSchema, resetPasswordSchema } from "@/features/auth/schemas/auth-schema";
 
 export const signIn = async (input) => {
@@ -28,11 +29,12 @@ export const signIn = async (input) => {
 export const signUp = async (input) => {
   const parsed = registerSchema.safeParse(input);
   if (!parsed.success) return validationFailure(parsed.error);
-  const { email, password } = parsed.data;
+  const { email, password, ref } = parsed.data;
   try {
     const limit = await rateLimit(`register:ip:${await clientIp()}`, { limit: 5, windowSeconds: 3600 });
     if (!limit.allowed) return tooManyAttempts(limit.retryAfter);
-    await getAuth().api.signUpEmail({ body: { email, password, name: email.split("@")[0] }, headers: await headers() });
+    const created = await getAuth().api.signUpEmail({ body: { email, password, name: email.split("@")[0] }, headers: await headers() });
+    if (created?.user) await recordSignup({ userId: created.user.id, email: created.user.email, code: ref }).catch((error) => console.error(`Could not record the invite for ${created.user.id}:`, error));
   } catch (error) {
     return serverFailure(error);
   }

@@ -211,9 +211,10 @@ export const deleteClient = async (userId) => {
     const verification = await collections.verifications().findOne(owned);
     await deletePrivateImages([verification?.documents?.front?.publicId, verification?.documents?.back?.publicId].filter(Boolean));
     await withTransaction(async (session) => {
-      for (const collection of [collections.wallets(), collections.ledger(), collections.orders(), collections.positions(), collections.tickets(), collections.verifications(), collections.addresses(), collections.security()]) {
+      for (const collection of [collections.wallets(), collections.ledger(), collections.orders(), collections.positions(), collections.tickets(), collections.verifications(), collections.addresses(), collections.security(), collections.invites()]) {
         await collection.deleteMany(owned, { session });
       }
+      await collections.invites().updateMany({ referrerId: parsed.data }, { $set: { referrerId: null } }, { session });
     });
     await getAuth().api.removeUser({ body: { userId: parsed.data }, headers: await headers() });
     await writeAudit(admin, "client.delete", user.email);

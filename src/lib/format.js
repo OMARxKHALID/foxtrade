@@ -36,3 +36,8 @@ export const formatCompact = (value) => {
   if (!Number.isFinite(number)) return "--";
   return number.toLocaleString("en-US", { notation: "compact", maximumFractionDigits: 2 });
 };
+
+export const maskEmail = (email = "") => {
+  const [name, domain] = email.split("@");
+  return `${name.slice(0, 2)}${"•".repeat(Math.max(2, Math.min(6, name.length - 2)))}@${domain ?? ""}`;
+};

@@ -1,15 +1,11 @@
 import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { ObjectId } from "mongodb";
+import { maskEmail } from "@/lib/format";
 import { collections } from "@/lib/mongo";
 
 const DAY = 24 * 60 * 60 * 1000;
 const MIN_TRADES = 5;
-
-const maskEmail = (email = "") => {
-  const [name, domain] = email.split("@");
-  return `${name.slice(0, 2)}${"•".repeat(Math.max(2, Math.min(6, name.length - 2)))}@${domain ?? ""}`;
-};
 
 export const getLeaderboard = async () => {
   "use cache";

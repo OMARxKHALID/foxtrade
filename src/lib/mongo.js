@@ -1,3 +1,4 @@
+import "server-only";
 import { MongoClient } from "mongodb";
 import { getEnv } from "@/lib/env";
 
@@ -30,6 +31,7 @@ export const collections = {
   tickets: () => getDb().collection("tickets"),
   verifications: () => getDb().collection("verifications"),
   addresses: () => getDb().collection("addresses"),
+  invites: () => getDb().collection("invites"),
   audit: () => getDb().collection("audit"),
   security: () => getDb().collection("security"),
   rateLimits: () => getDb().collection("rate_limits"),

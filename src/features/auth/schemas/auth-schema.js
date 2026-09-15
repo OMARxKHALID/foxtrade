@@ -24,6 +24,10 @@ export const registerSchema = z
     password: passwordSchema,
     confirmPassword: z.string(),
     terms: z.literal(true, { error: "Accept the terms to continue" }),
+    ref: z
+      .string()
+      .optional()
+      .transform((value) => (/^[A-Z2-9]{8}$/.test(value ?? "") ? value : undefined)),
   })
   .refine((value) => value.password === value.confirmPassword, { path: ["confirmPassword"], message: "Passwords do not match" });
 

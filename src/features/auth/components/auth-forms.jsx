@@ -57,12 +57,13 @@ export const LoginForm = ({ next }) => {
   );
 };
 
-export const RegisterForm = () => {
+export const RegisterForm = ({ inviteCode }) => {
   const { register, control, pending, onSubmit, formState } = useActionForm(registerSchema, signUp, {
     email: "",
     password: "",
     confirmPassword: "",
     terms: false,
+    ref: inviteCode,
   });
   const { errors } = formState;
 
