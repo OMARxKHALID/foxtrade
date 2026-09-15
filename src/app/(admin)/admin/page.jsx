@@ -84,7 +84,7 @@ const AdminDashboardPage = async () => {
         <div className="p-2">
           <MenuRow href="/admin/kyc" icon={IdCard} label="Review verifications" description="Approve or reject identity submissions" value={stats.pendingKyc ? `${stats.pendingKyc} pending` : undefined} />
           <MenuRow href="/admin/tickets" icon={LifeBuoy} label="Answer support tickets" description="Reply to clients waiting for help" value={stats.openTickets ? `${stats.openTickets} open` : undefined} />
-          <MenuRow href="/admin/pairs" icon={Coins} label="Manage trading pairs" description="Enable pairs and adjust payouts and leverage" />
+          <MenuRow href="/admin/pairs" icon={Coins} label="Manage trading pairs" description="Pause pairs and cap leverage" />
         </div>
       </GlowCard>
     </>

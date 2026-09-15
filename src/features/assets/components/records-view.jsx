@@ -30,7 +30,7 @@ const columns = [
 
 const endOfDay = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
 
-export const RecordsView = ({ records }) => {
+export const RecordsView = ({ records, limit }) => {
   const [tab, setTab] = useState("all");
   const [startDate, setStartDate] = useState();
   const [endDate, setEndDate] = useState();
@@ -57,6 +57,7 @@ export const RecordsView = ({ records }) => {
       columns={columns}
       rows={filtered.map(toRecordRow)}
       initialSort={{ key: "time", direction: "desc" }}
+      footer={records?.length >= limit ? <p className="border-t border-white/10 px-4 py-3 text-xs text-neutral-500 sm:px-6">Showing your latest {limit} records.</p> : null}
       emptyState={
         records ? (
           <EmptyState icon={ReceiptText} title={tab === "withdraw" ? "No withdrawals" : "No records found"} text={tab === "withdraw" ? "Demo balances cannot be withdrawn to external wallets." : "Try another type or date range."} />

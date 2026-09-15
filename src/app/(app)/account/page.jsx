@@ -1,10 +1,12 @@
 import { Bell, BookUser, LayoutDashboard, Download, Globe, CircleQuestionMark, Headset, Info, IdCard, KeyRound, ReceiptText, Settings, ShieldCheck, UserPlus, UserRound, Wallet } from "lucide-react";
+import { cookies } from "next/headers";
 import { Container } from "@/components/ui/container";
 import { CardHeader, GlowCard } from "@/components/ui/glow-card";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { MenuRow } from "@/components/ui/menu-row";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { locales } from "@/lib/content/locales";
 import { collections } from "@/lib/mongo";
 import { getCurrentUser, isAdmin } from "@/lib/session";
 import { SignOutButton } from "@/features/auth/components/sign-out-button";
@@ -17,7 +19,7 @@ export const instant = false;
 
 const verificationLabels = { none: "Unverified", pending: "Under review", approved: "Verified", rejected: "Rejected" };
 
-const buildGroups = (verification) => [
+const buildGroups = (verification, language) => [
   {
     title: "Profile",
     rows: [
@@ -40,7 +42,7 @@ const buildGroups = (verification) => [
     title: "Preferences & Support",
     rows: [
       { href: "/account/settings", icon: Settings, label: "Settings", description: "Currency and app preferences" },
-      { href: "/account/language", icon: Globe, label: "Language", value: "English" },
+      { href: "/account/language", icon: Globe, label: "Language", value: language },
       { href: "/notices", icon: Bell, label: "Notices" },
       { href: "/help", icon: CircleQuestionMark, label: "Help Center" },
       { href: "/support", icon: Headset, label: "Customer Support" },
@@ -53,6 +55,8 @@ const buildGroups = (verification) => [
 const AccountPage = async () => {
   const user = await getCurrentUser();
   const verification = user ? (await collections.verifications().findOne({ userId: user.id }))?.status ?? "none" : "none";
+  const localeCode = (await cookies()).get("NEXT_LOCALE")?.value;
+  const language = (locales.find((item) => item.code === localeCode) ?? locales[0]).native;
   const joined = user ? new Intl.DateTimeFormat("en", { month: "short", year: "numeric" }).format(new Date(user.createdAt)) : null;
 
   return (
@@ -96,7 +100,7 @@ const AccountPage = async () => {
           )}
         </GlowCard>
         <div className="flex flex-col gap-4 lg:gap-6">
-          {buildGroups(verification).map((group) => (
+          {buildGroups(verification, language).map((group) => (
             <GlowCard key={group.title} as="section" aria-labelledby={`account-${group.title}`}>
               <CardHeader id={`account-${group.title}`} title={group.title} />
               <div className="p-2">

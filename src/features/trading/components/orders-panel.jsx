@@ -14,7 +14,7 @@ import { SignInPrompt } from "@/components/ui/sign-in-prompt";
 import { useActionSubmit } from "@/hooks/use-action-submit";
 import { useMarkPrices } from "@/hooks/use-mark-prices";
 import { useNow } from "@/hooks/use-now";
-import { formatPrice } from "@/lib/format";
+import { formatPercent, formatPrice } from "@/lib/format";
 import { cancelOrder, closeAllPositions, closePosition } from "@/features/trading/actions/place-order";
 import { AddMarginDialog } from "@/features/trading/components/add-margin-dialog";
 import {
@@ -144,8 +144,9 @@ export const OrdersPanel = ({ market }) => {
   const cancel = useActionSubmit({ action: cancelOrder, successMessage: "Order cancelled.", onSuccess: refresh });
   const closeAll = useActionSubmit({
     action: closeAllPositions,
-    successMessage: "All positions closed.",
-    onSuccess: () => {
+    onSuccess: ({ data }) => {
+      if (data.closed === data.total) toast.success("All positions closed.");
+      if (data.closed < data.total) toast.warning(`Closed ${data.closed} of ${data.total} positions. Try again for the rest.`);
       setConfirmCloseAll(false);
       refresh();
     },
@@ -201,7 +202,7 @@ export const OrdersPanel = ({ market }) => {
                   result: (
                     <span className="inline-flex flex-col items-end gap-1">
                       <Status map={timedStatus} value={item.status} />
-                      <SignedAmount value={(item.payout ?? 0) - item.amount} className="text-xs" />
+                      {item.status !== "cancelled" && <SignedAmount value={(item.payout ?? 0) - item.amount} className="text-xs" />}
                     </span>
                   ),
                 },
@@ -253,7 +254,7 @@ export const OrdersPanel = ({ market }) => {
             pnl: (
               <span className="inline-flex flex-col items-end">
                 <SignedAmount value={pnl} suffix="" />
-                <span className="text-[11px] text-neutral-500 tabular-nums">{formatPrice((pnl / item.margin) * 100)}%</span>
+                <span className="text-[11px] text-neutral-500 tabular-nums">{formatPercent((pnl / item.margin) * 100)}</span>
               </span>
             ),
             actions: (

@@ -19,7 +19,7 @@ const SharePage = () => (
         </GradientButton>
       }
     />
-    <ShareCard />
+    <ShareCard inviteUrl={`${process.env.BETTER_AUTH_URL ?? "http://localhost:3000"}/register`} />
   </Container>
 );
 

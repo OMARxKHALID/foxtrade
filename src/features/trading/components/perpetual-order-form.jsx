@@ -138,10 +138,10 @@ export const PerpetualOrderForm = ({ symbol, enabled = true, maxLeverage = perpe
       {showTpSl && (
         <div className="grid grid-cols-2 gap-3">
           <Field id="perp-tp" label="TP price" error={errors.takeProfit?.message}>
-            <input id="perp-tp" type="number" step="any" className={controlClass} {...register("takeProfit")} />
+            <input id="perp-tp" type="number" step="any" className={controlClass} {...register("takeProfit", { shouldUnregister: true })} />
           </Field>
           <Field id="perp-sl" label="SL price" error={errors.stopLoss?.message}>
-            <input id="perp-sl" type="number" step="any" className={controlClass} {...register("stopLoss")} />
+            <input id="perp-sl" type="number" step="any" className={controlClass} {...register("stopLoss", { shouldUnregister: true })} />
           </Field>
         </div>
       )}
