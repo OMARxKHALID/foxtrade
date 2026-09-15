@@ -1,3 +1,4 @@
+import { focusRing } from "@/components/ui/gradient-button";
 import { cn } from "@/lib/utils";
 
 export const controlClass =
@@ -26,8 +27,14 @@ export const Field = ({ id, label, hint, error, className, children, aside }) =>
   </div>
 );
 
+export const FieldAction = ({ className, children, ...props }) => (
+  <button type="button" className={cn("rounded text-xs text-brand transition-colors hover:text-brand-light", focusRing, className)} {...props}>
+    {children}
+  </button>
+);
+
 export const SummaryList = ({ items, className }) => (
-  <dl className={cn("grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 rounded-lg border border-white/10 bg-surface p-3 text-xs", className)}>
+  <dl className={cn("grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 rounded-xl border border-white/5 bg-field p-3 text-xs", className)}>
     {items.map((item) => (
       <div key={item.label} className="contents">
         <dt className="text-neutral-500">{item.label}</dt>

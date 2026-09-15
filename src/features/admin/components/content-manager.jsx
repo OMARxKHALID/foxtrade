@@ -44,7 +44,7 @@ const ContentForm = ({ entry, onDone }) => {
       )}
       <div className="flex flex-col gap-4">
         {sections.fields.map((field, index) => (
-          <div key={field.id} className="flex flex-col gap-3 rounded-xl border border-white/10 bg-surface p-3">
+          <div key={field.id} className="flex flex-col gap-3 rounded-xl border border-white/5 bg-field p-3">
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs text-neutral-500">Section {index + 1}</span>
               <span className="inline-flex gap-1.5">

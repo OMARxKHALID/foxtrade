@@ -3,12 +3,13 @@
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowDownUp } from "lucide-react";
-import { Field, SummaryList, controlClass } from "@/components/ui/field";
-import { GradientButton } from "@/components/ui/gradient-button";
+import { Field, FieldAction, SummaryList, controlClass } from "@/components/ui/field";
+import { GradientButton, focusRing } from "@/components/ui/gradient-button";
 import { SelectMenu } from "@/components/ui/select-menu";
 import { useActionSubmit } from "@/hooks/use-action-submit";
 import { useLiveTickers } from "@/hooks/use-live-tickers";
 import { formatPrice, formatQuantity } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { convertAssets } from "@/features/assets/actions/assets-actions";
 import { toAssetOptions } from "@/features/assets/components/asset-options";
 import { usePlatform } from "@/hooks/use-platform";
@@ -56,7 +57,7 @@ export const ConvertForm = ({ holdings }) => {
         label="From"
         error={errors.amount?.message}
         hint={`Available: ${holdings ? formatQuantity(available) : "--"} ${from}`}
-        aside={holdings && <button type="button" onClick={handleMax} className="text-xs text-brand">Max</button>}
+        aside={holdings && <FieldAction onClick={handleMax}>Max</FieldAction>}
       >
         <div className="flex gap-2">
           <input id="convert-amount" type="number" step="any" inputMode="decimal" placeholder="0.00" aria-label="Amount to convert" aria-invalid={Boolean(errors.amount)} className={controlClass} {...register("amount")} />
@@ -67,7 +68,7 @@ export const ConvertForm = ({ holdings }) => {
           />
         </div>
       </Field>
-      <button type="button" onClick={handleSwap} aria-label="Swap assets" className="flex size-10 items-center justify-center self-center rounded-full border border-white/10 bg-cell text-white">
+      <button type="button" onClick={handleSwap} aria-label="Swap assets" className={cn("flex size-10 items-center justify-center self-center rounded-full border border-white/10 bg-cell text-white transition-colors hover:bg-white/10", focusRing)}>
         <ArrowDownUp className="size-4" />
       </button>
       <Field id="convert-to" label="To" error={errors.to?.message}>

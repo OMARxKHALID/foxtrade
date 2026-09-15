@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 export const SectionBadge = ({ children, muted, className }) => (
   <div
     className={cn(
-      "inline-flex h-7 items-center gap-2.5 rounded-full border border-white/15 bg-cell pr-1 pl-3 text-[11px] text-white",
+      "inline-flex h-7 items-center gap-2.5 rounded-full border border-white/15 bg-cell pr-1 pl-3 text-2xs text-white",
       className,
     )}
   >

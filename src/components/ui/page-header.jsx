@@ -11,7 +11,7 @@ export const PageHeader = ({ title, description, backHref, actions, className })
           Back
         </Link>
       )}
-      <h1 className="font-heading text-2xl font-bold tracking-tight wrap-anywhere text-white md:text-[32px]">{title}</h1>
+      <h1 className="font-heading text-2xl font-bold tracking-tight wrap-anywhere text-white md:text-title">{title}</h1>
       {description && <p className="mt-2 max-w-2xl text-sm text-neutral-400">{description}</p>}
     </div>
     {actions && <div className="flex flex-wrap gap-3">{actions}</div>}

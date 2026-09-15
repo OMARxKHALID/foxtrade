@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Field, controlClass } from "@/components/ui/field";
+import { Field, FieldAction, controlClass } from "@/components/ui/field";
 import { FormDialog } from "@/components/ui/form-dialog";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { useActionSubmit } from "@/hooks/use-action-submit";
@@ -43,9 +43,7 @@ export const AddMarginDialog = ({ position, available, onClose, onDone }) => {
           label="Amount (USDT)"
           hint={`Available: ${formatUsdt(available)} USDT`}
           aside={
-            <button type="button" onClick={handleMax} className="text-xs text-brand">
-              Max
-            </button>
+            <FieldAction onClick={handleMax}>Max</FieldAction>
           }
         >
           <input id="add-margin-amount" type="number" step="any" inputMode="decimal" value={amount} onChange={handleAmount} className={controlClass} />

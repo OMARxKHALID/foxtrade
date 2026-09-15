@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CandlestickChart, House, Timer, TrendingUp, Wallet } from "lucide-react";
 import { appNavLinks } from "@/components/layout/nav-links";
+import { focusRing } from "@/components/ui/gradient-button";
 import { cn } from "@/lib/utils";
 
 const icons = { home: House, markets: TrendingUp, futures: CandlestickChart, options: Timer, assets: Wallet };
@@ -26,7 +27,9 @@ export const TabBar = () => {
                 href={link.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative flex h-full flex-col items-center justify-center gap-1 text-[11px] transition-colors",
+                  "relative flex h-full flex-col items-center justify-center gap-1 text-2xs transition-colors",
+                  focusRing,
+                  "focus-visible:-outline-offset-2",
                   active ? "text-brand" : "text-neutral-500",
                 )}
               >

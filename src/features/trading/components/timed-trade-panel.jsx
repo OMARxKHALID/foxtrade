@@ -98,7 +98,7 @@ export const TimedTradePanel = ({ symbol, enabled = true }) => {
               )}
             >
               <span className="font-medium">{formatDuration(item.seconds)}</span>
-              <span className="text-[11px] text-neutral-500">{Math.round(item.payoutRate * 100)}%</span>
+              <span className="text-2xs text-neutral-500">{Math.round(item.payoutRate * 100)}%</span>
             </button>
           ))}
         </div>
@@ -154,7 +154,7 @@ export const TimedTradePanel = ({ symbol, enabled = true }) => {
           );
         })}
       </div>
-      <p className="text-[11px] leading-4 text-neutral-500">
+      <p className="text-2xs leading-4 text-neutral-500">
         Orders settle at the Binance market price when the timer ends. Equal prices refund your stake.
       </p>
     </form>

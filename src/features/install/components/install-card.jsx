@@ -48,7 +48,7 @@ export const InstallCard = () => {
         <div className="flex items-start gap-4">
           <IconTile icon={Smartphone} size="lg" />
           <div className="max-w-xl">
-            <h2 className="font-heading text-2xl font-bold text-white">Install {siteName}</h2>
+            <h2 className="font-heading text-2xl font-bold tracking-tight text-white sm:text-3xl">Install {siteName}</h2>
             <p className="mt-2 text-sm leading-6 text-neutral-400">
               Add {siteName} to your home screen or desktop. It opens full screen like a native app, with no app store and no configuration profiles.
             </p>

@@ -22,7 +22,7 @@ const calendarClasses = {
   button_next: navButton,
   month_grid: "border-collapse",
   weekdays: "flex",
-  weekday: "flex size-9 items-center justify-center text-[11px] font-normal text-neutral-500",
+  weekday: "flex size-9 items-center justify-center text-2xs font-normal text-neutral-500",
   weeks: "flex flex-col gap-1",
   week: "flex",
   day: "size-9 p-0 text-center text-sm",

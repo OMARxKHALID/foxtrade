@@ -41,7 +41,7 @@ export const TradeFeed = ({ symbol, className }) => {
   return (
     <section aria-label="Recent trades" className={cn("flex flex-col", className)}>
       <CardHeader title="Last trades" size="sm" as="h2" />
-      <div className={cn("py-2 text-[11px] text-neutral-500", rowGrid)}>
+      <div className={cn("py-2 text-2xs text-neutral-500", rowGrid)}>
         <span>Price</span>
         <span className="text-right">Amount</span>
         <span className="text-right">Time</span>
@@ -51,7 +51,7 @@ export const TradeFeed = ({ symbol, className }) => {
       ) : (
         <ul className="min-h-0 flex-1 overflow-hidden">
           {trades.map((trade) => (
-            <li key={trade.id} className={cn("h-5 items-center text-[11px] tabular-nums", rowGrid)}>
+            <li key={trade.id} className={cn("h-5 items-center text-2xs tabular-nums", rowGrid)}>
               <span className={trade.sell ? "text-down" : "text-up"}>{formatPrice(trade.price)}</span>
               <span className="text-right text-neutral-300">{trade.quantity.toFixed(4)}</span>
               <span className="text-right text-neutral-500">{timeFormat.format(trade.time)}</span>

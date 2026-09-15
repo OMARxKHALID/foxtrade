@@ -9,7 +9,7 @@ const tones = {
 };
 
 export const StatusBadge = ({ tone = "neutral", className, children }) => (
-  <span className={cn("inline-flex h-6 items-center rounded-md px-2 text-[11px] font-medium", tones[tone], className)}>
+  <span className={cn("inline-flex h-6 items-center rounded-md px-2 text-2xs font-medium", tones[tone], className)}>
     {children}
   </span>
 );

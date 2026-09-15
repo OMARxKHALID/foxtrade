@@ -20,8 +20,8 @@ import { ordersQuery, tradingKeys } from "@/features/trading/queries/trading-que
 import { perpetualOrderSchemaFor } from "@/features/trading/schemas/order-schema";
 
 const sides = [
-  { value: "long", label: "Long" },
-  { value: "short", label: "Short" },
+  { value: "long", label: "Long", activeClassName: "bg-up text-black" },
+  { value: "short", label: "Short", activeClassName: "bg-down text-white" },
 ];
 
 const types = [
@@ -74,24 +74,7 @@ export const PerpetualOrderForm = ({ symbol, enabled = true, maxLeverage }) => {
 
   return (
     <form className="flex flex-col gap-5 p-4 sm:p-6" noValidate onSubmit={handleSubmit(handlePlace)}>
-      <div className="grid grid-cols-2 gap-1 rounded-lg border border-white/10 bg-field p-1">
-        {sides.map((item) => (
-          <button
-            key={item.value}
-            type="button"
-            aria-pressed={side === item.value}
-            onClick={() => handleSide(item.value)}
-            className={cn(
-              "h-9 rounded-md text-sm font-medium",
-              side === item.value && item.value === "long" && "bg-up text-black",
-              side === item.value && item.value === "short" && "bg-down text-white",
-              side !== item.value && "text-neutral-400",
-            )}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
+      <SegmentedTabs items={sides} value={side} onChange={handleSide} variant="pill" fill toggle className="h-11 p-1" label="Order side" />
 
       <SegmentedTabs items={types} value={type} onChange={handleType} label="Order type" />
 
@@ -125,7 +108,7 @@ export const PerpetualOrderForm = ({ symbol, enabled = true, maxLeverage }) => {
         />
         <div className="flex justify-between">
           {leverageMarks.filter((mark) => mark <= maxLeverage).map((mark) => (
-            <button key={mark} type="button" onClick={() => handleLeverage(mark)} className={cn("text-[11px]", lev === mark ? "text-brand" : "text-neutral-500")}>
+            <button key={mark} type="button" onClick={() => handleLeverage(mark)} className={cn("text-2xs", lev === mark ? "text-brand" : "text-neutral-500")}>
               {mark}x
             </button>
           ))}

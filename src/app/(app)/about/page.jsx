@@ -25,7 +25,7 @@ const AboutPage = async () => {
       <GlowCard variant="warm">
         <CardBody className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <h2 className="font-heading text-2xl font-bold text-white sm:text-3xl">{fill(about.title)}</h2>
+            <h2 className="font-heading text-2xl font-bold tracking-tight text-white sm:text-3xl">{fill(about.title)}</h2>
             <p className="mt-3 text-sm leading-7 text-neutral-400">{fill(about.summary)}</p>
           </div>
           <div className="flex flex-wrap gap-3">

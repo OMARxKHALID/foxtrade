@@ -256,7 +256,7 @@ export const OrdersPanel = ({ market }) => {
             pnl: (
               <span className="inline-flex flex-col items-end">
                 <SignedAmount value={pnl} suffix="" />
-                <span className="text-[11px] text-neutral-500 tabular-nums">{formatPercent((pnl / item.margin) * 100)}</span>
+                <span className="text-2xs text-neutral-500 tabular-nums">{formatPercent((pnl / item.margin) * 100)}</span>
               </span>
             ),
             actions: (

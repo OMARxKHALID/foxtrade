@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+import { focusRing } from "@/components/ui/gradient-button";
 import { cn } from "@/lib/utils";
 
 export const MenuRow = ({ href, icon: Icon, label, description, value, className }) => (
   <Link
     href={href}
-    className={cn("flex items-center gap-4 rounded-xl px-4 py-3.5 transition-colors hover:bg-white/[0.03]", className)}
+    className={cn("flex items-center gap-4 rounded-xl px-4 py-3.5 transition-colors hover:bg-white/[0.03]", focusRing, "focus-visible:-outline-offset-2", className)}
   >
     {Icon && (
       <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5">

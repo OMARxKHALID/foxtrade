@@ -31,7 +31,7 @@ export const DemoFaucet = ({ status }) => {
       <GlowCard variant="warm">
         <CardBody>
           <IconTile icon={Gift} size="lg" />
-          <h2 className="mt-6 font-heading text-2xl font-bold text-white sm:text-3xl">Top up to {formatUsdt(demoAmount)} USDT</h2>
+          <h2 className="mt-6 font-heading text-2xl font-bold tracking-tight text-white sm:text-3xl">Top up to {formatUsdt(demoAmount)} USDT</h2>
           <p className="mt-3 max-w-md text-sm leading-6 text-neutral-400">
             Refill your demo Spot Wallet and keep practicing timed trades and leveraged positions with live market prices.
           </p>

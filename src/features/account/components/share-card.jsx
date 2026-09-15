@@ -5,6 +5,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { Check, Copy, UserPlus } from "lucide-react";
 import { CardBody, CardHeader, GlowCard } from "@/components/ui/glow-card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { GradientButton } from "@/components/ui/gradient-button";
 import { usePlatform } from "@/hooks/use-platform";
 
 export const ShareCard = ({ inviteUrl }) => {
@@ -25,14 +26,14 @@ export const ShareCard = ({ inviteUrl }) => {
             <QRCodeSVG value={inviteUrl} size={140} bgColor="#ffffff" fgColor="#0a0a0a" />
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="font-heading text-xl font-bold text-white">Invite friends to {siteName}</h2>
+            <h2 className="font-heading text-2xl font-bold tracking-tight text-white sm:text-3xl">Invite friends to {siteName}</h2>
             <p className="mt-2 text-sm text-neutral-400">Share your link. Friends get their own demo account to practice with.</p>
             <div className="mt-5 flex items-center gap-2 rounded-lg border border-white/10 bg-field p-1 pl-3">
               <span className="min-w-0 flex-1 truncate text-sm text-neutral-300">{inviteUrl}</span>
-              <button type="button" onClick={handleCopy} className="flex h-8 shrink-0 items-center gap-1.5 rounded-md bg-white px-3 text-xs font-semibold text-neutral-900">
+              <GradientButton variant="light" size="xs" onClick={handleCopy}>
                 {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
                 {copied ? "Copied" : "Copy"}
-              </button>
+              </GradientButton>
             </div>
           </div>
         </CardBody>

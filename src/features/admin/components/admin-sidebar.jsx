@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowLeft, Bell, Coins, FileText, History, IdCard, Image, LayoutDashboard, LifeBuoy, Settings, Users } from "lucide-react";
 import { LogoMark } from "@/components/ui/logo-mark";
+import { focusRing } from "@/components/ui/gradient-button";
 import { cn } from "@/lib/utils";
 
 const links = [
@@ -31,7 +32,7 @@ export const AdminSidebar = ({ email, signOut, mobileSignOut }) => {
           <span className="font-heading text-sm font-semibold text-white">Admin</span>
         </span>
         <div className="flex items-center gap-2 lg:hidden">
-          <Link href="/" className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/10 px-3 text-xs text-neutral-300">
+          <Link href="/" className={cn("inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/10 px-3 text-xs text-neutral-300 transition-colors hover:bg-white/5 hover:text-white", focusRing)}>
             <ArrowLeft className="size-3.5" />
             Home
           </Link>
@@ -46,8 +47,10 @@ export const AdminSidebar = ({ email, signOut, mobileSignOut }) => {
                 href={link.href}
                 aria-current={isActive(link.href) ? "page" : undefined}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm whitespace-nowrap",
-                  isActive(link.href) ? "bg-white/5 text-brand" : "text-neutral-400",
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm whitespace-nowrap transition-colors",
+                  focusRing,
+                  "focus-visible:-outline-offset-2",
+                  isActive(link.href) ? "bg-white/5 text-brand" : "text-neutral-400 hover:bg-white/5 hover:text-white",
                 )}
               >
                 <link.icon className="size-4" strokeWidth={1.75} />
@@ -59,7 +62,7 @@ export const AdminSidebar = ({ email, signOut, mobileSignOut }) => {
       </nav>
       <div className="mt-auto hidden border-t border-white/10 p-3 lg:block">
         <p className="truncate px-3 pb-2 text-xs text-neutral-500">{email}</p>
-        <Link href="/" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-neutral-400">
+        <Link href="/" className={cn("flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-neutral-400 transition-colors hover:bg-white/5 hover:text-white", focusRing)}>
           <ArrowLeft className="size-4" strokeWidth={1.75} />
           Back to Home
         </Link>

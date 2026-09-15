@@ -7,7 +7,7 @@ export const metadata = {
 
 const ForgotPasswordPage = () => (
   <>
-    <h1 className="font-heading text-3xl font-bold tracking-tight text-white">Forgot Password</h1>
+    <h1 className="font-heading text-2xl font-bold tracking-tight text-white md:text-title">Forgot Password</h1>
     <p className="mt-2 text-sm text-neutral-400">Enter your email and we will send you a reset code.</p>
     <div className="mt-8">
       <ForgotPasswordForm />

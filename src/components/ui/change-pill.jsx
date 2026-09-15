@@ -9,7 +9,7 @@ export const ChangePill = ({ value, size = "md", className }) => {
     <span
       className={cn(
         "inline-flex shrink-0 items-center justify-center gap-0.5 rounded-md font-medium whitespace-nowrap tabular-nums",
-        size === "md" ? "h-8 min-w-[84px] px-2 text-xs" : "h-6 px-1.5 text-[11px]",
+        size === "md" ? "h-8 min-w-[84px] px-2 text-xs" : "h-6 px-1.5 text-2xs",
         flat && "bg-white/10 text-neutral-300",
         up && "bg-up/12 text-up",
         !up && !flat && "bg-down/12 text-down",

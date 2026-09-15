@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 const Stat = ({ label, value }) => (
   <div className="flex flex-col gap-0.5">
-    <span className="text-[11px] text-neutral-500">{label}</span>
+    <span className="text-2xs text-neutral-500">{label}</span>
     <span className="text-xs text-white tabular-nums">{value}</span>
   </div>
 );
@@ -38,7 +38,7 @@ export const PairHeader = ({ symbol, market }) => {
             {pair.base}/{pair.quote}
             <ChevronDown className={cn("size-4 text-neutral-400 transition-transform", open && "rotate-180")} />
           </span>
-          <span className="block text-[11px] text-neutral-500">{market === "timed" ? "Options · Timed" : "Futures · Perpetual"}</span>
+          <span className="block text-2xs text-neutral-500">{market === "timed" ? "Options · Timed" : "Futures · Perpetual"}</span>
         </span>
       </button>
       <div className="flex min-w-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-3">
@@ -59,7 +59,7 @@ export const PairHeader = ({ symbol, market }) => {
         Trading Rules
       </Link>
       {open && (
-        <div className="absolute top-full left-3 z-30 mt-1 w-[min(18rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-white/10 bg-field">
+        <div className="absolute top-full left-3 z-30 mt-1 w-[min(18rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-white/10 bg-field shadow-[0_16px_40px_rgba(0,0,0,0.6)]">
           <ul className="max-h-80 overflow-y-auto py-1">
             {marketPairs.map((item) => (
               <li key={item.symbol}>

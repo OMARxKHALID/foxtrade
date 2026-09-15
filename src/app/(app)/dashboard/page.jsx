@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowDownToLine, ArrowRightLeft, CandlestickChart, CircleCheck, CircleDashed, ReceiptText, Timer } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { CardBody, CardHeader, GlowCard } from "@/components/ui/glow-card";
+import { focusRing } from "@/components/ui/gradient-button";
 import { IconTile } from "@/components/ui/icon-tile";
 import { PageHeader } from "@/components/ui/page-header";
 import { walletLabels } from "@/lib/demo";
@@ -70,7 +71,7 @@ const DashboardPage = async () => {
             <p className="mt-3 font-heading text-4xl font-bold tracking-tight text-white tabular-nums sm:text-5xl">{formatUsdt(overview.totalUsdt)}</p>
             <ul className="mt-5 grid grid-cols-3 gap-3 text-xs">
               {Object.entries(walletLabels).map(([wallet, label]) => (
-                <li key={wallet} className="rounded-xl border border-white/5 bg-black/20 px-3 py-2">
+                <li key={wallet} className="rounded-xl border border-white/5 bg-field px-3 py-2">
                   <span className="block truncate text-neutral-500">{label}</span>
                   <span className="mt-0.5 block text-sm text-white tabular-nums">{formatUsdt(overview.walletTotals[wallet] ?? 0)}</span>
                 </li>
@@ -79,7 +80,7 @@ const DashboardPage = async () => {
             <ul className="mt-6 grid grid-cols-5 gap-2 sm:gap-4">
               {actions.map((action) => (
                 <li key={action.label}>
-                  <Link href={action.href} className="flex flex-col items-center gap-2 text-center text-xs text-white">
+                  <Link href={action.href} className={cn("flex flex-col items-center gap-2 rounded-lg text-center text-xs text-white transition-opacity hover:opacity-90", focusRing)}>
                     <IconTile icon={action.icon} size="md" />
                     {action.label}
                   </Link>
@@ -94,7 +95,7 @@ const DashboardPage = async () => {
             <ul className="flex flex-col gap-3">
               {checklist.map((item) => (
                 <li key={item.label}>
-                  <Link href={item.href} className="flex items-center justify-between gap-3 rounded-xl border border-white/5 bg-field px-4 py-3">
+                  <Link href={item.href} className={cn("flex items-center justify-between gap-3 rounded-xl border border-white/5 bg-field px-4 py-3 transition-colors hover:bg-cell", focusRing)}>
                     <span className="flex items-center gap-3 text-sm text-white">
                       {item.done ? <CircleCheck className="size-4 text-up" /> : <CircleDashed className="size-4 text-neutral-500" />}
                       {item.label}

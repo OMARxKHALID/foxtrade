@@ -28,7 +28,7 @@ const HomePage = async () => {
       <HydrationBoundary state={tickerState}>
         <Suspense fallback={<PageLoader className="min-h-[40vh]" />}>
           <TickerTrio />
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr] lg:gap-6">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:gap-6">
             <QuickActions />
             <QuickTradeBanner />
           </div>

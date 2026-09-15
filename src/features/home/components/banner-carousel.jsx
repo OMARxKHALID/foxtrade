@@ -40,7 +40,7 @@ export const BannerCarousel = ({ banners }) => {
     >
       <CandleBackdrop />
       <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/40 to-transparent" />
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={banner.id}
           initial={{ opacity: 0, y: 16 }}

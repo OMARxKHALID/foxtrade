@@ -3,11 +3,12 @@
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRightLeft } from "lucide-react";
-import { Field, controlClass } from "@/components/ui/field";
-import { GradientButton } from "@/components/ui/gradient-button";
+import { Field, FieldAction, controlClass } from "@/components/ui/field";
+import { GradientButton, focusRing } from "@/components/ui/gradient-button";
 import { SelectMenu } from "@/components/ui/select-menu";
 import { useActionSubmit } from "@/hooks/use-action-submit";
 import { formatQuantity } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { transferAssets } from "@/features/assets/actions/assets-actions";
 import { toAssetOptions, walletOptions } from "@/features/assets/components/asset-options";
 import { usePlatform } from "@/hooks/use-platform";
@@ -47,7 +48,7 @@ export const TransferForm = ({ holdings }) => {
         <Field id="transfer-from" label="From">
           <Controller name="from" control={control} render={({ field }) => <SelectMenu id="transfer-from" options={walletOptions} value={field.value} onChange={field.onChange} onBlur={field.onBlur} />} />
         </Field>
-        <button type="button" onClick={handleSwap} aria-label="Swap wallets" className="flex size-11 items-center justify-center self-center rounded-full border border-white/10 bg-cell text-white sm:self-end">
+        <button type="button" onClick={handleSwap} aria-label="Swap wallets" className={cn("flex size-10 items-center justify-center self-center rounded-full border border-white/10 bg-cell text-white transition-colors hover:bg-white/10 sm:self-end", focusRing)}>
           <ArrowRightLeft className="size-4" />
         </button>
         <Field id="transfer-to" label="To" error={errors.to?.message}>
@@ -63,7 +64,7 @@ export const TransferForm = ({ holdings }) => {
           label="Amount"
           error={errors.amount?.message}
           hint={`Available: ${holdings ? formatQuantity(available) : "--"} ${asset}`}
-          aside={holdings && <button type="button" onClick={handleMax} className="text-xs text-brand">Max</button>}
+          aside={holdings && <FieldAction onClick={handleMax}>Max</FieldAction>}
         >
           <input id="transfer-amount" type="number" step="any" inputMode="decimal" aria-invalid={Boolean(errors.amount)} className={controlClass} {...register("amount")} />
         </Field>

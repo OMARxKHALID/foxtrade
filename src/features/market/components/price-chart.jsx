@@ -164,7 +164,7 @@ export const PriceChart = ({ symbol, className }) => {
     <div className={cn("flex flex-col", className)}>
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-white/10 px-4 py-2">
         <SegmentedTabs items={intervals} value={interval} onChange={setChartInterval} variant="pill" label="Chart interval" />
-        <span className="hidden text-[11px] text-neutral-500 sm:block">Binance · {symbol}</span>
+        <span className="hidden text-2xs text-neutral-500 sm:block">Binance · {symbol}</span>
       </div>
       <div className="relative min-h-0 flex-1">
         <div ref={containerRef} className="absolute inset-0" />
