@@ -20,6 +20,7 @@ vi.mock("next/cache", () => ({
 const { fetchLatestPrices, fetchKlineRange } = await import("@/lib/market/binance-rest");
 
 const SECOND = 1000;
+const MINUTE = 60 * SECOND;
 
 const clearAll = async () => {
   const collectionsToClear = Object.values(collections);
@@ -75,16 +76,42 @@ describe("Liquidation / SL / TP priority", () => {
       takeProfit: 66000,
       stopLoss: 64000,
     });
+    const checkedFrom = Math.floor((Date.now() - 3 * MINUTE) / MINUTE) * MINUTE;
+    await collections.positions().updateOne({ _id: new ObjectId(positionId) }, { $set: { lastCheckedAt: new Date(checkedFrom) } });
     const position = await collections.positions().findOne({ _id: new ObjectId(positionId) });
     const liqPrice = position.liquidationPrice;
     const lowPrice = Math.min(liqPrice, 63000, 50000) - 1000;
     const highPrice = Math.max(66000, liqPrice) + 1000;
-    fetchKlineRange.mockResolvedValue([{ openTime: position.lastCheckedAt.getTime() - 120_000, open: 65000, high: highPrice, low: lowPrice, close: 65000 }]);
+    fetchKlineRange.mockImplementation(async ({ startTime }) => [{ openTime: startTime, open: 65000, high: highPrice, low: lowPrice, close: 65000 }]);
     await settleUser(userId);
     const closed = await collections.positions().findOne({ _id: new ObjectId(positionId) });
     expect(closed.status).toBe("liquidated");
     expect(closed.pnl).toBe(-100);
     expect(closed.payout).toBe(0);
+  });
+});
+
+describe("Pre-open price data", () => {
+  it("ignores price moves from before the position was opened", async () => {
+    const userId = "u-pre-open";
+    await postEntries([{ userId, wallet: "perpetual", asset: "USDT", type: "faucet", amount: 1000 }], null);
+    fetchLatestPrices.mockResolvedValue({ BTCUSDT: "65000" });
+    const positionId = await placePerpetualOrder(userId, { symbol: "BTCUSDT", side: "long", type: "market", amount: 100, leverage: 10, takeProfit: 65400 });
+    const openedAt = Math.floor((Date.now() - 3 * MINUTE) / MINUTE) * MINUTE + 30 * SECOND;
+    await collections.positions().updateOne({ _id: new ObjectId(positionId) }, { $set: { openedAt: new Date(openedAt), lastCheckedAt: new Date(openedAt) } });
+    fetchKlineRange.mockImplementation(async ({ interval, startTime, endTime }) => {
+      if (interval === "1m") return [{ openTime: startTime, open: 65000, high: startTime < openedAt ? 65500 : 65100, low: 64900, close: 65000 }];
+      const seconds = [];
+      for (let time = startTime; time <= endTime; time += SECOND) seconds.push({ openTime: time, open: 65000, high: 65100, low: 64900, close: 65000 });
+      return seconds;
+    });
+    await settleUser(userId);
+    const position = await collections.positions().findOne({ _id: new ObjectId(positionId) });
+    const starts = fetchKlineRange.mock.calls.map(([args]) => args.startTime);
+    expect(Math.min(...starts)).toBeGreaterThanOrEqual(openedAt - SECOND);
+    expect(fetchKlineRange.mock.calls[0][0].interval).toBe("1s");
+    expect(position.status).toBe("open");
+    expect(position.lastCheckedAt.getTime()).toBeGreaterThan(openedAt);
   });
 });
 

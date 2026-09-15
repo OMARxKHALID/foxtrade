@@ -13,6 +13,7 @@ const MINUTE = 60 * SECOND;
 const SETTLE_DELAY = 1500;
 const SETTLE_FALLBACK_MS = 5 * MINUTE;
 const SETTLE_DEBOUNCE_MS = 5000;
+const CHECK_OVERLAP_MS = 2 * SECOND;
 
 let indexesReady;
 
@@ -183,12 +184,18 @@ const triggerFor = (position, candle) => {
   return null;
 };
 
+const evaluationWindow = (cursor) => {
+  if (cursor % MINUTE === 0) return { interval: "1m", step: MINUTE, startTime: cursor, limit: 1000 };
+  return { interval: "1s", step: SECOND, startTime: Math.floor(cursor / SECOND) * SECOND, endTime: Math.ceil(cursor / MINUTE) * MINUTE - 1, limit: 60 };
+};
+
 const evaluatePosition = async (position) => {
   let cursor = position.lastCheckedAt.getTime();
   let current = position;
-  while (cursor < Date.now()) {
-    const candles = await fetchKlineRange({ symbol: current.symbol, interval: "1m", startTime: Math.floor(cursor / MINUTE) * MINUTE, limit: 1000 });
-    if (!candles.length) return;
+  while (cursor < Date.now() - CHECK_OVERLAP_MS) {
+    const requestedAt = Date.now();
+    const { step, ...range } = evaluationWindow(cursor);
+    const candles = await fetchKlineRange({ symbol: current.symbol, ...range });
     for (const candle of candles) {
       if (current.status === "pending") {
         const fills = current.side === "long" ? candle.low <= current.limitPrice : candle.high >= current.limitPrice;
@@ -208,10 +215,15 @@ const evaluatePosition = async (position) => {
         return;
       }
     }
-    const lastOpen = candles.at(-1).openTime;
-    await collections.positions().updateOne({ _id: current._id, status: { $in: ["open", "pending"] } }, { $set: { lastCheckedAt: new Date(lastOpen) } });
-    if (candles.length < 1000) return;
-    cursor = lastOpen + MINUTE;
+    const safeEnd = requestedAt - CHECK_OVERLAP_MS;
+    const minuteDone = range.endTime !== undefined && range.endTime + 1 <= safeEnd;
+    const reached = candles.length ? candles.at(-1).openTime + step : minuteDone ? range.endTime + 1 : cursor;
+    const next = Math.max(cursor, Math.min(reached, safeEnd));
+    if (next === cursor) return;
+    await collections.positions().updateOne({ _id: current._id, status: { $in: ["open", "pending"] } }, { $set: { lastCheckedAt: new Date(next) } });
+    const caughtUp = range.interval === "1m" ? candles.length < range.limit : reached > safeEnd;
+    if (caughtUp) return;
+    cursor = next;
   }
 };
 
@@ -280,7 +292,9 @@ export const closeAllPositions = async (userId) => {
   const priced = positions.filter((position) => Number(prices[position.symbol]) > 0);
   if (!priced.length) throw new LedgerError("Live price unavailable. Try again in a moment.");
   const results = await Promise.allSettled(priced.map((position) => closePositionAt(position, Number(prices[position.symbol]), "manual")));
-  return results.filter((item) => item.status === "fulfilled").length;
+  const closed = results.filter((item) => item.status === "fulfilled").length;
+  if (!closed) throw new LedgerError("No positions could be closed. Try again in a moment.");
+  return { closed, total: positions.length };
 };
 
 export const cancelPendingOrder = async (userId, id) => {
