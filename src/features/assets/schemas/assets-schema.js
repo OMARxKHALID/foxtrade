@@ -1,10 +1,17 @@
+import Big from "big.js";
 import { z } from "zod";
 import { networks, wallets } from "@/features/assets/data/assets-config";
 
 const walletValues = wallets.map((wallet) => wallet.value);
 const assetField = z.string({ error: "Choose an asset" }).regex(/^[A-Z0-9]{2,20}$/, "Choose an asset");
 
-const positiveAmount = z.coerce.number({ error: "Enter an amount" }).positive("Enter an amount greater than 0").max(1e12, "Amount is too large");
+const isDecimal = (value) => /^\d+(\.\d+)?$/.test(value);
+
+const positiveAmount = z
+  .union([z.string(), z.number()], { error: "Enter an amount" })
+  .transform((value) => String(value).trim())
+  .refine((value) => isDecimal(value) && new Big(value).gt(0), "Enter an amount greater than 0")
+  .refine((value) => !isDecimal(value) || new Big(value).lte(1e12), "Amount is too large");
 
 export const withdrawSchema = z.object({
   asset: assetField,

@@ -3,8 +3,8 @@
 import { headers } from "next/headers";
 import { formFailure, serverFailure, signInRequired, validationFailure } from "@/lib/action-result";
 import { getAuth } from "@/lib/auth";
-import { DOCUMENT_MAX_BYTES, documentSides } from "@/lib/document-rules";
-import { detectImageFormat, isDocumentStorageConfigured, uploadPrivateImage } from "@/lib/document-storage";
+import { DOCUMENT_MAX_BYTES, combinedSide, documentSides } from "@/lib/document-rules";
+import { deletePrivateImages, detectDocumentFormat, isDocumentStorageConfigured, uploadPrivateImage } from "@/lib/document-storage";
 import { collections } from "@/lib/mongo";
 import { setPin } from "@/lib/pin";
 import { rateLimit, tooManyAttempts } from "@/lib/rate-limit";
@@ -22,11 +22,11 @@ export const submitBasicVerification = async (input) => {
     const existing = await collections.verifications().findOne({ userId: user.id });
     if (existing?.status === "approved") return formFailure("Your identity is already verified.");
     if (existing?.status === "pending") return formFailure("Your verification is already under review.");
-    await collections.verifications().updateOne(
-      { userId: user.id },
-      { $set: { ...parsed.data, userId: user.id, email: user.email, status: "pending", reason: null, submittedAt: new Date(), reviewedAt: null } },
-      { upsert: true },
-    );
+    const submission = { $set: { ...parsed.data, userId: user.id, email: user.email, status: "pending", reason: null, submittedAt: new Date(), reviewedAt: null } };
+    const result = existing
+      ? await collections.verifications().updateOne({ userId: user.id, status: { $nin: ["approved", "pending"] } }, submission)
+      : await collections.verifications().updateOne({ userId: user.id }, submission, { upsert: true });
+    if (!result.matchedCount && !result.upsertedCount) return formFailure("Your verification was just reviewed. Refresh the page.");
     return { ok: true };
   } catch (error) {
     return serverFailure(error);
@@ -91,9 +91,9 @@ export const uploadVerificationDocument = async (formData) => {
   if (!user) return signInRequired("Log in to upload documents.");
   const side = formData.get("side");
   const file = formData.get("file");
-  if (!documentSides.some((item) => item.value === side)) return formFailure("Choose the front or back of your ID.");
-  if (!file || typeof file.arrayBuffer !== "function" || !file.size) return formFailure("Choose an image to upload.");
-  if (file.size > DOCUMENT_MAX_BYTES) return formFailure("Images must be 4 MB or smaller.");
+  if (![...documentSides, combinedSide].some((item) => item.value === side)) return formFailure("Choose the front or back of your ID.");
+  if (!file || typeof file.arrayBuffer !== "function" || !file.size) return formFailure("Choose a file to upload.");
+  if (file.size > DOCUMENT_MAX_BYTES) return formFailure("Files must be 4 MB or smaller.");
   try {
     if (!isDocumentStorageConfigured()) return formFailure("Document upload is not available yet.");
     const limit = await rateLimit(`kyc-upload:${user.id}`, { limit: 20, windowSeconds: 3600 });
@@ -102,12 +102,19 @@ export const uploadVerificationDocument = async (formData) => {
     const locked = documentsLocked(verification);
     if (locked) return formFailure(locked);
     const buffer = Buffer.from(await file.arrayBuffer());
-    if (!detectImageFormat(buffer)) return formFailure("Upload a JPG or PNG image.");
+    const format = detectDocumentFormat(buffer);
+    if (!format) return formFailure("Upload a JPG, PNG or PDF file.");
+    if (side === combinedSide.value && format !== "pdf") return formFailure("Upload one PDF that shows both sides of your ID.");
     const stored = await uploadPrivateImage(buffer, { folder: `kyc/${user.id}`, publicId: side });
+    const targets = side === combinedSide.value ? documentSides.map((item) => item.value) : [side];
+    const entry = { ...stored, uploadedAt: new Date() };
     await collections.verifications().updateOne(
       { userId: user.id },
-      { $set: { [`documents.${side}`]: { ...stored, uploadedAt: new Date() }, "documents.status": "draft", "documents.reason": null } },
+      { $set: { ...Object.fromEntries(targets.map((target) => [`documents.${target}`, entry])), "documents.status": "draft", "documents.reason": null } },
     );
+    const current = documentSides.map((item) => (targets.includes(item.value) ? stored.publicId : verification.documents?.[item.value]?.publicId));
+    const stale = documentSides.map((item) => verification.documents?.[item.value]?.publicId).filter((publicId) => publicId && !current.includes(publicId));
+    await deletePrivateImages(stale).catch((error) => console.error(`Could not delete replaced KYC files for ${user.id}:`, error));
     return { ok: true };
   } catch (error) {
     return serverFailure(error);

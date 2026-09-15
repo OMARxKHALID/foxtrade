@@ -3,13 +3,13 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { CircleCheck, ImagePlus, LoaderCircle } from "lucide-react";
+import { CircleCheck, FileText, ImagePlus, LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
 import { SchemaForm } from "@/components/forms/schema-form";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { useActionSubmit } from "@/hooks/use-action-submit";
 import { countries } from "@/lib/content/countries";
-import { DOCUMENT_MAX_BYTES, documentSides } from "@/lib/document-rules";
+import { DOCUMENT_MAX_BYTES, combinedSide, documentMimeTypes, documentSides } from "@/lib/document-rules";
 import { notifyResult } from "@/lib/notify";
 import { cn } from "@/lib/utils";
 import { submitBasicVerification, submitVerificationDocuments, uploadVerificationDocument } from "@/features/account/actions/account-actions";
@@ -35,7 +35,13 @@ export const BasicVerificationForm = () => (
   />
 );
 
-const UploadSlot = ({ side, preview, uploaded, uploading, disabled, onFile }) => (
+const uploadedHint = (format, combined) => {
+  if (combined) return "In your PDF · tap to replace this side";
+  if (format === "pdf") return "PDF uploaded · tap to replace";
+  return "Uploaded · tap to replace";
+};
+
+const UploadSlot = ({ side, preview, uploaded, combined, uploading, disabled, onFile }) => (
   <label
     className={cn(
       "relative flex aspect-[16/10] cursor-pointer flex-col items-center justify-center gap-3 overflow-hidden rounded-xl border border-dashed bg-field p-4 text-center transition-colors",
@@ -43,17 +49,34 @@ const UploadSlot = ({ side, preview, uploaded, uploading, disabled, onFile }) =>
       disabled && "pointer-events-none opacity-60",
     )}
   >
-    <input type="file" accept="image/jpeg,image/png" className="sr-only" disabled={disabled} onChange={onFile} />
+    <input type="file" accept={documentMimeTypes.join(",")} className="sr-only" disabled={disabled} onChange={onFile} />
     {preview && <Image src={preview} alt="" fill unoptimized className="object-cover opacity-40" />}
     <span className="relative flex flex-col items-center gap-2">
       {uploading ? <LoaderCircle className="size-6 animate-spin text-brand" /> : uploaded ? <CircleCheck className="size-6 text-up" /> : <ImagePlus className="size-6 text-neutral-500" strokeWidth={1.5} />}
       <span className="text-sm text-white">{side.label}</span>
-      <span className="text-xs text-neutral-400">{uploading ? "Uploading…" : uploaded ? "Uploaded · tap to replace" : "JPG or PNG, up to 4 MB"}</span>
+      <span className="text-xs text-neutral-400">{uploading ? "Uploading…" : uploaded ? uploadedHint(uploaded, combined) : "JPG, PNG or PDF, up to 4 MB"}</span>
     </span>
   </label>
 );
 
-export const DocumentUploadForm = ({ uploaded }) => {
+const CombinedUpload = ({ uploaded, uploading, disabled, onFile }) => (
+  <label
+    className={cn(
+      "flex cursor-pointer items-center gap-3 rounded-xl border border-dashed bg-field px-4 py-3 transition-colors",
+      uploaded ? "border-up/40" : "border-white/15 hover:border-brand/50",
+      disabled && "pointer-events-none opacity-60",
+    )}
+  >
+    <input type="file" accept="application/pdf" className="sr-only" disabled={disabled} onChange={onFile} />
+    {uploading ? <LoaderCircle className="size-5 shrink-0 animate-spin text-brand" /> : uploaded ? <CircleCheck className="size-5 shrink-0 text-up" /> : <FileText className="size-5 shrink-0 text-neutral-500" strokeWidth={1.5} />}
+    <span className="flex min-w-0 flex-col">
+      <span className="text-sm text-white">Have one PDF with both sides?</span>
+      <span className="text-xs text-neutral-400">{uploading ? "Uploading…" : uploaded ? "PDF uploaded for front and back · tap to replace" : "Upload it here instead, up to 4 MB"}</span>
+    </span>
+  </label>
+);
+
+export const DocumentUploadForm = ({ uploaded, combined }) => {
   const router = useRouter();
   const [previews, setPreviews] = useState({});
   const [uploading, setUploading] = useState(null);
@@ -71,8 +94,10 @@ export const DocumentUploadForm = ({ uploaded }) => {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
-    if (!["image/jpeg", "image/png"].includes(file.type)) return toast.error("Upload a JPG or PNG image.");
-    if (file.size > DOCUMENT_MAX_BYTES) return toast.error("Images must be 4 MB or smaller.");
+    const both = side.value === combinedSide.value;
+    if (both && file.type !== "application/pdf") return toast.error("Upload one PDF that shows both sides of your ID.");
+    if (!documentMimeTypes.includes(file.type)) return toast.error("Upload a JPG, PNG or PDF file.");
+    if (file.size > DOCUMENT_MAX_BYTES) return toast.error("Files must be 4 MB or smaller.");
     const formData = new FormData();
     formData.append("side", side.value);
     formData.append("file", file);
@@ -83,8 +108,10 @@ export const DocumentUploadForm = ({ uploaded }) => {
         notifyResult(result, `${side.label} uploaded.`);
         if (!result.ok) return;
         setPreviews((current) => {
-          if (current[side.value]) URL.revokeObjectURL(current[side.value]);
-          return { ...current, [side.value]: URL.createObjectURL(file) };
+          const replaced = both ? documentSides.map((item) => item.value) : [side.value];
+          replaced.filter((key) => current[key]).forEach((key) => URL.revokeObjectURL(current[key]));
+          const cleared = Object.fromEntries(Object.entries(current).filter(([key]) => !replaced.includes(key)));
+          return file.type === "application/pdf" ? cleared : { ...cleared, [side.value]: URL.createObjectURL(file) };
         });
         router.refresh();
       } finally {
@@ -104,13 +131,15 @@ export const DocumentUploadForm = ({ uploaded }) => {
             side={side}
             preview={previews[side.value]}
             uploaded={uploaded[side.value]}
+            combined={combined}
             uploading={uploading === side.value}
             disabled={Boolean(uploading) || submit.pending}
             onFile={handleFile(side)}
           />
         ))}
       </div>
-      <p className="text-xs leading-5 text-neutral-500">Photos are stored privately and only visible to the review team. Make sure all four corners and your details are readable.</p>
+      <CombinedUpload uploaded={combined} uploading={uploading === combinedSide.value} disabled={Boolean(uploading) || submit.pending} onFile={handleFile(combinedSide)} />
+      <p className="text-xs leading-5 text-neutral-500">Files are stored privately and only visible to the review team. Make sure all four corners and your details are readable.</p>
       <GradientButton onClick={() => submit.submit()} disabled={!ready || Boolean(uploading) || submit.pending} className="self-start">
         {submit.pending ? "Submitting…" : "Submit Documents"}
       </GradientButton>

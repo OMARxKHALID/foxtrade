@@ -4,7 +4,7 @@ import { ObjectId } from "mongodb";
 import { formFailure, serverFailure, signInRequired } from "@/lib/action-result";
 import { getAuth } from "@/lib/auth";
 import { getBalances } from "@/lib/ledger";
-import { toAmount } from "@/lib/money";
+import { toAmountString } from "@/lib/money";
 import { listUserTickets } from "@/lib/ticket-store";
 import { listRecords } from "@/features/assets/dal/assets-dal";
 import { getTradingSummary } from "@/features/trading/dal/trading-engine";
@@ -33,7 +33,7 @@ const usdtByUser = async (userIds) => {
     .wallets()
     .aggregate([{ $match: { userId: { $in: userIds }, asset: "USDT" } }, { $group: { _id: "$userId", total: { $sum: "$balance" } } }])
     .toArray();
-  return Object.fromEntries(rows.map((row) => [row._id, toAmount(row.total)]));
+  return Object.fromEntries(rows.map((row) => [row._id, toAmountString(row.total)]));
 };
 
 export const getDashboardStats = async () => {
@@ -129,7 +129,7 @@ export const getClientDetail = async (userId) => {
       emailVerified: Boolean(user.emailVerified),
       createdAt: user.createdAt.toISOString(),
     },
-    balances: balances.filter((item) => !item.balance.eq(0)).map((item) => ({ wallet: item.wallet, asset: item.asset, balance: toAmount(item.balance) })),
+    balances: balances.filter((item) => !item.balance.eq(0)).map((item) => ({ wallet: item.wallet, asset: item.asset, balance: toAmountString(item.balance) })),
     trading,
     records,
     tickets,
@@ -180,6 +180,8 @@ export const listVerifications = async () => {
       reason: doc.documents?.reason ?? null,
       hasFront: Boolean(doc.documents?.front),
       hasBack: Boolean(doc.documents?.back),
+      formats: { front: doc.documents?.front?.format ?? null, back: doc.documents?.back?.format ?? null },
+      combined: Boolean(doc.documents?.front && doc.documents.front.publicId === doc.documents?.back?.publicId),
       submittedAt: doc.documents?.submittedAt?.toISOString() ?? null,
     },
   }));

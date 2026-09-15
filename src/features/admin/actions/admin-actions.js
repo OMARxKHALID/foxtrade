@@ -183,7 +183,8 @@ export const adjustClientBalance = async (input) => {
     const { userId, wallet, asset, amount, note } = parsed.data;
     if (!assetsOf(await readPairs()).some((item) => item.symbol === asset)) return formFailure(`${asset} is not a listed asset.`);
     await withTransaction((session) => postEntries([{ userId, wallet, asset, type: "admin_adjust", amount, note }], session));
-    await writeAudit(admin, amount > 0 ? "client.credit" : "client.debit", user.email, `${amount > 0 ? "+" : ""}${amount} ${asset} (${wallet}): ${note}`);
+    const credit = !amount.startsWith("-");
+    await writeAudit(admin, credit ? "client.credit" : "client.debit", user.email, `${credit ? "+" : ""}${amount} ${asset} (${wallet}): ${note}`);
   });
 };
 
@@ -209,11 +210,11 @@ export const deleteClient = async (userId) => {
     const owned = { userId: parsed.data };
     const verification = await collections.verifications().findOne(owned);
     await deletePrivateImages([verification?.documents?.front?.publicId, verification?.documents?.back?.publicId].filter(Boolean));
-    await Promise.all(
-      [collections.wallets(), collections.ledger(), collections.orders(), collections.positions(), collections.tickets(), collections.verifications(), collections.addresses(), collections.security()].map(
-        (collection) => collection.deleteMany(owned),
-      ),
-    );
+    await withTransaction(async (session) => {
+      for (const collection of [collections.wallets(), collections.ledger(), collections.orders(), collections.positions(), collections.tickets(), collections.verifications(), collections.addresses(), collections.security()]) {
+        await collection.deleteMany(owned, { session });
+      }
+    });
     await getAuth().api.removeUser({ body: { userId: parsed.data }, headers: await headers() });
     await writeAudit(admin, "client.delete", user.email);
   });

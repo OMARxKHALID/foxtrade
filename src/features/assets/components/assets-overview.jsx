@@ -38,7 +38,7 @@ export const AssetsOverview = ({ overview }) => {
   const rows = assets.map((asset) => {
     const price = priceOf(asset.symbol);
     const change = bySymbol[`${asset.symbol}USDT`]?.changePercent ?? 0;
-    const balance = overview?.holdings[asset.symbol]?.total ?? 0;
+    const balance = Number(overview?.holdings[asset.symbol]?.total ?? 0);
     const value = balance * price;
     return {
       id: asset.symbol,

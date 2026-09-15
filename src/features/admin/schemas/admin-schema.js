@@ -1,3 +1,4 @@
+import Big from "big.js";
 import { z } from "zod";
 import { passwordSchema } from "@/features/auth/schemas/auth-schema";
 
@@ -122,10 +123,11 @@ export const balanceAdjustSchema = z.object({
   userId: objectIdSchema,
   wallet: z.enum(["spot", "timed", "perpetual"], { error: "Choose a wallet" }),
   asset: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{2,20}$/, "Choose an asset"),
-  amount: z.coerce
-    .number({ error: "Enter an amount" })
-    .refine((value) => value !== 0, "Amount cannot be 0")
-    .refine((value) => Math.abs(value) <= 1e9, "Amount is too large"),
+  amount: z
+    .union([z.string(), z.number()], { error: "Enter an amount" })
+    .transform((value) => String(value).trim())
+    .refine((value) => /^-?\d+(\.\d+)?$/.test(value) && !new Big(value).eq(0), "Enter an amount other than 0")
+    .refine((value) => !/^-?\d+(\.\d+)?$/.test(value) || new Big(value).abs().lte(1e9), "Amount is too large"),
   note: z.string().trim().min(3, "Add a short reason").max(120),
 });
 

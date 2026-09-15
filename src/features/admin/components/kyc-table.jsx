@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Check, FileSearch, IdCard, X } from "lucide-react";
+import { Check, FileSearch, FileText, IdCard, X } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -13,7 +13,7 @@ import { SegmentedTabs } from "@/components/ui/segmented-tabs";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { IconButton } from "@/components/ui/icon-button";
 import { useActionSubmit } from "@/hooks/use-action-submit";
-import { documentSides } from "@/lib/document-rules";
+import { combinedSide, documentSides } from "@/lib/document-rules";
 import { documentStatus, kycStatus } from "@/lib/status";
 import { cn } from "@/lib/utils";
 import { reviewClientDocuments, reviewClientVerification } from "@/features/admin/actions/admin-actions";
@@ -52,14 +52,25 @@ const DocumentsDialog = ({ submission, onClose }) => {
         <StatusBadge tone={documentStatus[status].tone}>{documentStatus[status].label}</StatusBadge>
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {documentSides.map((side) => (
-          <figure key={side.value} className="flex flex-col gap-2">
-            <a href={`/api/admin/kyc/${submission.id}/${side.value}`} target="_blank" rel="noreferrer" className="relative block aspect-[16/10] overflow-hidden rounded-xl border border-white/10 bg-field">
-              <Image src={`/api/admin/kyc/${submission.id}/${side.value}`} alt={`${side.label} of ${submission.fullName}`} fill unoptimized className="object-contain" />
-            </a>
-            <figcaption className="text-xs text-neutral-500">{side.label} · opens full size</figcaption>
-          </figure>
-        ))}
+        {(submission.documents.combined ? [{ ...combinedSide, value: "front" }] : documentSides).map((side) => {
+          const href = `/api/admin/kyc/${submission.id}/${side.value}`;
+          const pdf = submission.documents.formats[side.value] === "pdf";
+          return (
+            <figure key={side.value} className="flex flex-col gap-2">
+              {pdf ? (
+                <a href={href} className="flex aspect-[16/10] flex-col items-center justify-center gap-2 rounded-xl border border-white/10 bg-field text-sm text-white transition-colors hover:border-brand/50">
+                  <FileText className="size-8 text-neutral-400" strokeWidth={1.5} />
+                  PDF document
+                </a>
+              ) : (
+                <a href={href} target="_blank" rel="noreferrer" className="relative block aspect-[16/10] overflow-hidden rounded-xl border border-white/10 bg-field">
+                  <Image src={href} alt={`${side.label} of ${submission.fullName}`} fill unoptimized className="object-contain" />
+                </a>
+              )}
+              <figcaption className="text-xs text-neutral-500">{side.label} · {pdf ? "downloads the PDF" : "opens full size"}</figcaption>
+            </figure>
+          );
+        })}
       </div>
       {status !== "rejected" && (
         <label className="flex flex-col gap-2 text-xs text-neutral-300">

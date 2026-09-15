@@ -6,7 +6,7 @@ import { LedgerError, getBalance, getBalances, postEntries, withTransaction } fr
 import { fetchLatestPrices, fetchTickers } from "@/lib/market/binance-rest";
 import { readPairs } from "@/lib/market/pair-store";
 import { QUOTE, assetsOf } from "@/lib/market/pairs";
-import { toAmount, toBig } from "@/lib/money";
+import { toAmount, toAmountString, toBig } from "@/lib/money";
 import { collections } from "@/lib/mongo";
 import { readPlatformSettings } from "@/lib/platform-settings";
 import { verifyPin } from "@/lib/pin";
@@ -47,14 +47,14 @@ export const getAssetsOverview = async (userId) => {
     const value = item.balance.times(prices[item.asset] ?? 0);
     holdings[item.asset] ??= { total: toBig(0), byWallet: {} };
     holdings[item.asset].total = holdings[item.asset].total.plus(item.balance);
-    holdings[item.asset].byWallet[item.wallet] = toAmount(item.balance);
+    holdings[item.asset].byWallet[item.wallet] = toAmountString(item.balance);
     walletTotals[item.wallet] = (walletTotals[item.wallet] ?? toBig(0)).plus(value);
     total = total.plus(value);
   }
   return {
     totalUsdt: toAmount(total),
     walletTotals: Object.fromEntries(Object.entries(walletTotals).map(([wallet, value]) => [wallet, toAmount(value)])),
-    holdings: Object.fromEntries(Object.entries(holdings).map(([asset, item]) => [asset, { total: toAmount(item.total), byWallet: item.byWallet }])),
+    holdings: Object.fromEntries(Object.entries(holdings).map(([asset, item]) => [asset, { total: toAmountString(item.total), byWallet: item.byWallet }])),
     pricesStale,
   };
 };
@@ -70,8 +70,8 @@ export const listRecords = async (userId, { asset, limit = RECORDS_LIMIT } = {})
     type: doc.type,
     wallet: doc.wallet,
     asset: doc.asset,
-    amount: toAmount(doc.amount),
-    balanceAfter: toAmount(doc.balanceAfter),
+    amount: toAmountString(doc.amount),
+    balanceAfter: toAmountString(doc.balanceAfter),
     note: doc.note,
   }));
 };
@@ -136,7 +136,6 @@ export const convertAssets = async (userId, { from, to, amount }) => {
       session,
     ),
   );
-  return { receive: toAmount(receive) };
 };
 
 export const transferAssets = async (userId, { from, to, asset, amount }) => {

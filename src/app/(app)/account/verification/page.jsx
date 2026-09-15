@@ -59,7 +59,7 @@ const VerificationPage = async () => {
           <CardHeader
             id="advanced-title"
             title="Advanced verification"
-            description="Upload clear photos of the front and back of the ID you used for basic verification."
+            description="Upload clear photos or a PDF of the front and back of the ID you used for basic verification."
             actions={<StatusBadge tone={documentsBadge.tone}>{documentsBadge.label}</StatusBadge>}
           />
           <CardBody className="flex flex-col gap-5">
@@ -70,10 +70,13 @@ const VerificationPage = async () => {
             )}
             {status === "approved" && storageReady && documentsState === "approved" && <p className="text-sm leading-6 text-neutral-400">Your identity documents are verified.</p>}
             {status === "approved" && storageReady && documentsState === "rejected" && documents?.reason && (
-              <p className="rounded-lg border border-down/30 bg-down/10 px-3 py-2.5 text-xs text-down">Reason: {documents.reason}. Upload new photos and submit again.</p>
+              <p className="rounded-lg border border-down/30 bg-down/10 px-3 py-2.5 text-xs text-down">Reason: {documents.reason}. Upload new files and submit again.</p>
             )}
             {status === "approved" && storageReady && ["none", "draft", "rejected"].includes(documentsState) && (
-              <DocumentUploadForm uploaded={{ front: Boolean(documents?.front), back: Boolean(documents?.back) }} />
+              <DocumentUploadForm
+                uploaded={{ front: documents?.front?.format ?? null, back: documents?.back?.format ?? null }}
+                combined={Boolean(documents?.front && documents.front.publicId === documents?.back?.publicId)}
+              />
             )}
           </CardBody>
         </GlowCard>

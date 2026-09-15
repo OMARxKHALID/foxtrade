@@ -34,6 +34,4 @@ export const collections = {
   security: () => getDb().collection("security"),
   rateLimits: () => getDb().collection("rate_limits"),
   settings: () => getDb().collection("settings"),
-  profiles: () => getDb().collection("profiles"),
-  follows: () => getDb().collection("follows"),
 };

@@ -57,7 +57,7 @@ export const ClientsTable = ({ clients }) => {
   const rows = visible.map((client) => ({
     id: client.id,
     searchText: client.email,
-    sortValues: { email: client.email, usdt: client.usdt, createdAt: client.createdAt },
+    sortValues: { email: client.email, usdt: Number(client.usdt), createdAt: client.createdAt },
     cells: {
       email: (
         <span className="block min-w-0">

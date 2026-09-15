@@ -5,6 +5,7 @@ import { getEnv } from "@/lib/env";
 const signatures = {
   jpg: [0xff, 0xd8, 0xff],
   png: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
+  pdf: [0x25, 0x50, 0x44, 0x46, 0x2d],
 };
 
 export const isDocumentStorageConfigured = () => {
@@ -18,7 +19,7 @@ const client = () => {
   return cloudinary;
 };
 
-export const detectImageFormat = (buffer) =>
+export const detectDocumentFormat = (buffer) =>
   Object.entries(signatures).find(([, bytes]) => bytes.every((byte, index) => buffer[index] === byte))?.[0] ?? null;
 
 export const uploadPrivateImage = (buffer, { folder, publicId }) =>
@@ -31,8 +32,9 @@ export const uploadPrivateImage = (buffer, { folder, publicId }) =>
   });
 
 export const deletePrivateImages = async (publicIds) => {
-  if (!publicIds.length || !isDocumentStorageConfigured()) return;
-  await client().api.delete_resources(publicIds, { type: "private", resource_type: "image" });
+  const unique = [...new Set(publicIds.filter(Boolean))];
+  if (!unique.length || !isDocumentStorageConfigured()) return;
+  await client().api.delete_resources(unique, { type: "private", resource_type: "image" });
 };
 
 export const privateImageUrl = (publicId, format) =>

@@ -15,7 +15,7 @@ export const recordTypeGroups = {
 export const toRecordRow = (record) => ({
   id: record.id,
   searchText: `${record.asset} ${ledgerTypeLabels[record.type] ?? record.type} ${record.note ?? ""}`,
-  sortValues: { time: record.time, amount: record.amount },
+  sortValues: { time: record.time, amount: Number(record.amount) },
   cells: {
     time: <span className="text-neutral-300 tabular-nums">{timeFormat.format(new Date(record.time))}</span>,
     type: (

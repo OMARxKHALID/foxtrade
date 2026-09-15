@@ -50,7 +50,6 @@ export const getLeaderboard = async () => {
   return qualified
     .filter(([id]) => emails[id])
     .map(([id, stats]) => ({
-      id,
       trader: maskEmail(emails[id]),
       trades: stats.trades,
       winRate: Math.round((stats.wins / stats.trades) * 100),

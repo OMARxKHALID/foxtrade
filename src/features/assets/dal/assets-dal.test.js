@@ -1,7 +1,9 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { collections } from "@/lib/mongo";
 import { postEntries } from "@/lib/ledger";
-import { claimFaucet, transferAssets } from "./assets-dal";
+import { toBig } from "@/lib/money";
+import { transferSchema } from "@/features/assets/schemas/assets-schema";
+import { claimFaucet, getAssetsOverview, transferAssets } from "./assets-dal";
 
 vi.mock("next/headers", () => ({ headers: vi.fn(async () => new Headers()) }));
 
@@ -36,6 +38,29 @@ describe("Insufficient-balance rollback", () => {
     expect(after.balance.toString()).toBe(before.balance.toString());
     const transfers = await collections.ledger().find({ userId, type: "transfer" }).toArray();
     expect(transfers).toHaveLength(0);
+  });
+});
+
+describe("Full-precision amounts", () => {
+  it("transfers a max balance above 1e7 exactly, with no dust left behind", async () => {
+    const userId = "u-precision";
+    const balance = "12345678.12345678";
+    await postEntries([{ userId, wallet: "spot", asset: "USDT", type: "faucet", amount: balance }], null);
+    const overview = await getAssetsOverview(userId);
+    expect(overview.holdings.USDT.byWallet.spot).toBe(balance);
+    const parsed = transferSchema.parse({ from: "spot", to: "perpetual", asset: "USDT", amount: overview.holdings.USDT.byWallet.spot });
+    expect(parsed.amount).toBe(balance);
+    await transferAssets(userId, parsed);
+    const spot = await collections.wallets().findOne({ userId, wallet: "spot", asset: "USDT" });
+    const perpetual = await collections.wallets().findOne({ userId, wallet: "perpetual", asset: "USDT" });
+    expect(toBig(spot.balance).eq(0)).toBe(true);
+    expect(toBig(perpetual.balance).toFixed()).toBe(balance);
+  });
+
+  it("rejects zero, negative and non-numeric amounts", () => {
+    ["", "0", "-5", "abc", "1e5"].forEach((amount) => {
+      expect(transferSchema.safeParse({ from: "spot", to: "perpetual", asset: "USDT", amount }).success).toBe(false);
+    });
   });
 });
 

@@ -31,7 +31,7 @@ const columns = [
 const CopyTradingPage = async () => {
   const leaders = await getLeaderboard();
   const rows = leaders.map((row) => ({
-    id: row.id,
+    id: String(row.rank),
     searchText: row.trader,
     sortValues: row,
     cells: {

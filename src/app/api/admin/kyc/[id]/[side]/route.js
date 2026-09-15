@@ -6,7 +6,7 @@ import { getCurrentUser, isAdmin } from "@/lib/session";
 
 const notFound = () => new Response("Not found", { status: 404 });
 
-const contentTypes = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png" };
+const contentTypes = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", pdf: "application/pdf" };
 
 export const GET = async (request, { params }) => {
   const user = await getCurrentUser().catch(() => null);
@@ -21,6 +21,7 @@ export const GET = async (request, { params }) => {
   return new Response(upstream.body, {
     headers: {
       "Content-Type": contentTypes[document.format] ?? "application/octet-stream",
+      ...(document.format === "pdf" ? { "Content-Disposition": `attachment; filename="kyc-${id}-${side}.pdf"` } : {}),
       "Cache-Control": "private, no-store",
       "X-Content-Type-Options": "nosniff",
     },

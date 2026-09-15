@@ -4,7 +4,7 @@ import { LedgerError, getBalance, postEntries, withTransaction } from "@/lib/led
 import { fetchKlineRange, fetchLatestPrices } from "@/lib/market/binance-rest";
 import { readPairs } from "@/lib/market/pair-store";
 import { findPair } from "@/lib/market/pairs";
-import { toAmount, toBig } from "@/lib/money";
+import { toAmount, toAmountString, toBig } from "@/lib/money";
 import { collections } from "@/lib/mongo";
 import { defaultPlatformSettings, readPlatformSettings } from "@/lib/platform-settings";
 
@@ -14,6 +14,7 @@ const SETTLE_DELAY = 1500;
 const SETTLE_FALLBACK_MS = 5 * MINUTE;
 const SETTLE_DEBOUNCE_MS = 5000;
 const CHECK_OVERLAP_MS = 2 * SECOND;
+const SETTLE_BATCH_SIZE = 10;
 
 let indexesReady;
 
@@ -112,6 +113,7 @@ export const placePerpetualOrder = async (userId, { symbol, side, type, price, a
   if (!pair.perpetualEnabled) throw new LedgerError(`Futures trading on ${pair.base}/USDT is paused.`);
   const maxLeverage = Math.min(pair.maxLeverage, settings.maxLeverage);
   if (leverage > maxLeverage) throw new LedgerError(`Maximum leverage for ${pair.base}/USDT is ${maxLeverage}x.`);
+  if (leverage * settings.maintenanceMarginRate >= 1) throw new LedgerError(`Leverage must be below ${Math.ceil(1 / settings.maintenanceMarginRate)}x at the current maintenance margin.`);
   const market = await latestPrice(pair.symbol);
   if (type === "limit" && (side === "long" ? price >= market : price <= market)) {
     throw new LedgerError(`A ${side} limit price must be ${side === "long" ? "below" : "above"} the market price. Use a market order to fill now.`);
@@ -169,11 +171,11 @@ const closePositionAt = async (position, exitPrice, reason) => {
   const payout = payoutBig.gt(0) ? toAmount(payoutBig) : 0;
   await withTransaction(async (session) => {
     const claimed = await collections.positions().findOneAndUpdate(
-      { _id: position._id, status: "open" },
+      { _id: position._id, status: "open", margin: position.margin },
       { $set: { status: liquidated ? "liquidated" : "closed", exitPrice, pnl: toAmount(pnl), closeFee: toAmount(closeFee), payout, closeReason: reason, closedAt: new Date() } },
       { session },
     );
-    if (!claimed) throw new LedgerError("This position is already closed.");
+    if (!claimed) throw new LedgerError("This position is already closed or just changed. Try again.");
     if (payout > 0) {
       await postEntries([{ userId: position.userId, wallet: "perpetual", asset: "USDT", type: "perp_close", amount: payout, refId: position._id.toString(), note: reason === "manual" ? "Closed" : reason.replace("_", " ") }], session);
     }
@@ -184,7 +186,8 @@ const triggerFor = (position, candle) => {
   const long = position.side === "long";
   if (long ? candle.low <= position.liquidationPrice : candle.high >= position.liquidationPrice) return ["liquidation", position.liquidationPrice];
   if (position.stopLoss && (long ? candle.low <= position.stopLoss : candle.high >= position.stopLoss)) return ["stop_loss", position.stopLoss];
-  if (position.takeProfit && (long ? candle.high >= position.takeProfit : candle.low <= position.takeProfit)) return ["take_profit", position.takeProfit];
+  const afterOpen = position.openedAt && candle.openTime > position.openedAt.getTime();
+  if (afterOpen && position.takeProfit && (long ? candle.high >= position.takeProfit : candle.low <= position.takeProfit)) return ["take_profit", position.takeProfit];
   return null;
 };
 
@@ -209,7 +212,6 @@ const evaluatePosition = async (position) => {
           .findOneAndUpdate({ _id: current._id, status: "pending" }, { $set: { status: "open", openedAt: new Date(Math.max(candle.openTime, current.createdAt.getTime())) } }, { returnDocument: "after" });
         if (!filled) return;
         current = filled;
-        continue;
       }
       const trigger = triggerFor(current, candle);
       if (trigger) {
@@ -250,10 +252,12 @@ export const settleAll = async () => {
     collections.positions().distinct("userId", { status: { $in: ["open", "pending"] } }),
   ]);
   const users = [...new Set([...orderUsers, ...positionUsers])];
-  const results = await Promise.allSettled(users.map(settleUser));
-  results.forEach((result) => {
-    if (result.status === "rejected") console.error("Settlement sweep failed for a user:", result.reason);
-  });
+  for (let index = 0; index < users.length; index += SETTLE_BATCH_SIZE) {
+    const results = await Promise.allSettled(users.slice(index, index + SETTLE_BATCH_SIZE).map(settleUser));
+    results.forEach((result) => {
+      if (result.status === "rejected") console.error("Settlement sweep failed for a user:", result.reason);
+    });
+  }
   return users.length;
 };
 
@@ -302,6 +306,7 @@ export const closeAllPositions = async (userId) => {
 };
 
 export const cancelPendingOrder = async (userId, id) => {
+  await evaluatePosition(await ownPosition(userId, id, "pending"));
   const position = await ownPosition(userId, id, "pending");
   await withTransaction(async (session) => {
     const claimed = await collections.positions().findOneAndUpdate({ _id: position._id, status: "pending" }, { $set: { status: "cancelled", closedAt: new Date() } }, { session });
@@ -381,7 +386,7 @@ export const getTradingSnapshot = async (userId, market) => {
       ? collections.orders().find({ userId }).sort({ openedAt: -1 }).limit(200).toArray()
       : collections.positions().find({ userId }).sort({ createdAt: -1 }).limit(200).toArray(),
   ]);
-  return { available: toAmount(balance), items: items.map(market === "timed" ? timedDTO : positionDTO) };
+  return { available: toAmountString(balance), items: items.map(market === "timed" ? timedDTO : positionDTO) };
 };
 
 export const getOrderDetail = async (userId, market, id) => {
