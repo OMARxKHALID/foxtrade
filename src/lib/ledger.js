@@ -1,3 +1,4 @@
+import "server-only";
 import { collections, getMongoClient } from "@/lib/mongo";
 import { toBig, toDecimal } from "@/lib/money";
 import { walletLabels } from "@/lib/demo";

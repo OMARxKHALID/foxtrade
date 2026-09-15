@@ -2,8 +2,9 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { collections } from "@/lib/mongo";
 import { postEntries } from "@/lib/ledger";
 import { toBig } from "@/lib/money";
-import { transferSchema } from "@/features/assets/schemas/assets-schema";
-import { claimFaucet, getAssetsOverview, transferAssets } from "./assets-dal";
+import { setPin } from "@/lib/pin";
+import { transferSchema, withdrawSchema } from "@/features/assets/schemas/assets-schema";
+import { checkWithdrawal, claimFaucet, getAssetsOverview, transferAssets } from "./assets-dal";
 
 vi.mock("next/headers", () => ({ headers: vi.fn(async () => new Headers()) }));
 
@@ -61,6 +62,44 @@ describe("Full-precision amounts", () => {
     ["", "0", "-5", "abc", "1e5"].forEach((amount) => {
       expect(transferSchema.safeParse({ from: "spot", to: "perpetual", asset: "USDT", amount }).success).toBe(false);
     });
+  });
+
+  it("rejects amounts with more than 8 decimals so the ledger cannot round them away", () => {
+    expect(transferSchema.safeParse({ from: "spot", to: "perpetual", asset: "USDT", amount: "0.123456789" }).success).toBe(false);
+    expect(transferSchema.safeParse({ from: "spot", to: "perpetual", asset: "USDT", amount: "0.12345678" }).success).toBe(true);
+  });
+});
+
+describe("Withdrawal checks", () => {
+  const withdrawal = { asset: "USDT", network: "TRC20", address: "TXn9Yh1a2b3c4d5e6f7g8h9i0jklmnopqr", amount: "50", pin: "123456" };
+
+  it("refuses when no PIN is set", async () => {
+    const userId = "u-withdraw-nopin";
+    await postEntries([{ userId, wallet: "spot", asset: "USDT", type: "faucet", amount: 100 }], null);
+    await expect(checkWithdrawal(userId, withdrawSchema.parse(withdrawal))).rejects.toThrow(/PIN is incorrect or not set/i);
+  });
+
+  it("refuses a wrong PIN before checking the balance", async () => {
+    const userId = "u-withdraw-wrongpin";
+    await setPin(userId, "123456");
+    await expect(checkWithdrawal(userId, withdrawSchema.parse({ ...withdrawal, pin: "000000" }))).rejects.toThrow(/PIN is incorrect/i);
+  });
+
+  it("refuses when the spot balance is too low", async () => {
+    const userId = "u-withdraw-poor";
+    await setPin(userId, "123456");
+    await postEntries([{ userId, wallet: "spot", asset: "USDT", type: "faucet", amount: 10 }], null);
+    await expect(checkWithdrawal(userId, withdrawSchema.parse(withdrawal))).rejects.toThrow(/Insufficient USDT/i);
+  });
+
+  it("always refuses the payout and never moves money, even when everything checks out", async () => {
+    const userId = "u-withdraw-ok";
+    await setPin(userId, "123456");
+    await postEntries([{ userId, wallet: "spot", asset: "USDT", type: "faucet", amount: 100 }], null);
+    await expect(checkWithdrawal(userId, withdrawSchema.parse(withdrawal))).rejects.toThrow(/Demo balances cannot be sent/i);
+    const wallet = await collections.wallets().findOne({ userId, wallet: "spot", asset: "USDT" });
+    expect(Number(wallet.balance)).toBe(100);
+    expect(await collections.ledger().countDocuments({ userId, type: "withdraw" })).toBe(0);
   });
 });
 
