@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { SegmentedTabs } from "@/components/ui/segmented-tabs";
 import { useLiveTickers } from "@/hooks/use-live-tickers";
-import { allSymbols, pairBySymbol } from "@/lib/market/pairs";
+import { usePlatform } from "@/hooks/use-platform";
 import { cn } from "@/lib/utils";
 import { usePreferencesStore } from "@/store/use-preferences-store";
 import { PairCell, compactText, marketColumns, mutedPrice, priceText, tickerSortValues } from "@/features/market/components/market-cells";
@@ -21,19 +21,19 @@ const markets = [
 
 const columns = [...marketColumns, { key: "actions", header: <span className="sr-only">Actions</span>, align: "right" }];
 
-export const MarketsTable = ({ settings = {} }) => {
+export const MarketsTable = () => {
   const [market, setMarket] = useState("perpetual");
   const favorites = usePreferencesStore((state) => state.favorites);
   const toggleFavorite = usePreferencesStore((state) => state.toggleFavorite);
-  const tickers = useLiveTickers(allSymbols);
+  const { symbols, pairBySymbol } = usePlatform();
+  const tickers = useLiveTickers(symbols);
   const path = markets.find((item) => item.value === market).path;
 
   const rows = tickers
     .filter((ticker) => market !== "favorites" || favorites.includes(ticker.symbol))
     .filter((ticker) => {
-      const setting = settings[ticker.symbol];
-      if (!setting) return true;
-      return path === "timed" ? setting.timedEnabled : setting.perpetualEnabled;
+      const pair = pairBySymbol[ticker.symbol];
+      return path === "timed" ? pair?.timedEnabled : pair?.perpetualEnabled;
     })
     .map((ticker) => {
       const pair = pairBySymbol[ticker.symbol];

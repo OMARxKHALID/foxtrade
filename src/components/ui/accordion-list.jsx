@@ -15,7 +15,7 @@ export const AccordionList = ({ items, idPrefix }) => {
         const open = openIndex === i;
         const panelId = `${idPrefix}-${i}`;
         return (
-          <li key={item.question} className={cn("rounded-xl border bg-cell", open ? "border-brand/50" : "border-white/5")}>
+          <li key={`${i}-${item.question}`} className={cn("rounded-xl border bg-cell", open ? "border-brand/50" : "border-white/5")}>
             <h3>
               <button
                 type="button"

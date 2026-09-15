@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { getPlatformSettings } from "@/lib/cached-settings";
 import { LoginForm } from "@/features/auth/components/auth-forms";
 
 export const metadata = {
@@ -9,7 +10,7 @@ export const metadata = {
 export const instant = false;
 
 const LoginPage = async ({ searchParams }) => {
-  const { next, reset } = await searchParams;
+  const [{ next, reset }, { siteName }] = await Promise.all([searchParams, getPlatformSettings()]);
 
   return (
     <>
@@ -20,7 +21,7 @@ const LoginPage = async ({ searchParams }) => {
         <LoginForm next={typeof next === "string" ? next : "/"} />
       </div>
       <p className="mt-8 text-center text-sm text-neutral-400">
-        New to Foxtrade? <Link href="/register" className="text-brand">Sign up</Link>
+        New to {siteName}? <Link href="/register" className="text-brand">Sign up</Link>
       </p>
     </>
   );

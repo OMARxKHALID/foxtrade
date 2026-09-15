@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { GlowCard } from "@/components/ui/glow-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { getPlatformSettings } from "@/lib/cached-settings";
 import { getPublishedNotices } from "@/lib/content-store";
 
 export const metadata = {
@@ -14,7 +15,7 @@ export const metadata = {
 const dateFormat = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" });
 
 const NoticesPage = async () => {
-  const notices = await getPublishedNotices();
+  const [notices, { siteName }] = await Promise.all([getPublishedNotices(), getPlatformSettings()]);
 
   return (
     <Container className="flex flex-col gap-4 lg:gap-6">
@@ -41,7 +42,7 @@ const NoticesPage = async () => {
             ))}
           </ul>
         ) : (
-          <EmptyState icon={Bell} title="No notices yet" text="Announcements from the Foxtrade team appear here." />
+          <EmptyState icon={Bell} title="No notices yet" text={`Announcements from the ${siteName} team appear here.`} />
         )}
       </GlowCard>
     </Container>

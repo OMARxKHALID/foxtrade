@@ -15,9 +15,9 @@ import { useLiveTickers } from "@/hooks/use-live-tickers";
 import { formatPrice, formatUsdt } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { placePerpetualOrder } from "@/features/trading/actions/place-order";
-import { perpetualRules } from "@/lib/market/trading-rules";
+import { usePlatform } from "@/hooks/use-platform";
 import { ordersQuery, tradingKeys } from "@/features/trading/queries/trading-queries";
-import { perpetualOrderSchema } from "@/features/trading/schemas/order-schema";
+import { perpetualOrderSchemaFor } from "@/features/trading/schemas/order-schema";
 
 const sides = [
   { value: "long", label: "Long" },
@@ -31,7 +31,8 @@ const types = [
 
 const leverageMarks = [1, 10, 25, 50, 100];
 
-export const PerpetualOrderForm = ({ symbol, enabled = true, maxLeverage = perpetualRules.maxLeverage }) => {
+export const PerpetualOrderForm = ({ symbol, enabled = true, maxLeverage }) => {
+  const { takerFeeRate, maintenanceMarginRate } = usePlatform().settings;
   const [ticker] = useLiveTickers([symbol]);
   const [showTpSl, setShowTpSl] = useState(false);
   const {
@@ -42,7 +43,7 @@ export const PerpetualOrderForm = ({ symbol, enabled = true, maxLeverage = perpe
     control,
     formState: { errors },
   } = useForm({
-    resolver: zodResolver(perpetualOrderSchema),
+    resolver: zodResolver(perpetualOrderSchemaFor(maxLeverage)),
     defaultValues: { symbol, side: "long", type: "market", amount: 100, leverage: Math.min(10, maxLeverage) },
   });
   const [side, type, amount, leverage, limitPrice] = useWatch({ control, name: ["side", "type", "amount", "leverage", "price"] });
@@ -51,12 +52,12 @@ export const PerpetualOrderForm = ({ symbol, enabled = true, maxLeverage = perpe
   const margin = Number(amount) || 0;
   const lev = Number(leverage) || 1;
   const notional = margin * lev;
-  const fee = notional * perpetualRules.takerFeeRate;
+  const fee = notional * takerFeeRate;
   const liquidation =
     entry > 0
       ? side === "long"
-        ? entry * (1 - 1 / lev + perpetualRules.maintenanceMarginRate)
-        : entry * (1 + 1 / lev - perpetualRules.maintenanceMarginRate)
+        ? entry * (1 - 1 / lev + maintenanceMarginRate)
+        : entry * (1 + 1 / lev - maintenanceMarginRate)
       : 0;
 
   const handleSide = (value) => setValue("side", value);
@@ -151,7 +152,7 @@ export const PerpetualOrderForm = ({ symbol, enabled = true, maxLeverage = perpe
           { label: "Entry price", value: entry ? formatPrice(entry) : "--" },
           { label: "Position size", value: `${formatUsdt(notional)} USDT` },
           { label: "Est. liquidation", value: liquidation ? formatPrice(liquidation) : "--", className: "text-down" },
-          { label: `Fee (${perpetualRules.takerFeeRate * 100}%)`, value: `${formatUsdt(fee)} USDT` },
+          { label: `Fee (${+(takerFeeRate * 100).toFixed(4)}%)`, value: `${formatUsdt(fee)} USDT` },
         ]}
       />
 

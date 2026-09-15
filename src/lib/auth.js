@@ -4,12 +4,11 @@ import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { nextCookies } from "better-auth/next-js";
 import { admin, emailOTP } from "better-auth/plugins";
 import { ObjectId } from "mongodb";
-import { DEMO_FAUCET_AMOUNT } from "@/lib/demo";
 import { sendEmail } from "@/lib/email";
 import { getEnv } from "@/lib/env";
 import { postEntries, withTransaction } from "@/lib/ledger";
 import { collections, getDb, getMongoClient } from "@/lib/mongo";
-import { site } from "@/lib/site";
+import { defaultPlatformSettings, readPlatformSettings } from "@/lib/platform-settings";
 import { passwordSchema } from "@/features/auth/schemas/auth-schema";
 
 const otpSubjects = {
@@ -24,7 +23,25 @@ const passwordFields = {
   "/email-otp/reset-password": "password",
   "/reset-password": "newPassword",
   "/change-password": "newPassword",
+  "/admin/set-user-password": "newPassword",
 };
+
+const blockedPaths = new Set([
+  "/update-user",
+  "/change-email",
+  "/delete-user",
+  "/delete-user/callback",
+  "/set-password",
+  "/sign-in/email-otp",
+  "/email-otp/send-verification-otp",
+  "/email-otp/check-verification-otp",
+  "/email-otp/verify-email",
+  "/email-otp/request-email-change",
+  "/email-otp/change-email",
+  "/admin/impersonate-user",
+  "/admin/stop-impersonating",
+  "/admin/create-user",
+]);
 
 const authRateRules = {
   "/sign-in/email": { window: 900, max: 10 },
@@ -45,7 +62,7 @@ const promoteConfiguredAdmin = async (userId) => {
 const createAuth = () => {
   const env = getEnv();
   return betterAuth({
-    appName: site.name,
+    appName: defaultPlatformSettings.siteName,
     baseURL: env.BETTER_AUTH_URL,
     secret: env.BETTER_AUTH_SECRET,
     database: mongodbAdapter(getDb(), { client: getMongoClient() }),
@@ -54,6 +71,7 @@ const createAuth = () => {
     rateLimit: { enabled: true, storage: "database", window: 60, max: 60, customRules: authRateRules },
     hooks: {
       before: createAuthMiddleware(async (ctx) => {
+        if (blockedPaths.has(ctx.path)) throw new APIError("NOT_FOUND", { message: "Not found" });
         const field = passwordFields[ctx.path];
         if (!field) return;
         const result = passwordSchema.safeParse(ctx.body?.[field]);
@@ -64,8 +82,9 @@ const createAuth = () => {
       user: {
         create: {
           after: async (user) => {
+            const { demoAmount } = await readPlatformSettings();
             await withTransaction((session) =>
-              postEntries([{ userId: user.id, wallet: "spot", asset: "USDT", type: "faucet", amount: DEMO_FAUCET_AMOUNT, note: "Welcome demo funds" }], session),
+              postEntries([{ userId: user.id, wallet: "spot", asset: "USDT", type: "faucet", amount: demoAmount, note: "Welcome demo funds" }], session),
             );
           },
         },
@@ -83,10 +102,11 @@ const createAuth = () => {
         otpLength: 6,
         expiresIn: 600,
         sendVerificationOTP: async ({ email, otp, type }) => {
+          const { siteName } = await readPlatformSettings();
           await sendEmail({
             to: email,
-            subject: `${otpSubjects[type] ?? "Your code"} · ${site.name}`,
-            text: `Your ${site.name} code is ${otp}. It expires in 10 minutes. If you did not request it, ignore this email.`,
+            subject: `${otpSubjects[type] ?? "Your code"} · ${siteName}`,
+            text: `Your ${siteName} code is ${otp}. It expires in 10 minutes. If you did not request it, ignore this email.`,
           });
         },
       }),

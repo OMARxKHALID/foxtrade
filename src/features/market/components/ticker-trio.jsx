@@ -6,10 +6,11 @@ import { ChangePill } from "@/components/ui/change-pill";
 import { GlowCard } from "@/components/ui/glow-card";
 import { useLiveTickers } from "@/hooks/use-live-tickers";
 import { formatCompact, formatPrice } from "@/lib/format";
-import { featuredSymbols, pairBySymbol } from "@/lib/market/pairs";
+import { usePlatform } from "@/hooks/use-platform";
 import { cn } from "@/lib/utils";
 
 export const TickerTrio = () => {
+  const { featuredSymbols, pairBySymbol } = usePlatform();
   const tickers = useLiveTickers(featuredSymbols);
 
   return (

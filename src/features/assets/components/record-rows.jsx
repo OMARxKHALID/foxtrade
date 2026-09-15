@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 const timeFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
 export const recordTypeGroups = {
-  faucet: ["faucet", "admin_reset"],
+  faucet: ["faucet", "admin_reset", "admin_adjust"],
   convert: ["convert"],
   transfer: ["transfer"],
   trade: ["timed_stake", "timed_payout", "perp_margin", "perp_close", "perp_fee"],

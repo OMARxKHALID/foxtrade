@@ -1,5 +1,3 @@
-import { perpetualRules } from "@/lib/market/trading-rules";
-
 export const tradingGuides = {
   timed: {
     title: "Options Rules",
@@ -41,14 +39,14 @@ export const tradingGuides = {
         items: [
           "Market orders fill at the live price. Limit orders fill when the market reaches your price.",
           "Take-profit and stop-loss prices close the position automatically when touched.",
-          `Leverage from 1x up to ${perpetualRules.maxLeverage}x is available on every pair.`,
+          "Leverage from 1x up to the maximum shown in the table above, which can be lower on some pairs.",
         ],
       },
       {
         heading: "Margin and liquidation",
         items: [
           "Each position uses isolated margin: only the margin assigned to it can be lost.",
-          `Maintenance margin rate is ${perpetualRules.maintenanceMarginRate * 100}% of position value.`,
+          "The maintenance margin rate shown above is applied to position value.",
           "Long liquidation price ≈ entry × (1 − 1/leverage + maintenance margin rate).",
           "Short liquidation price ≈ entry × (1 + 1/leverage − maintenance margin rate).",
           "You can add margin to an open position to move its liquidation price further away.",
@@ -57,7 +55,7 @@ export const tradingGuides = {
       {
         heading: "Fees and PnL",
         items: [
-          `A taker fee of ${perpetualRules.takerFeeRate * 100}% of position value is charged when opening and closing.`,
+          "The taker fee shown above is charged on position value when opening and closing.",
           "Unrealised PnL = (mark price − entry price) × size for longs, reversed for shorts.",
           "Realised PnL is credited to your Futures Wallet when the position closes.",
         ],

@@ -2,11 +2,11 @@ import "server-only";
 import { ObjectId } from "mongodb";
 import { LedgerError, getBalance, postEntries, withTransaction } from "@/lib/ledger";
 import { fetchKlineRange, fetchLatestPrices } from "@/lib/market/binance-rest";
+import { readPairs } from "@/lib/market/pair-store";
 import { findPair } from "@/lib/market/pairs";
-import { perpetualRules, timedDurations } from "@/lib/market/trading-rules";
 import { toAmount, toBig } from "@/lib/money";
 import { collections } from "@/lib/mongo";
-import { getPairSetting } from "@/lib/pair-settings";
+import { defaultPlatformSettings, readPlatformSettings } from "@/lib/platform-settings";
 
 const SECOND = 1000;
 const MINUTE = 60 * SECOND;
@@ -36,9 +36,9 @@ const latestPrice = async (symbol) => {
 
 const toObjectId = (id) => (ObjectId.isValid(id) ? new ObjectId(id) : null);
 
-const liquidationPrice = ({ side, entryPrice, size, margin }) => {
+const liquidationPrice = ({ side, entryPrice, size, margin, maintenanceMarginRate = defaultPlatformSettings.maintenanceMarginRate }) => {
   const notional = toBig(entryPrice).times(size);
-  const buffer = toBig(margin).minus(toBig(perpetualRules.maintenanceMarginRate).times(notional)).div(size);
+  const buffer = toBig(margin).minus(toBig(maintenanceMarginRate).times(notional)).div(size);
   const price = side === "long" ? toBig(entryPrice).minus(buffer) : toBig(entryPrice).plus(buffer);
   return toAmount(price.lt(0) ? toBig(0) : price);
 };
@@ -50,10 +50,11 @@ const pnlAt = ({ side, entryPrice, size }, price) => {
 
 export const placeTimedOrder = async (userId, { symbol, direction, duration, amount }) => {
   await ensureIndexes();
-  const pair = findPair(symbol);
-  const rule = timedDurations.find((item) => item.seconds === duration);
+  const [pairs, settings] = await Promise.all([readPairs(), readPlatformSettings()]);
+  const pair = findPair(pairs, symbol);
+  const rule = settings.timedDurations.find((item) => item.seconds === duration);
   if (!pair || !rule) throw new LedgerError("This market is not available.");
-  if (!(await getPairSetting(pair.symbol)).timedEnabled) throw new LedgerError(`Options trading on ${pair.base}/USDT is paused.`);
+  if (!pair.timedEnabled) throw new LedgerError(`Options trading on ${pair.base}/USDT is paused.`);
   if (amount < rule.minAmount) throw new LedgerError(`Minimum stake for ${duration}s is ${rule.minAmount} USDT.`);
   const openPrice = await latestPrice(pair.symbol);
   const openedAt = new Date();
@@ -105,11 +106,12 @@ const settleTimedOrder = async (order) => {
 
 export const placePerpetualOrder = async (userId, { symbol, side, type, price, amount, leverage, takeProfit, stopLoss }) => {
   await ensureIndexes();
-  const pair = findPair(symbol);
+  const [pairs, settings] = await Promise.all([readPairs(), readPlatformSettings()]);
+  const pair = findPair(pairs, symbol);
   if (!pair) throw new LedgerError("This market is not available.");
-  const setting = await getPairSetting(pair.symbol);
-  if (!setting.perpetualEnabled) throw new LedgerError(`Futures trading on ${pair.base}/USDT is paused.`);
-  if (leverage > setting.maxLeverage) throw new LedgerError(`Maximum leverage for ${pair.base}/USDT is ${setting.maxLeverage}x.`);
+  if (!pair.perpetualEnabled) throw new LedgerError(`Futures trading on ${pair.base}/USDT is paused.`);
+  const maxLeverage = Math.min(pair.maxLeverage, settings.maxLeverage);
+  if (leverage > maxLeverage) throw new LedgerError(`Maximum leverage for ${pair.base}/USDT is ${maxLeverage}x.`);
   const market = await latestPrice(pair.symbol);
   if (type === "limit" && (side === "long" ? price >= market : price <= market)) {
     throw new LedgerError(`A ${side} limit price must be ${side === "long" ? "below" : "above"} the market price. Use a market order to fill now.`);
@@ -117,7 +119,7 @@ export const placePerpetualOrder = async (userId, { symbol, side, type, price, a
   const entryPrice = type === "limit" ? price : market;
   const notional = toBig(amount).times(leverage);
   const size = toAmount(notional.div(entryPrice));
-  const openFee = toAmount(notional.times(perpetualRules.takerFeeRate));
+  const openFee = toAmount(notional.times(settings.takerFeeRate));
   const tp = takeProfit || null;
   const sl = stopLoss || null;
   if (side === "long" && ((tp && tp <= entryPrice) || (sl && sl >= entryPrice))) throw new LedgerError("For a long, take profit must be above and stop loss below the entry price.");
@@ -138,6 +140,8 @@ export const placePerpetualOrder = async (userId, { symbol, side, type, price, a
     takeProfit: tp,
     stopLoss: sl,
     openFee,
+    takerFeeRate: settings.takerFeeRate,
+    maintenanceMarginRate: settings.maintenanceMarginRate,
     status: type === "limit" ? "pending" : "open",
     createdAt: now,
     openedAt: type === "limit" ? null : now,
@@ -160,7 +164,7 @@ export const placePerpetualOrder = async (userId, { symbol, side, type, price, a
 const closePositionAt = async (position, exitPrice, reason) => {
   const liquidated = reason === "liquidation";
   const pnl = liquidated ? toBig(position.margin).times(-1) : pnlAt(position, exitPrice);
-  const closeFee = liquidated ? toBig(0) : toBig(exitPrice).times(position.size).times(perpetualRules.takerFeeRate);
+  const closeFee = liquidated ? toBig(0) : toBig(exitPrice).times(position.size).times(position.takerFeeRate ?? defaultPlatformSettings.takerFeeRate);
   const payoutBig = toBig(position.margin).plus(pnl).minus(closeFee);
   const payout = payoutBig.gt(0) ? toAmount(payoutBig) : 0;
   await withTransaction(async (session) => {
@@ -357,6 +361,7 @@ const positionDTO = (position) => ({
   takeProfit: position.takeProfit,
   stopLoss: position.stopLoss,
   openFee: position.openFee,
+  takerFeeRate: position.takerFeeRate ?? null,
   exitPrice: position.exitPrice ?? null,
   pnl: position.pnl ?? null,
   closeFee: position.closeFee ?? null,

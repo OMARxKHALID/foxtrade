@@ -14,13 +14,15 @@ import { notifyResult } from "@/lib/notify";
 import { formatPrice, formatUsdt } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { placeTimedOrder } from "@/features/trading/actions/place-order";
-import { formatDuration, timedDurations } from "@/lib/market/trading-rules";
+import { usePlatform } from "@/hooks/use-platform";
+import { formatDuration } from "@/lib/market/trading-rules";
 import { ordersQuery, tradingKeys } from "@/features/trading/queries/trading-queries";
-import { timedOrderSchema } from "@/features/trading/schemas/order-schema";
+import { timedOrderSchemaFor } from "@/features/trading/schemas/order-schema";
 
 const presets = [10, 50, 100, 500];
 
 export const TimedTradePanel = ({ symbol, enabled = true }) => {
+  const { timedDurations } = usePlatform().settings;
   const [ticker] = useLiveTickers([symbol]);
   const [pending, startTransition] = useTransition();
   const [activeDirection, setActiveDirection] = useState(null);
@@ -35,7 +37,7 @@ export const TimedTradePanel = ({ symbol, enabled = true }) => {
     control,
     formState: { errors },
   } = useForm({
-    resolver: zodResolver(timedOrderSchema),
+    resolver: zodResolver(timedOrderSchemaFor(timedDurations)),
     defaultValues: { symbol, direction: "call", duration: timedDurations[0].seconds, amount: 50 },
   });
   const duration = useWatch({ control, name: "duration" });

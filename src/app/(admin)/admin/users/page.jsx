@@ -6,12 +6,14 @@ export const metadata = {
   title: "Clients",
 };
 
+export const instant = false;
+
 const UsersPage = async () => {
   const clients = await listClients();
 
   return (
     <>
-      <PageHeader title="Clients" description="Every registered client. Ban abusive accounts or reset a demo balance." />
+      <PageHeader title="Clients" description="Every registered account. Open one to edit its profile, password, role, balances or access." />
       <ClientsTable clients={clients} />
     </>
   );

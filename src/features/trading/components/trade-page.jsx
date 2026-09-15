@@ -13,8 +13,8 @@ import { PerpetualOrderForm } from "@/features/trading/components/perpetual-orde
 import { TimedTradePanel } from "@/features/trading/components/timed-trade-panel";
 import { TradeScreen } from "@/features/trading/components/trade-screen";
 import { tickersQuery, klinesQuery } from "@/lib/market/market-queries";
+import { getPairs, getPlatformSettings } from "@/lib/cached-settings";
 import { findPair } from "@/lib/market/pairs";
-import { getPairSetting } from "@/lib/pair-settings";
 import { getQueryClient } from "@/lib/query-client";
 
 const marketMeta = {
@@ -24,26 +24,26 @@ const marketMeta = {
 
 export const tradePageMetadata = async ({ params }, market) => {
   const { symbol } = await params;
-  const pair = findPair(symbol);
+  const pair = findPair(await getPairs(), symbol);
   const label = marketMeta[market].label;
   return { title: pair ? `${pair.base}/${pair.quote} ${label}` : label };
 };
 
 export const TradePage = async ({ params, market }) => {
   const { symbol } = await params;
-  const pair = findPair(symbol);
+  const [pairs, settings] = await Promise.all([getPairs(), getPlatformSettings()]);
+  const pair = findPair(pairs, symbol);
   if (!pair) notFound();
   await connection();
   const queryClient = getQueryClient();
   void queryClient.prefetchQuery(tickersQuery([pair.symbol]));
   void queryClient.prefetchQuery(klinesQuery(pair.symbol, "15m"));
-  const setting = await getPairSetting(pair.symbol);
 
   const orderPanel =
     market === "timed" ? (
-      <TimedTradePanel symbol={pair.symbol} enabled={setting.timedEnabled} />
+      <TimedTradePanel symbol={pair.symbol} enabled={pair.timedEnabled} />
     ) : (
-      <PerpetualOrderForm symbol={pair.symbol} enabled={setting.perpetualEnabled} maxLeverage={setting.maxLeverage} />
+      <PerpetualOrderForm symbol={pair.symbol} enabled={pair.perpetualEnabled} maxLeverage={Math.min(pair.maxLeverage, settings.maxLeverage)} />
     );
 
   return (

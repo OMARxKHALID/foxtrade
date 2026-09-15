@@ -8,15 +8,17 @@ import { GradientButton } from "@/components/ui/gradient-button";
 import { SelectMenu } from "@/components/ui/select-menu";
 import { useActionSubmit } from "@/hooks/use-action-submit";
 import { useLiveTickers } from "@/hooks/use-live-tickers";
-import { CONVERT_SPREAD } from "@/lib/demo";
 import { formatPrice, formatQuantity } from "@/lib/format";
-import { allSymbols } from "@/lib/market/pairs";
 import { convertAssets } from "@/features/assets/actions/assets-actions";
-import { assetOptions } from "@/features/assets/components/asset-options";
+import { toAssetOptions } from "@/features/assets/components/asset-options";
+import { usePlatform } from "@/hooks/use-platform";
 import { convertSchema } from "@/features/assets/schemas/assets-schema";
 
 export const ConvertForm = ({ holdings }) => {
-  const tickers = useLiveTickers(allSymbols);
+  const { assets, symbols, settings } = usePlatform();
+  const assetOptions = toAssetOptions(assets);
+  const tickers = useLiveTickers(symbols);
+  const { convertSpread } = settings;
   const {
     register,
     handleSubmit,
@@ -31,7 +33,7 @@ export const ConvertForm = ({ holdings }) => {
 
   const usdPrice = (symbol) => (symbol === "USDT" ? 1 : tickers.find((ticker) => ticker.symbol === `${symbol}USDT`)?.price ?? 0);
   const rate = usdPrice(to) ? usdPrice(from) / usdPrice(to) : 0;
-  const receive = (Number(amount) || 0) * rate * (1 - CONVERT_SPREAD);
+  const receive = (Number(amount) || 0) * rate * (1 - convertSpread);
 
   const handleSwap = () => {
     const values = getValues();
@@ -81,7 +83,7 @@ export const ConvertForm = ({ holdings }) => {
       <SummaryList
         items={[
           { label: "Rate", value: rate ? `1 ${from} = ${formatPrice(rate)} ${to}` : "--" },
-          { label: "Spread", value: `${CONVERT_SPREAD * 100}%` },
+          { label: "Spread", value: `${+(convertSpread * 100).toFixed(4)}%` },
         ]}
       />
       <GradientButton type="submit" disabled={pending}>

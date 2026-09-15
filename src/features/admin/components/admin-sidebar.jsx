@@ -2,18 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, Bell, Coins, History, IdCard, Image, LayoutDashboard, LifeBuoy, Users } from "lucide-react";
+import { ArrowLeft, Bell, Coins, FileText, History, IdCard, Image, LayoutDashboard, LifeBuoy, Settings, Users } from "lucide-react";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { cn } from "@/lib/utils";
 
 const links = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin", label: "Overview", icon: LayoutDashboard },
   { href: "/admin/users", label: "Clients", icon: Users },
   { href: "/admin/kyc", label: "KYC Review", icon: IdCard },
   { href: "/admin/pairs", label: "Pairs", icon: Coins },
   { href: "/admin/banners", label: "Banners", icon: Image },
   { href: "/admin/notices", label: "Notices", icon: Bell },
   { href: "/admin/tickets", label: "Tickets", icon: LifeBuoy },
+  { href: "/admin/content", label: "Content", icon: FileText },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
   { href: "/admin/audit", label: "Audit Log", icon: History },
 ];
 

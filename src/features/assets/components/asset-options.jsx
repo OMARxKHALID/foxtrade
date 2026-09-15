@@ -1,11 +1,12 @@
 import { CoinIcon } from "@/components/icons/coin-icon";
-import { assets, networks, wallets } from "@/features/assets/data/assets-config";
+import { networks, wallets } from "@/features/assets/data/assets-config";
 
-export const assetOptions = assets.map((asset) => ({
-  value: asset.symbol,
-  label: asset.symbol,
-  icon: <CoinIcon symbol={asset.symbol} color={asset.color} size="sm" />,
-}));
+export const toAssetOptions = (assets) =>
+  assets.map((asset) => ({
+    value: asset.symbol,
+    label: asset.symbol,
+    icon: <CoinIcon symbol={asset.symbol} color={asset.color} size="sm" />,
+  }));
 
 export const networkOptions = networks.map((network) => ({ value: network, label: network }));
 

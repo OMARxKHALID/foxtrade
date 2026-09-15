@@ -3,7 +3,7 @@ export const legalPages = {
     title: "Terms of Service",
     updated: "2026-09-01",
     sections: [
-      { heading: "Demo service", text: "Foxtrade is a simulated trading service. Balances, profits and losses are virtual and have no monetary value." },
+      { heading: "Demo service", text: "{siteName} is a simulated trading service. Balances, profits and losses are virtual and have no monetary value." },
       { heading: "Market data", text: "Market data is provided by third parties and may be delayed or inaccurate. It is offered for educational purposes only." },
       { heading: "Accounts", text: "You are responsible for keeping your credentials secure. We may suspend accounts that abuse the service." },
     ],
@@ -23,7 +23,7 @@ export const legalPages = {
     sections: [
       { heading: "Leverage", text: "Leveraged trading magnifies gains and losses. Results in a demo account do not guarantee similar results with real funds." },
       { heading: "Timed trades", text: "Short-duration trades are highly volatile and outcomes depend on small price movements." },
-      { heading: "No advice", text: "Nothing on Foxtrade is financial advice. Consult a licensed professional before trading real assets." },
+      { heading: "No advice", text: "Nothing on {siteName} is financial advice. Consult a licensed professional before trading real assets." },
     ],
   },
 };

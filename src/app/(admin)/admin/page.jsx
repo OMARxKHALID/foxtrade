@@ -7,12 +7,14 @@ import { PageHeader } from "@/components/ui/page-header";
 import { getDashboardStats } from "@/features/admin/dal/admin-dal";
 
 export const metadata = {
-  title: "Dashboard",
+  title: "Overview",
 };
+
+export const instant = false;
 
 const dateFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
-const AdminDashboardPage = async () => {
+const AdminOverviewPage = async () => {
   const stats = await getDashboardStats();
   const cards = [
     { label: "Total clients", value: stats.clients, icon: Users, href: "/admin/users" },
@@ -25,7 +27,7 @@ const AdminDashboardPage = async () => {
 
   return (
     <>
-      <PageHeader title="Dashboard" description="Live overview of clients, trading activity and work waiting for you." />
+      <PageHeader title="Overview" description="Live overview of clients, trading activity and work waiting for you." />
       <ul className="grid grid-cols-2 gap-4 lg:gap-6 xl:grid-cols-3 2xl:grid-cols-6">
         {cards.map((card) => {
           const content = (
@@ -91,4 +93,4 @@ const AdminDashboardPage = async () => {
   );
 };
 
-export default AdminDashboardPage;
+export default AdminOverviewPage;

@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 import { getEnv } from "@/lib/env";
-import { site } from "@/lib/site";
+import { readPlatformSettings } from "@/lib/platform-settings";
 
 export const sendEmail = async ({ to, subject, text }) => {
   const { RESEND_API_KEY, EMAIL_FROM } = getEnv();
@@ -9,6 +9,7 @@ export const sendEmail = async ({ to, subject, text }) => {
     return;
   }
   const resend = new Resend(RESEND_API_KEY);
-  const { error } = await resend.emails.send({ from: EMAIL_FROM ?? `${site.name} <onboarding@resend.dev>`, to, subject, text });
+  const { siteName } = await readPlatformSettings();
+  const { error } = await resend.emails.send({ from: EMAIL_FROM ?? `${siteName} <onboarding@resend.dev>`, to, subject, text });
   if (error) throw new Error(error.message);
 };

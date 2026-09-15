@@ -1,7 +1,13 @@
 import "server-only";
+import { headers } from "next/headers";
 import { ObjectId } from "mongodb";
 import { formFailure, serverFailure, signInRequired } from "@/lib/action-result";
+import { getAuth } from "@/lib/auth";
+import { getBalances } from "@/lib/ledger";
 import { toAmount } from "@/lib/money";
+import { listUserTickets } from "@/lib/ticket-store";
+import { listRecords } from "@/features/assets/dal/assets-dal";
+import { getTradingSummary } from "@/features/trading/dal/trading-engine";
 import { collections } from "@/lib/mongo";
 import { getCurrentUser, isAdmin, requireAdmin } from "@/lib/session";
 
@@ -68,7 +74,7 @@ const toAuditDTO = (doc) => ({
 
 export const listClients = async () => {
   await requireAdmin();
-  const users = await collections.users().find({ role: { $ne: "admin" } }).sort({ createdAt: -1 }).limit(1000).toArray();
+  const users = await collections.users().find().sort({ createdAt: -1 }).limit(1000).toArray();
   const ids = users.map((user) => user._id.toString());
   const [balances, verifications] = await Promise.all([
     usdtByUser(ids),
@@ -80,6 +86,8 @@ export const listClients = async () => {
     return {
       id,
       email: user.email,
+      name: user.name ?? "",
+      role: user.role === "admin" ? "admin" : "user",
       createdAt: user.createdAt.toISOString(),
       banned: Boolean(user.banned),
       banReason: user.banReason ?? null,
@@ -87,6 +95,64 @@ export const listClients = async () => {
       kyc: kyc[id] ?? "none",
     };
   });
+};
+
+export const findUser = async (userId) => {
+  if (!ObjectId.isValid(userId)) return null;
+  return collections.users().findOne({ _id: new ObjectId(userId) });
+};
+
+export const getClientDetail = async (userId) => {
+  await requireAdmin();
+  const user = await findUser(userId);
+  if (!user) return null;
+  const id = user._id.toString();
+  const [balances, trading, records, tickets, verification, sessions] = await Promise.all([
+    getBalances(id),
+    getTradingSummary(id),
+    listRecords(id, { limit: 100 }),
+    listUserTickets(id),
+    collections.verifications().findOne({ userId: id }),
+    getAuth()
+      .api.listUserSessions({ body: { userId: id }, headers: await headers() })
+      .then((result) => result.sessions ?? [])
+      .catch(() => []),
+  ]);
+  return {
+    user: {
+      id,
+      email: user.email,
+      name: user.name ?? "",
+      role: user.role === "admin" ? "admin" : "user",
+      banned: Boolean(user.banned),
+      banReason: user.banReason ?? null,
+      emailVerified: Boolean(user.emailVerified),
+      createdAt: user.createdAt.toISOString(),
+    },
+    balances: balances.filter((item) => !item.balance.eq(0)).map((item) => ({ wallet: item.wallet, asset: item.asset, balance: toAmount(item.balance) })),
+    trading,
+    records,
+    tickets,
+    verification: verification
+      ? {
+          id: verification._id.toString(),
+          status: verification.status,
+          fullName: verification.fullName,
+          country: verification.country,
+          city: verification.city,
+          idNumber: `•••• ${String(verification.idNumber).slice(-4)}`,
+          reason: verification.reason ?? null,
+          submittedAt: verification.submittedAt.toISOString(),
+        }
+      : null,
+    sessions: sessions.map((session) => ({
+      id: String(session.id),
+      userAgent: session.userAgent ?? "",
+      ipAddress: session.ipAddress ?? "",
+      createdAt: new Date(session.createdAt).toISOString(),
+      expiresAt: new Date(session.expiresAt).toISOString(),
+    })),
+  };
 };
 
 export const findClient = async (userId) => {
@@ -114,7 +180,7 @@ export const listVerifications = async () => {
 export const reviewVerification = async (id, decision, reason) => {
   if (!ObjectId.isValid(id)) return null;
   return collections.verifications().findOneAndUpdate(
-    { _id: new ObjectId(id), status: "pending" },
+    { _id: new ObjectId(id), status: { $ne: decision } },
     { $set: { status: decision, reason: decision === "rejected" ? reason : null, reviewedAt: new Date() } },
     { returnDocument: "after" },
   );

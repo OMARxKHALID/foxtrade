@@ -7,6 +7,8 @@ export const metadata = {
   title: "Notices",
 };
 
+export const instant = false;
+
 const AdminNoticesPage = async () => {
   await requireAdmin();
   const notices = await listAllNotices();

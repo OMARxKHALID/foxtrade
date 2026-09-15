@@ -7,7 +7,7 @@ import { IconTile } from "@/components/ui/icon-tile";
 import { useActionSubmit } from "@/hooks/use-action-submit";
 import { formatUsdt } from "@/lib/format";
 import { claimDemoAssets } from "@/features/assets/actions/assets-actions";
-import { DEMO_FAUCET_AMOUNT } from "@/features/assets/data/assets-config";
+import { usePlatform } from "@/hooks/use-platform";
 
 const rules = [
   "Demo assets are credited to your Spot Wallet in USDT.",
@@ -16,6 +16,7 @@ const rules = [
 ];
 
 export const DemoFaucet = ({ usdtTotal }) => {
+  const { demoAmount } = usePlatform().settings;
   const { pending, submit } = useActionSubmit({ action: claimDemoAssets, successMessage: "Demo assets added to your Spot Wallet." });
 
   const handleClaim = () => submit();
@@ -25,7 +26,7 @@ export const DemoFaucet = ({ usdtTotal }) => {
       <GlowCard variant="warm">
         <CardBody>
           <IconTile icon={Gift} size="lg" />
-          <h2 className="mt-6 font-heading text-2xl font-bold text-white sm:text-3xl">Top up to {formatUsdt(DEMO_FAUCET_AMOUNT)} USDT</h2>
+          <h2 className="mt-6 font-heading text-2xl font-bold text-white sm:text-3xl">Top up to {formatUsdt(demoAmount)} USDT</h2>
           <p className="mt-3 max-w-md text-sm leading-6 text-neutral-400">
             Refill your demo Spot Wallet and keep practicing timed trades and leveraged positions with live market prices.
           </p>

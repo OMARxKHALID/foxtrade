@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { headers } from "next/headers";
+import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { getAuth } from "@/lib/auth";
 
@@ -8,6 +9,7 @@ const isBackendConfigured = () => Boolean(process.env.MONGODB_URI && process.env
 
 export const getSession = cache(async () => {
   if (!isBackendConfigured()) return null;
+  await connection();
   return getAuth().api.getSession({ headers: await headers() });
 });
 

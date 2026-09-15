@@ -1,7 +1,8 @@
 import { Inter, Inter_Tight } from "next/font/google";
 import { AppProviders } from "@/providers/app-providers";
 import { LocaleProvider } from "@/components/locale-provider";
-import { site } from "@/lib/site";
+import { getPairs, getPlatformSettings } from "@/lib/cached-settings";
+import { PlatformProvider } from "@/providers/platform-provider";
 import "./globals.css";
 
 const inter = Inter({
@@ -14,31 +15,40 @@ const interTight = Inter_Tight({
   subsets: ["latin"],
 });
 
-export const metadata = {
-  title: {
-    default: `${site.name} — ${site.tagline}`,
-    template: `%s · ${site.name}`,
-  },
-  description: site.description,
-  appleWebApp: {
-    capable: true,
-    title: site.name,
-    statusBarStyle: "black-translucent",
-  },
+export const generateMetadata = async () => {
+  const { siteName, tagline, description } = await getPlatformSettings();
+  return {
+    title: {
+      default: `${siteName} — ${tagline}`,
+      template: `%s · ${siteName}`,
+    },
+    description,
+    appleWebApp: {
+      capable: true,
+      title: siteName,
+      statusBarStyle: "black-translucent",
+    },
+  };
 };
 
 export const viewport = {
   themeColor: "#000000",
 };
 
-const RootLayout = ({ children }) => (
-  <html lang="en" className={`${inter.variable} ${interTight.variable} h-full antialiased`}>
-    <body className="flex min-h-full flex-col overflow-x-hidden">
-      <LocaleProvider>
-        <AppProviders>{children}</AppProviders>
-      </LocaleProvider>
-    </body>
-  </html>
-);
+const RootLayout = async ({ children }) => {
+  const [settings, pairs] = await Promise.all([getPlatformSettings(), getPairs()]);
+
+  return (
+    <html lang="en" className={`${inter.variable} ${interTight.variable} h-full antialiased`}>
+      <body className="flex min-h-full flex-col overflow-x-hidden">
+        <PlatformProvider settings={settings} pairs={pairs}>
+          <LocaleProvider>
+            <AppProviders>{children}</AppProviders>
+          </LocaleProvider>
+        </PlatformProvider>
+      </body>
+    </html>
+  );
+};
 
 export default RootLayout;

@@ -8,6 +8,8 @@ export const metadata = {
   title: "Audit Log",
 };
 
+export const instant = false;
+
 const dateFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
 const columns = [

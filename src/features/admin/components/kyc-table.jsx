@@ -63,16 +63,18 @@ export const KycTable = ({ submissions }) => {
           </span>
         ),
         actions:
-          item.status === "pending" ? (
-            <span className="inline-flex gap-2">
+          <span className="inline-flex gap-2">
+            {item.status !== "approved" && (
               <IconButton label={`Approve ${item.email}`} disabled={review.pending} onClick={() => review.submit({ id: item.id, decision: "approved" })}>
                 <Check className="size-4 text-up" />
               </IconButton>
+            )}
+            {item.status !== "rejected" && (
               <IconButton label={`Reject ${item.email}`} onClick={() => setRejecting(item)}>
                 <X className="size-4 text-down" />
               </IconButton>
-            </span>
-          ) : null,
+            )}
+          </span>,
       },
     }));
 

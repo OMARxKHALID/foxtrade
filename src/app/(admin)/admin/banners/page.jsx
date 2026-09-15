@@ -7,6 +7,8 @@ export const metadata = {
   title: "Banners",
 };
 
+export const instant = false;
+
 const AdminBannersPage = async () => {
   await requireAdmin();
   const banners = await listAllBanners();

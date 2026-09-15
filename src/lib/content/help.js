@@ -4,8 +4,8 @@ export const helpTopics = [
     title: "Getting started",
     questions: [
       {
-        question: "What is Foxtrade?",
-        answer: "Foxtrade is a demo trading platform with live Binance market data. You can practice timed trades and leveraged perpetual positions using demo funds.",
+        question: "What is {siteName}?",
+        answer: "{siteName} is a demo trading platform with live Binance market data. You can practice timed trades and leveraged perpetual positions using demo funds.",
       },
       {
         question: "Do I need to deposit real money?",
@@ -31,7 +31,7 @@ export const helpTopics = [
       },
       {
         question: "What fees apply?",
-        answer: "Perpetual positions pay a 0.05% taker fee on position size when opened and closed. Timed trades have no fee.",
+        answer: "Perpetual positions pay a {takerFee} taker fee on position size when opened and closed. Timed trades have no fee.",
       },
     ],
   },

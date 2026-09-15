@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Ban, RotateCcw, ShieldCheck, Users } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Ban, Eye, RotateCcw, ShieldCheck, Users } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -19,6 +21,7 @@ const tabs = [
   { value: "all", label: "All" },
   { value: "active", label: "Active" },
   { value: "banned", label: "Banned" },
+  { value: "admins", label: "Admins" },
 ];
 
 const columns = [
@@ -32,6 +35,7 @@ const columns = [
 
 
 export const ClientsTable = ({ clients }) => {
+  const router = useRouter();
   const [tab, setTab] = useState("all");
   const [dialog, setDialog] = useState(null);
   const handleClose = () => setDialog(null);
@@ -44,7 +48,11 @@ export const ClientsTable = ({ clients }) => {
     if (dialog.type === "reset") reset.submit(dialog.client.id);
   };
 
-  const visible = clients.filter((client) => tab === "all" || (tab === "banned" ? client.banned : !client.banned));
+  const visible = clients.filter((client) => {
+    if (tab === "all") return true;
+    if (tab === "admins") return client.role === "admin";
+    return tab === "banned" ? client.banned : !client.banned;
+  });
 
   const rows = visible.map((client) => ({
     id: client.id,
@@ -53,7 +61,10 @@ export const ClientsTable = ({ clients }) => {
     cells: {
       email: (
         <span className="block min-w-0">
-          <span className="block max-w-[14rem] truncate text-white sm:max-w-xs">{client.email}</span>
+          <Link href={`/admin/users/${client.id}`} className="block max-w-[14rem] truncate text-white hover:text-brand sm:max-w-xs">
+            {client.email}
+          </Link>
+          {client.role === "admin" && <StatusBadge tone="brand" className="mt-1">Admin</StatusBadge>}
           {client.banReason && <span className="block max-w-xs truncate text-xs text-down">{client.banReason}</span>}
         </span>
       ),
@@ -63,17 +74,24 @@ export const ClientsTable = ({ clients }) => {
       createdAt: <span className="text-neutral-400">{dateFormat.format(new Date(client.createdAt))}</span>,
       actions: (
         <span className="inline-flex gap-2">
-          <IconButton label={`Reset balance for ${client.email}`} onClick={() => setDialog({ type: "reset", client })}>
-            <RotateCcw className="size-4" />
+          <IconButton label={`Open ${client.email}`} onClick={() => router.push(`/admin/users/${client.id}`)}>
+            <Eye className="size-4" />
           </IconButton>
-          {client.banned ? (
-            <IconButton label={`Unban ${client.email}`} disabled={unban.pending} onClick={() => unban.submit(client.id)}>
-              <ShieldCheck className="size-4 text-up" />
-            </IconButton>
-          ) : (
-            <IconButton label={`Ban ${client.email}`} onClick={() => setDialog({ type: "ban", client })}>
-              <Ban className="size-4 text-down" />
-            </IconButton>
+          {client.role !== "admin" && (
+            <>
+              <IconButton label={`Reset balance for ${client.email}`} onClick={() => setDialog({ type: "reset", client })}>
+                <RotateCcw className="size-4" />
+              </IconButton>
+              {client.banned ? (
+                <IconButton label={`Unban ${client.email}`} disabled={unban.pending} onClick={() => unban.submit(client.id)}>
+                  <ShieldCheck className="size-4 text-up" />
+                </IconButton>
+              ) : (
+                <IconButton label={`Ban ${client.email}`} onClick={() => setDialog({ type: "ban", client })}>
+                  <Ban className="size-4 text-down" />
+                </IconButton>
+              )}
+            </>
           )}
         </span>
       ),

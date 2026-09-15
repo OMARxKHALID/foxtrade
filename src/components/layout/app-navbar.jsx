@@ -7,11 +7,12 @@ import { Container } from "@/components/ui/container";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { appNavLinks } from "@/components/layout/nav-links";
 import { UserMenu } from "@/components/layout/user-menu";
-import { site } from "@/lib/site";
+import { usePlatform } from "@/hooks/use-platform";
 import { cn } from "@/lib/utils";
 
 export const AppNavbar = ({ user, signOutAction }) => {
   const pathname = usePathname();
+  const { siteName } = usePlatform().settings;
 
   return (
     <header className="sticky top-0 z-40 pt-3 lg:pt-5">
@@ -21,9 +22,9 @@ export const AppNavbar = ({ user, signOutAction }) => {
           className="flex h-12 items-center justify-between rounded-xl border border-white/10 bg-panel/85 pr-3 pl-4 backdrop-blur-md md:pr-4 md:pl-5"
         >
           <div className="flex items-center gap-10">
-            <Link href="/" className="flex items-center gap-2.5" aria-label={`${site.name} home`}>
+            <Link href="/" className="flex items-center gap-2.5" aria-label={`${siteName} home`}>
               <LogoMark />
-              <span className="font-heading text-sm font-semibold text-white">{site.name}</span>
+              <span className="font-heading text-sm font-semibold text-white">{siteName}</span>
             </Link>
             <ul className="hidden items-center gap-6 lg:flex">
               {appNavLinks.map((link) => (

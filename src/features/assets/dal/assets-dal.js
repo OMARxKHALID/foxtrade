@@ -1,20 +1,21 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { ObjectId } from "mongodb";
-import { CONVERT_SPREAD, DEMO_FAUCET_AMOUNT, FAUCET_COOLDOWN_MS } from "@/lib/demo";
+import { FAUCET_COOLDOWN_MS } from "@/lib/demo";
 import { LedgerError, getBalance, getBalances, postEntries, withTransaction } from "@/lib/ledger";
 import { fetchLatestPrices, fetchTickers } from "@/lib/market/binance-rest";
-import { pairBySymbol } from "@/lib/market/pairs";
+import { readPairs } from "@/lib/market/pair-store";
+import { QUOTE, assetsOf } from "@/lib/market/pairs";
 import { toAmount, toBig } from "@/lib/money";
 import { collections } from "@/lib/mongo";
+import { readPlatformSettings } from "@/lib/platform-settings";
 import { verifyPin } from "@/lib/pin";
 import { rateLimit } from "@/lib/rate-limit";
 import { getCurrentUser } from "@/lib/session";
 
-const pairFor = (asset) => (pairBySymbol[`${asset}USDT`] ? `${asset}USDT` : null);
-
 const priceMap = async (assets, latest = false) => {
-  const symbols = [...new Set(assets.map(pairFor).filter(Boolean))];
+  const listed = new Set((await readPairs()).map((pair) => pair.symbol));
+  const symbols = [...new Set(assets.map((asset) => `${asset}${QUOTE}`).filter((symbol) => listed.has(symbol)))];
   if (!symbols.length) return { USDT: "1" };
   const prices = latest
     ? await fetchLatestPrices(symbols)
@@ -89,7 +90,8 @@ const totalUsdt = async (userId, session) => {
 };
 
 export const claimFaucet = async (userId) => {
-  if ((await totalUsdt(userId)).gte(DEMO_FAUCET_AMOUNT)) throw new LedgerError("Your wallets already hold the full demo amount of USDT.");
+  const { demoAmount } = await readPlatformSettings();
+  if ((await totalUsdt(userId)).gte(demoAmount)) throw new LedgerError("Your wallets already hold the full demo amount of USDT.");
   await ensureSecurityIndex();
   const now = new Date();
   const cutoff = new Date(now.getTime() - FAUCET_COOLDOWN_MS);
@@ -107,16 +109,16 @@ export const claimFaucet = async (userId) => {
     throw new LedgerError(`You can claim demo assets again in about ${hours}h.`);
   }
   await withTransaction(async (session) => {
-    const topUp = toBig(DEMO_FAUCET_AMOUNT).minus(await totalUsdt(userId, session));
+    const topUp = toBig(demoAmount).minus(await totalUsdt(userId, session));
     if (topUp.lte(0)) return;
     await postEntries([{ userId, wallet: "spot", asset: "USDT", type: "faucet", amount: topUp, note: "Demo top-up" }], session);
   });
 };
 
 export const convertAssets = async (userId, { from, to, amount }) => {
-  const prices = await priceMap([from, to], true);
+  const [prices, { convertSpread }] = await Promise.all([priceMap([from, to], true), readPlatformSettings()]);
   if (!prices[from] || !prices[to]) throw new LedgerError("Live price unavailable for this pair. Try again shortly.");
-  const receive = toBig(amount).times(prices[from]).div(prices[to]).times(1 - CONVERT_SPREAD);
+  const receive = toBig(amount).times(prices[from]).div(prices[to]).times(1 - convertSpread);
   if (toBig(toAmount(receive)).lte(0)) throw new LedgerError(`Amount is too small to convert into ${to}.`);
   const refId = randomUUID();
   await withTransaction((session) =>
@@ -161,6 +163,7 @@ export const listAddresses = async (userId) => {
 export const saveAddress = async (userId, input) => {
   const limit = await rateLimit(`address-save:${userId}`, { limit: 30, windowSeconds: 3600 });
   if (!limit.allowed) throw new LedgerError("Too many changes. Try again later.");
+  if (!assetsOf(await readPairs()).some((item) => item.symbol === input.asset)) throw new LedgerError("This asset is not supported.");
   const count = await collections.addresses().countDocuments({ userId });
   if (count >= 20) throw new LedgerError("You can save up to 20 addresses.");
   await collections.addresses().insertOne({ userId, ...input, createdAt: new Date() });

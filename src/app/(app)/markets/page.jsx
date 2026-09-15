@@ -5,16 +5,17 @@ import { PageLoader } from "@/components/ui/page-loader";
 import { PageHeader } from "@/components/ui/page-header";
 import { MarketsTable } from "@/features/market/components/markets-table";
 import { TickerTrio } from "@/features/market/components/ticker-trio";
-import { allSymbols, featuredSymbols } from "@/lib/market/pairs";
+import { getPairs } from "@/lib/cached-settings";
+import { featuredSymbolsOf } from "@/lib/market/pairs";
 import { getTickerHydrationState } from "@/lib/market/ticker-snapshot";
-import { getPairSettings } from "@/lib/pair-settings";
 
 export const metadata = {
   title: "Markets",
 };
 
 const MarketsPage = async () => {
-  const [settings, tickerState] = await Promise.all([getPairSettings(), getTickerHydrationState([featuredSymbols, allSymbols])]);
+  const pairs = await getPairs();
+  const tickerState = await getTickerHydrationState([featuredSymbolsOf(pairs), pairs.map((pair) => pair.symbol)]);
 
   return (
     <Container className="flex flex-col gap-4 lg:gap-6">
@@ -22,7 +23,7 @@ const MarketsPage = async () => {
       <HydrationBoundary state={tickerState}>
         <Suspense fallback={<PageLoader className="min-h-[40vh]" />}>
           <TickerTrio />
-          <MarketsTable settings={settings} />
+          <MarketsTable />
         </Suspense>
       </HydrationBoundary>
     </Container>

@@ -1,5 +1,3 @@
-export const DEMO_FAUCET_AMOUNT = 100000;
-
 export const FAUCET_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 export const walletLabels = {
@@ -7,8 +5,6 @@ export const walletLabels = {
   timed: "Options Wallet",
   perpetual: "Futures Wallet",
 };
-
-export const CONVERT_SPREAD = 0.001;
 
 export const ledgerTypeLabels = {
   faucet: "Demo deposit",
@@ -20,4 +16,5 @@ export const ledgerTypeLabels = {
   perp_close: "Position close",
   perp_fee: "Trading fee",
   admin_reset: "Balance reset",
+  admin_adjust: "Admin adjustment",
 };

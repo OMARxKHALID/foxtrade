@@ -15,6 +15,7 @@ import { IconButton } from "@/components/ui/icon-button";
 import { useActionSubmit } from "@/hooks/use-action-submit";
 import { useMarkPrices } from "@/hooks/use-mark-prices";
 import { useNow } from "@/hooks/use-now";
+import { usePlatform } from "@/hooks/use-platform";
 import { formatPercent, formatPrice, formatQuantity, formatUsdt } from "@/lib/format";
 import { cancelOrder, closeAllPositions, closePosition } from "@/features/trading/actions/place-order";
 import { AddMarginDialog } from "@/features/trading/components/add-margin-dialog";
@@ -135,6 +136,7 @@ export const OrdersPanel = ({ market }) => {
   const [marginTarget, setMarginTarget] = useState(null);
   const [confirmCloseAll, setConfirmCloseAll] = useState(false);
   const queryClient = useQueryClient();
+  const { takerFeeRate } = usePlatform().settings;
   const { data, isPending } = useQuery(ordersQuery(market));
   const items = data?.items;
   useSettlementToasts(market, items);
@@ -235,7 +237,7 @@ export const OrdersPanel = ({ market }) => {
       columns: columns.positions,
       rows: openPositions.map((item) => {
         const mark = marks[item.symbol];
-        const pnl = unrealizedPnl(item, mark);
+        const pnl = unrealizedPnl(item, mark, takerFeeRate);
         return {
           id: item.id,
           searchText: pairLabel(item.symbol),

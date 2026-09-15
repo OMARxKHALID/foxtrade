@@ -1,10 +1,8 @@
 import { z } from "zod";
-import { assets, networks, wallets } from "@/features/assets/data/assets-config";
+import { networks, wallets } from "@/features/assets/data/assets-config";
 
 const walletValues = wallets.map((wallet) => wallet.value);
-const assetValues = assets.map((asset) => asset.symbol);
-
-const assetField = z.enum(assetValues, { error: "Choose an asset" });
+const assetField = z.string({ error: "Choose an asset" }).regex(/^[A-Z0-9]{2,20}$/, "Choose an asset");
 
 const positiveAmount = z.coerce.number({ error: "Enter an amount" }).positive("Enter an amount greater than 0").max(1e12, "Amount is too large");
 

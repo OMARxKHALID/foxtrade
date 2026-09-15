@@ -9,10 +9,12 @@ import { SelectMenu } from "@/components/ui/select-menu";
 import { useActionSubmit } from "@/hooks/use-action-submit";
 import { formatQuantity } from "@/lib/format";
 import { transferAssets } from "@/features/assets/actions/assets-actions";
-import { assetOptions, walletOptions } from "@/features/assets/components/asset-options";
+import { toAssetOptions, walletOptions } from "@/features/assets/components/asset-options";
+import { usePlatform } from "@/hooks/use-platform";
 import { transferSchema } from "@/features/assets/schemas/assets-schema";
 
 export const TransferForm = ({ holdings }) => {
+  const assetOptions = toAssetOptions(usePlatform().assets);
   const {
     register,
     handleSubmit,

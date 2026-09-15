@@ -7,7 +7,7 @@ import { CoinIcon } from "@/components/icons/coin-icon";
 import { ChangePill } from "@/components/ui/change-pill";
 import { useLiveTickers } from "@/hooks/use-live-tickers";
 import { formatCompact, formatPrice } from "@/lib/format";
-import { defaultPairs, pairBySymbol } from "@/lib/market/pairs";
+import { usePlatform } from "@/hooks/use-platform";
 import { cn } from "@/lib/utils";
 
 const Stat = ({ label, value }) => (
@@ -20,6 +20,8 @@ const Stat = ({ label, value }) => (
 export const PairHeader = ({ symbol, market }) => {
   const [open, setOpen] = useState(false);
   const [ticker] = useLiveTickers([symbol]);
+  const { pairs, pairBySymbol } = usePlatform();
+  const marketPairs = pairs.filter((item) => (market === "timed" ? item.timedEnabled : item.perpetualEnabled) || item.symbol === symbol);
   const pair = pairBySymbol[symbol];
   const up = (ticker?.changePercent ?? 0) >= 0;
 
@@ -59,7 +61,7 @@ export const PairHeader = ({ symbol, market }) => {
       {open && (
         <div className="absolute top-full left-3 z-30 mt-1 w-[min(18rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-white/10 bg-field">
           <ul className="max-h-80 overflow-y-auto py-1">
-            {defaultPairs.map((item) => (
+            {marketPairs.map((item) => (
               <li key={item.symbol}>
                 <Link
                   href={`/trade/${market}/${item.symbol.toLowerCase()}`}

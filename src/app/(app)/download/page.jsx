@@ -2,6 +2,7 @@ import { Apple, Monitor, Smartphone } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { CardBody, CardHeader, GlowCard } from "@/components/ui/glow-card";
 import { PageHeader } from "@/components/ui/page-header";
+import { getPlatformSettings } from "@/lib/cached-settings";
 import { InstallCard } from "@/features/install/components/install-card";
 
 export const metadata = {
@@ -29,36 +30,40 @@ const platforms = [
   },
 ];
 
-const DownloadPage = () => (
-  <Container className="flex flex-col gap-4 lg:gap-6">
-    <PageHeader title="Download App" description="Use Foxtrade as an installed app on any device." />
-    <InstallCard />
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:gap-6">
-      {platforms.map((platform) => (
-        <GlowCard key={platform.title} as="section" aria-labelledby={`install-${platform.id}`}>
-          <CardHeader
-            id={`install-${platform.id}`}
-            title={
-              <span className="flex items-center gap-2">
-                <platform.icon className="size-4 text-brand" />
-                {platform.title}
-              </span>
-            }
-          />
-          <CardBody>
-            <ol className="flex flex-col gap-4">
-              {platform.steps.map((step, i) => (
-                <li key={step} className="flex gap-3 text-sm leading-6 text-neutral-400">
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-white/10 text-xs text-neutral-400">{i + 1}</span>
-                  {step}
-                </li>
-              ))}
-            </ol>
-          </CardBody>
-        </GlowCard>
-      ))}
-    </div>
-  </Container>
-);
+const DownloadPage = async () => {
+  const { siteName } = await getPlatformSettings();
+
+  return (
+    <Container className="flex flex-col gap-4 lg:gap-6">
+      <PageHeader title="Download App" description={`Use ${siteName} as an installed app on any device.`} />
+      <InstallCard />
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:gap-6">
+        {platforms.map((platform) => (
+          <GlowCard key={platform.title} as="section" aria-labelledby={`install-${platform.id}`}>
+            <CardHeader
+              id={`install-${platform.id}`}
+              title={
+                <span className="flex items-center gap-2">
+                  <platform.icon className="size-4 text-brand" />
+                  {platform.title}
+                </span>
+              }
+            />
+            <CardBody>
+              <ol className="flex flex-col gap-4">
+                {platform.steps.map((step, i) => (
+                  <li key={step} className="flex gap-3 text-sm leading-6 text-neutral-400">
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-white/10 text-xs text-neutral-400">{i + 1}</span>
+                    {step}
+                  </li>
+                ))}
+              </ol>
+            </CardBody>
+          </GlowCard>
+        ))}
+      </div>
+    </Container>
+  );
+};
 
 export default DownloadPage;

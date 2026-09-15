@@ -10,8 +10,8 @@ import { IconTile } from "@/components/ui/icon-tile";
 import { SignInPrompt } from "@/components/ui/sign-in-prompt";
 import { useLiveTickers } from "@/hooks/use-live-tickers";
 import { formatPrice, formatQuantity, formatUsdt } from "@/lib/format";
-import { allSymbols } from "@/lib/market/pairs";
-import { assets, wallets } from "@/features/assets/data/assets-config";
+import { usePlatform } from "@/hooks/use-platform";
+import { wallets } from "@/features/assets/data/assets-config";
 
 const actions = [
   { label: "Deposit", href: "/assets/deposit", icon: ArrowDownToLine },
@@ -30,7 +30,8 @@ const columns = [
 ];
 
 export const AssetsOverview = ({ overview }) => {
-  const tickers = useLiveTickers(allSymbols);
+  const { assets, symbols } = usePlatform();
+  const tickers = useLiveTickers(symbols);
   const bySymbol = Object.fromEntries(tickers.map((ticker) => [ticker.symbol, ticker]));
   const priceOf = (symbol) => (symbol === "USDT" ? 1 : bySymbol[`${symbol}USDT`]?.price ?? 0);
 

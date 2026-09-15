@@ -6,6 +6,8 @@ export const metadata = {
   title: "KYC Review",
 };
 
+export const instant = false;
+
 const KycPage = async () => {
   const submissions = await listVerifications();
 

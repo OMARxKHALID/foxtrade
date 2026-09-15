@@ -7,12 +7,14 @@ import { CardBody, CardHeader, GlowCard } from "@/components/ui/glow-card";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useActionSubmit } from "@/hooks/use-action-submit";
+import { usePlatform } from "@/hooks/use-platform";
 import { ticketStatus } from "@/lib/status";
 import { cn } from "@/lib/utils";
 
 const dateFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
 export const TicketThread = ({ ticket, viewer, replyAction, statusAction, statusLabel, statusValue }) => {
+  const { siteName } = usePlatform().settings;
   const [message, setMessage] = useState("");
   const reply = useActionSubmit({ action: replyAction, successMessage: "Reply sent.", onSuccess: () => setMessage("") });
   const status = useActionSubmit({ action: statusAction, successMessage: statusValue === "closed" || !statusValue ? "Ticket closed." : "Ticket reopened." });
@@ -54,7 +56,7 @@ export const TicketThread = ({ ticket, viewer, replyAction, statusAction, status
               </span>
               <div className={cn("max-w-[80%] rounded-2xl border px-4 py-3", item.from === "admin" ? "border-brand/20 bg-brand/5" : "border-white/10 bg-field")}>
                 <p className="text-xs text-neutral-500">
-                  {item.from === "admin" ? "Foxtrade Support" : viewer === "admin" ? item.author : "You"} · {dateFormat.format(new Date(item.at))}
+                  {item.from === "admin" ? `${siteName} Support` : viewer === "admin" ? item.author : "You"} · {dateFormat.format(new Date(item.at))}
                 </p>
                 <p className="mt-1.5 text-sm leading-6 break-words whitespace-pre-line text-neutral-200">{item.body}</p>
               </div>

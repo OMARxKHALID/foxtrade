@@ -13,7 +13,8 @@ import { SignInPrompt } from "@/components/ui/sign-in-prompt";
 import { IconButton } from "@/components/ui/icon-button";
 import { useActionSubmit } from "@/hooks/use-action-submit";
 import { removeWithdrawalAddress, saveWithdrawalAddress } from "@/features/assets/actions/assets-actions";
-import { assetOptions, networkOptions } from "@/features/assets/components/asset-options";
+import { toAssetOptions, networkOptions } from "@/features/assets/components/asset-options";
+import { usePlatform } from "@/hooks/use-platform";
 import { addressSchema } from "@/features/assets/schemas/assets-schema";
 
 const columns = [
@@ -25,6 +26,7 @@ const columns = [
 ];
 
 export const AddressBook = ({ addresses, signedIn }) => {
+  const assetOptions = toAssetOptions(usePlatform().assets);
   const {
     register,
     handleSubmit,

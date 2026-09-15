@@ -4,6 +4,7 @@ import { CardBody, CardHeader, GlowCard } from "@/components/ui/glow-card";
 import { IconTile } from "@/components/ui/icon-tile";
 import { PageHeader } from "@/components/ui/page-header";
 import { SignInPrompt } from "@/components/ui/sign-in-prompt";
+import { getPlatformSettings } from "@/lib/cached-settings";
 import { getCurrentUser } from "@/lib/session";
 import { listUserTickets } from "@/lib/ticket-store";
 import { TicketList } from "@/features/support/components/ticket-list";
@@ -15,15 +16,15 @@ export const metadata = {
 
 export const instant = false;
 
-const channels = [
+const channelsFor = (supportEmail) => [
   { icon: MessagesSquare, title: "Support tickets", text: "Replies inside your account, usually within a few hours." },
-  { icon: Mail, title: "Email", text: "support@foxtrade.app" },
+  { icon: Mail, title: "Email", text: supportEmail },
   { icon: Clock, title: "Hours", text: "Every day, 08:00 – 22:00 UTC" },
 ];
 
 const SupportPage = async () => {
   const user = await getCurrentUser();
-  const tickets = user ? await listUserTickets(user.id) : null;
+  const [tickets, { supportEmail }] = await Promise.all([user ? listUserTickets(user.id) : null, getPlatformSettings()]);
 
   return (
     <Container className="flex flex-col gap-4 lg:gap-6">
@@ -40,7 +41,7 @@ const SupportPage = async () => {
             <CardHeader id="channels-title" title="Contact channels" />
             <CardBody>
               <ul className="flex flex-col gap-5">
-                {channels.map((channel) => (
+                {channelsFor(supportEmail).map((channel) => (
                   <li key={channel.title} className="flex items-start gap-4">
                     <IconTile icon={channel.icon} />
                     <div className="min-w-0">

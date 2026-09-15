@@ -7,7 +7,7 @@ import { ChangePill } from "@/components/ui/change-pill";
 import { DataTable } from "@/components/ui/data-table";
 import { SegmentedTabs } from "@/components/ui/segmented-tabs";
 import { useLiveTickers } from "@/hooks/use-live-tickers";
-import { allSymbols, pairBySymbol } from "@/lib/market/pairs";
+import { usePlatform } from "@/hooks/use-platform";
 import { PairCell, compactText, marketColumns, mutedPrice, priceText, tickerSortValues } from "@/features/market/components/market-cells";
 
 const tabs = [
@@ -16,17 +16,18 @@ const tabs = [
   { value: "turnover", label: "24h Turnover", sort: (a, b) => b.quoteVolume - a.quoteVolume },
 ];
 
-export const MarketList = ({ settings = {} }) => {
+export const MarketList = () => {
   const [activeTab, setActiveTab] = useState(tabs[0].value);
-  const tickers = useLiveTickers(allSymbols);
+  const { symbols, pairBySymbol } = usePlatform();
+  const tickers = useLiveTickers(symbols);
   const tab = tabs.find((item) => item.value === activeTab);
 
   const rows = [...tickers]
-    .filter((ticker) => settings[ticker.symbol]?.perpetualEnabled !== false || settings[ticker.symbol]?.timedEnabled !== false)
+    .filter((ticker) => pairBySymbol[ticker.symbol]?.perpetualEnabled || pairBySymbol[ticker.symbol]?.timedEnabled)
     .sort(tab.sort)
     .map((ticker) => {
     const pair = pairBySymbol[ticker.symbol];
-    const market = settings[ticker.symbol]?.perpetualEnabled === false ? "timed" : "perpetual";
+    const market = pair.perpetualEnabled ? "perpetual" : "timed";
     return {
       id: ticker.symbol,
       searchText: `${pair.base} ${pair.name}`,

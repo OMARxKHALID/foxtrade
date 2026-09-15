@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { CardHeader, GlowCard } from "@/components/ui/glow-card";
 import { useMarkPrices } from "@/hooks/use-mark-prices";
 import { useNow } from "@/hooks/use-now";
+import { usePlatform } from "@/hooks/use-platform";
 import { formatPrice, formatUsdt } from "@/lib/format";
 import { SideText, SignedAmount, pairLabel, unrealizedPnl } from "@/features/trading/components/trade-format";
 
@@ -14,7 +15,8 @@ const rowClass = "flex items-center justify-between gap-3 px-4 py-3 sm:px-6";
 export const OpenActivity = ({ positions, timed }) => {
   const marks = useMarkPrices([...positions, ...timed].map((item) => item.symbol));
   const now = useNow(timed.length > 0);
-  const totalPnl = positions.filter((item) => item.status === "open").reduce((sum, item) => sum + unrealizedPnl(item, marks[item.symbol]), 0);
+  const { takerFeeRate } = usePlatform().settings;
+  const totalPnl = positions.filter((item) => item.status === "open").reduce((sum, item) => sum + unrealizedPnl(item, marks[item.symbol], takerFeeRate), 0);
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:gap-6 xl:grid-cols-2">
@@ -35,7 +37,7 @@ export const OpenActivity = ({ positions, timed }) => {
                       <SideText value={item.side} /> {item.leverage}x · {item.status === "pending" ? `limit ${formatPrice(item.limitPrice)}` : `entry ${formatPrice(item.entryPrice)}`}
                     </span>
                   </span>
-                  {item.status === "pending" ? <span className="text-xs text-warning">Pending</span> : <SignedAmount value={unrealizedPnl(item, marks[item.symbol])} className="text-sm" />}
+                  {item.status === "pending" ? <span className="text-xs text-warning">Pending</span> : <SignedAmount value={unrealizedPnl(item, marks[item.symbol], takerFeeRate)} className="text-sm" />}
                 </Link>
               </li>
             ))}

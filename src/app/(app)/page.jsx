@@ -9,21 +9,17 @@ import { QuickTradeBanner } from "@/features/home/components/quick-trade-banner"
 import { MarketList } from "@/features/market/components/market-list";
 import { TickerTrio } from "@/features/market/components/ticker-trio";
 import { getActiveBanners, getPublishedNotices } from "@/lib/content-store";
-import { allSymbols, featuredSymbols } from "@/lib/market/pairs";
+import { getPairs } from "@/lib/cached-settings";
+import { featuredSymbolsOf } from "@/lib/market/pairs";
 import { getTickerHydrationState } from "@/lib/market/ticker-snapshot";
-import { getPairSettings } from "@/lib/pair-settings";
 
 export const metadata = {
   title: "Home",
 };
 
 const HomePage = async () => {
-  const [banners, notices, settings, tickerState] = await Promise.all([
-    getActiveBanners(),
-    getPublishedNotices(),
-    getPairSettings(),
-    getTickerHydrationState([featuredSymbols, allSymbols]),
-  ]);
+  const [banners, notices, pairs] = await Promise.all([getActiveBanners(), getPublishedNotices(), getPairs()]);
+  const tickerState = await getTickerHydrationState([featuredSymbolsOf(pairs), pairs.map((pair) => pair.symbol)]);
 
   return (
     <Container className="flex flex-col gap-4 lg:gap-6">
@@ -36,7 +32,7 @@ const HomePage = async () => {
             <QuickActions />
             <QuickTradeBanner />
           </div>
-          <MarketList settings={settings} />
+          <MarketList />
         </Suspense>
       </HydrationBoundary>
     </Container>

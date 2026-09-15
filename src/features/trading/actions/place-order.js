@@ -1,6 +1,7 @@
 "use server";
 
 import { serverFailure, signInRequired, validationFailure } from "@/lib/action-result";
+import { readPlatformSettings } from "@/lib/platform-settings";
 import { rateLimit, tooManyAttempts } from "@/lib/rate-limit";
 import { getCurrentUser } from "@/lib/session";
 import {
@@ -11,7 +12,7 @@ import {
   placePerpetualOrder as openPosition,
   placeTimedOrder as openTimed,
 } from "@/features/trading/dal/trading-engine";
-import { addMarginSchema, perpetualOrderSchema, positionIdSchema, timedOrderSchema } from "@/features/trading/schemas/order-schema";
+import { addMarginSchema, perpetualOrderSchemaFor, positionIdSchema, timedOrderSchemaFor } from "@/features/trading/schemas/order-schema";
 
 const asTrader = async (message, work) => {
   const user = await getCurrentUser().catch(() => null);
@@ -26,13 +27,13 @@ const asTrader = async (message, work) => {
 };
 
 export const placeTimedOrder = async (input) => {
-  const parsed = timedOrderSchema.safeParse(input);
+  const parsed = timedOrderSchemaFor((await readPlatformSettings()).timedDurations).safeParse(input);
   if (!parsed.success) return validationFailure(parsed.error);
   return asTrader("Log in to place timed trades.", (user) => openTimed(user.id, parsed.data));
 };
 
 export const placePerpetualOrder = async (input) => {
-  const parsed = perpetualOrderSchema.safeParse(input);
+  const parsed = perpetualOrderSchemaFor((await readPlatformSettings()).maxLeverage).safeParse(input);
   if (!parsed.success) return validationFailure(parsed.error);
   return asTrader("Log in to open positions.", (user) => openPosition(user.id, parsed.data));
 };

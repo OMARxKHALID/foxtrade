@@ -5,9 +5,10 @@ import { CircleCheck, Download, Smartphone } from "lucide-react";
 import { CardBody, GlowCard } from "@/components/ui/glow-card";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { IconTile } from "@/components/ui/icon-tile";
-import { site } from "@/lib/site";
+import { usePlatform } from "@/hooks/use-platform";
 
 export const InstallCard = () => {
+  const { siteName } = usePlatform().settings;
   const [promptEvent, setPromptEvent] = useState(null);
   const [installed, setInstalled] = useState(false);
 
@@ -47,9 +48,9 @@ export const InstallCard = () => {
         <div className="flex items-start gap-4">
           <IconTile icon={Smartphone} size="lg" />
           <div className="max-w-xl">
-            <h2 className="font-heading text-2xl font-bold text-white">Install {site.name}</h2>
+            <h2 className="font-heading text-2xl font-bold text-white">Install {siteName}</h2>
             <p className="mt-2 text-sm leading-6 text-neutral-400">
-              Add {site.name} to your home screen or desktop. It opens full screen like a native app, with no app store and no configuration profiles.
+              Add {siteName} to your home screen or desktop. It opens full screen like a native app, with no app store and no configuration profiles.
             </p>
           </div>
         </div>

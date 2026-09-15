@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { ConvertForm } from "@/features/assets/components/convert-form";
 import { loadAssetsPage } from "@/features/assets/dal/assets-dal";
 import { tickersQuery } from "@/lib/market/market-queries";
-import { allSymbols } from "@/lib/market/pairs";
+import { getPairs } from "@/lib/cached-settings";
 import { getQueryClient } from "@/lib/query-client";
 
 export const metadata = {
@@ -20,7 +20,7 @@ export const instant = false;
 const ConvertPage = async () => {
   await connection();
   const queryClient = getQueryClient();
-  void queryClient.prefetchQuery(tickersQuery(allSymbols));
+  void queryClient.prefetchQuery(tickersQuery((await getPairs()).map((pair) => pair.symbol)));
   const { overview } = await loadAssetsPage();
 
   return (

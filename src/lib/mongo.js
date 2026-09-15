@@ -36,5 +36,4 @@ export const collections = {
   settings: () => getDb().collection("settings"),
   profiles: () => getDb().collection("profiles"),
   follows: () => getDb().collection("follows"),
-  pairSettings: () => getDb().collection("pair_settings"),
 };

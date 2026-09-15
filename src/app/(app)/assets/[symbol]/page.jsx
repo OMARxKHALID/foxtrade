@@ -7,26 +7,26 @@ import { PageLoader } from "@/components/ui/page-loader";
 import { PageHeader } from "@/components/ui/page-header";
 import { AssetDetail } from "@/features/assets/components/asset-detail";
 import { loadAssetsPage } from "@/features/assets/dal/assets-dal";
-import { assets } from "@/features/assets/data/assets-config";
+import { getPairs } from "@/lib/cached-settings";
 import { tickersQuery } from "@/lib/market/market-queries";
-import { findPair } from "@/lib/market/pairs";
+import { QUOTE, assetsOf, findPair } from "@/lib/market/pairs";
 import { getQueryClient } from "@/lib/query-client";
 
-const findAsset = (value) => assets.find((asset) => asset.symbol === String(value).toUpperCase());
+const findAsset = async (value) => assetsOf(await getPairs()).find((asset) => asset.symbol === String(value).toUpperCase());
 
 export const generateMetadata = async ({ params }) => {
   const { symbol } = await params;
-  return { title: findAsset(symbol)?.symbol ?? "Asset" };
+  return { title: (await findAsset(symbol))?.symbol ?? "Asset" };
 };
 
 export const instant = false;
 
 const AssetPage = async ({ params }) => {
   const { symbol } = await params;
-  const asset = findAsset(symbol);
+  const asset = await findAsset(symbol);
   if (!asset) notFound();
   await connection();
-  const pairSymbol = findPair(`${asset.symbol}USDT`)?.symbol;
+  const pairSymbol = findPair(await getPairs(), `${asset.symbol}${QUOTE}`)?.symbol;
   const queryClient = getQueryClient();
   if (pairSymbol) void queryClient.prefetchQuery(tickersQuery([pairSymbol]));
   const { overview, records } = await loadAssetsPage({ records: true, asset: asset.symbol });

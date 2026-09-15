@@ -9,6 +9,8 @@ export const metadata = {
   title: "Ticket",
 };
 
+export const instant = false;
+
 const AdminTicketPage = async ({ params }) => {
   await requireAdmin();
   const { id } = await params;

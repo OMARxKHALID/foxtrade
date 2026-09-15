@@ -7,6 +7,8 @@ export const metadata = {
   title: "Tickets",
 };
 
+export const instant = false;
+
 const AdminTicketsPage = async () => {
   await requireAdmin();
   const tickets = await listAllTickets();
