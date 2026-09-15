@@ -237,6 +237,19 @@ The repo includes configuration for [Open Code Review](https://github.com/alibab
 
 In Claude Code, run `/delegate-review` (optionally with `--from main --to <branch>`) to review changes.
 
+### Developer tooling you can remove
+
+These directories only help AI coding assistants and are safe to delete if you do not use them:
+- `.opencodereview/` — review rules and context
+- `.claude/` — the `/delegate-review` command and the dev-server launch config
+- `AGENTS.md` and `CLAUDE.md` — `next dev` rewrites `AGENTS.md` on every run, so deleting it brings it back as an uncommitted change
+
+## Continuous integration
+
+Two GitHub Actions workflows live in `.github/workflows`:
+- `ci.yml` runs lint, tests and the production build on every push and pull request.
+- `settle.yml` calls `/api/cron/settle` every 5 minutes. It needs the repository secret `CRON_SECRET` and the repository variable `SITE_URL` (your production URL). This exists because Vercel Hobby only allows a cron job to run once per day; if you move to Pro, raise the schedule in `vercel.json` and delete this workflow.
+
 ## Code conventions
 
 - JavaScript ES modules, `const` arrow functions, early returns, event handlers named `handleX`.

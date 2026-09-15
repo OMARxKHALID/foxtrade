@@ -11,6 +11,19 @@ import { rateLimit, tooManyAttempts } from "@/lib/rate-limit";
 import { getCurrentUser } from "@/lib/session";
 import { basicVerificationSchema, changePasswordSchema, withdrawalPinSchema } from "@/features/account/schemas/account-schema";
 
+let verificationIndexReady;
+
+const ensureVerificationIndex = () => {
+  verificationIndexReady ??= collections
+    .verifications()
+    .createIndex({ userId: 1 }, { unique: true })
+    .catch((error) => {
+      verificationIndexReady = undefined;
+      console.error("Could not create the unique verifications index:", error);
+    });
+  return verificationIndexReady;
+};
+
 export const submitBasicVerification = async (input) => {
   const parsed = basicVerificationSchema.safeParse(input);
   if (!parsed.success) return validationFailure(parsed.error);
@@ -19,14 +32,21 @@ export const submitBasicVerification = async (input) => {
   try {
     const limit = await rateLimit(`kyc-submit:${user.id}`, { limit: 5, windowSeconds: 3600 });
     if (!limit.allowed) return tooManyAttempts(limit.retryAfter);
+    await ensureVerificationIndex();
     const existing = await collections.verifications().findOne({ userId: user.id });
     if (existing?.status === "approved") return formFailure("Your identity is already verified.");
     if (existing?.status === "pending") return formFailure("Your verification is already under review.");
     const submission = { $set: { ...parsed.data, userId: user.id, email: user.email, status: "pending", reason: null, submittedAt: new Date(), reviewedAt: null } };
-    const result = existing
-      ? await collections.verifications().updateOne({ userId: user.id, status: { $nin: ["approved", "pending"] } }, submission)
-      : await collections.verifications().updateOne({ userId: user.id }, submission, { upsert: true });
-    if (!result.matchedCount && !result.upsertedCount) return formFailure("Your verification was just reviewed. Refresh the page.");
+    if (existing) {
+      const updated = await collections.verifications().updateOne({ userId: user.id, status: { $nin: ["approved", "pending"] } }, submission);
+      if (!updated.matchedCount) return formFailure("Your verification was just reviewed. Refresh the page.");
+      return { ok: true };
+    }
+    const created = await collections
+      .verifications()
+      .updateOne({ userId: user.id }, submission, { upsert: true })
+      .catch((error) => (error?.code === 11000 ? null : Promise.reject(error)));
+    if (!created) return formFailure("Your verification was just submitted. Refresh the page.");
     return { ok: true };
   } catch (error) {
     return serverFailure(error);

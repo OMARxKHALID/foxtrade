@@ -59,6 +59,16 @@ describe("Basic verification resubmit", () => {
     expect(result.ok).toBe(true);
     expect(await collections.verifications().countDocuments({ userId: user.id, status: "pending" })).toBe(1);
   });
+
+  it("keeps one record when a first-time user double submits at the same moment", async () => {
+    await collections.verifications().deleteMany({});
+    const submission = { country: "Pakistan", fullName: "New Name", idNumber: "12345678", city: "Lahore" };
+    const results = await Promise.all([submitBasicVerification(submission), submitBasicVerification(submission)]);
+    expect(results.some((result) => result.ok)).toBe(true);
+    expect(await collections.verifications().countDocuments({ userId: user.id })).toBe(1);
+    const indexes = await collections.verifications().indexes();
+    expect(indexes.some((index) => index.unique && index.key.userId === 1)).toBe(true);
+  });
 });
 
 describe("KYC document upload", () => {
