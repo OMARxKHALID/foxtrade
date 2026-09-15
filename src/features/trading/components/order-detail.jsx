@@ -1,6 +1,6 @@
 import { CardBody, CardHeader, GlowCard } from "@/components/ui/glow-card";
 import { SignInPrompt } from "@/components/ui/sign-in-prompt";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, formatQuantity, formatUsdt } from "@/lib/format";
 import { SideText, SignedAmount, Status, closeReasons, dateTime, pairLabel, positionStatus, timedStatus } from "@/features/trading/components/trade-format";
 
 const when = (value) => (value ? dateTime.format(new Date(value)) : "--");
@@ -15,7 +15,7 @@ const groupsFor = (market, order) =>
             ["Pair", pairLabel(order.symbol)],
             ["Direction", <SideText key="d" value={order.direction} />],
             ["Duration", `${order.duration}s`],
-            ["Stake", `${formatPrice(order.amount)} USDT`],
+            ["Stake", `${formatUsdt(order.amount)} USDT`],
             ["Payout rate", `${Math.round(order.payoutRate * 100)}%`],
           ],
         },
@@ -32,7 +32,7 @@ const groupsFor = (market, order) =>
           title: "Result",
           rows: [
             ["Outcome", <Status key="s" map={timedStatus} value={order.status} />],
-            ["Payout", order.payout === null ? "--" : `${formatPrice(order.payout)} USDT`],
+            ["Payout", order.payout === null ? "--" : `${formatUsdt(order.payout)} USDT`],
             ["Profit", ["open", "cancelled"].includes(order.status) ? "--" : <SignedAmount key="p" value={(order.payout ?? 0) - order.amount} />],
           ],
         },
@@ -45,8 +45,8 @@ const groupsFor = (market, order) =>
             ["Side", <SideText key="s" value={order.side} />],
             ["Type", order.type === "limit" ? "Limit" : "Market"],
             ["Leverage", `${order.leverage}x`],
-            ["Size", formatPrice(order.size)],
-            ["Margin", `${formatPrice(order.margin)} USDT`],
+            ["Size", formatQuantity(order.size)],
+            ["Margin", `${formatUsdt(order.margin)} USDT`],
           ],
         },
         {
@@ -65,7 +65,7 @@ const groupsFor = (market, order) =>
             ["Status", <Status key="st" map={positionStatus} value={order.status} />],
             ["Closed by", closeReasons[order.closeReason] ?? "--"],
             ["Realised PnL", order.pnl === null ? "--" : <SignedAmount key="pnl" value={order.pnl} />],
-            ["Fees", `${formatPrice((order.openFee ?? 0) + (order.closeFee ?? 0))} USDT`],
+            ["Fees", `${formatUsdt((order.openFee ?? 0) + (order.closeFee ?? 0))} USDT`],
             ["Opened at", when(order.openedAt)],
             ["Closed at", when(order.closedAt)],
           ],
@@ -76,7 +76,7 @@ export const OrderDetail = ({ market, order, signedIn }) => {
   if (!signedIn) {
     return (
       <GlowCard>
-        <SignInPrompt title="Sign in to view this order" text="Order details load from your account once you are signed in." />
+        <SignInPrompt title="Log in to view this order" text="Order details load from your account once you are logged in." />
       </GlowCard>
     );
   }

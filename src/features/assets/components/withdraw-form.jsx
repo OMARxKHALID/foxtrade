@@ -6,7 +6,7 @@ import { Field, controlClass } from "@/components/ui/field";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { SelectMenu } from "@/components/ui/select-menu";
 import { useActionSubmit } from "@/hooks/use-action-submit";
-import { formatPrice } from "@/lib/format";
+import { formatQuantity } from "@/lib/format";
 import { requestWithdrawal } from "@/features/assets/actions/assets-actions";
 import { assetOptions, networkOptions } from "@/features/assets/components/asset-options";
 import { withdrawSchema } from "@/features/assets/schemas/assets-schema";
@@ -62,7 +62,7 @@ export const WithdrawForm = ({ holdings, addresses = [] }) => {
         <input id="withdraw-address" autoComplete="off" spellCheck={false} placeholder="Paste wallet address" aria-invalid={Boolean(errors.address)} className={controlClass} {...register("address")} />
       </Field>
       <div className="grid gap-5 sm:grid-cols-2">
-        <Field id="withdraw-amount" label="Amount" error={errors.amount?.message} hint={`Available: ${holdings ? formatPrice(available) : "--"} ${asset}`}>
+        <Field id="withdraw-amount" label="Amount" error={errors.amount?.message} hint={`Available: ${holdings ? formatQuantity(available) : "--"} ${asset}`}>
           <input id="withdraw-amount" type="number" step="any" inputMode="decimal" aria-invalid={Boolean(errors.amount)} className={controlClass} {...register("amount")} />
         </Field>
         <Field id="withdraw-pin" label="Withdrawal PIN" error={errors.pin?.message}>

@@ -18,7 +18,7 @@ export const notices = [
     summary: "Two new pairs are available for 30 second to 15 minute timed trades.",
     body: [
       "Timed trades are now available on SOL/USDT and SUI/USDT with the same payout table as other pairs.",
-      "Check the Futures tab to see minimum amounts and payout rates for every duration.",
+      "Check the Options tab to see minimum amounts and payout rates for every duration.",
     ],
   },
   {

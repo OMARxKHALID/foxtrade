@@ -1,6 +1,6 @@
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ledgerTypeLabels, walletLabels } from "@/lib/demo";
-import { formatPrice } from "@/lib/format";
+import { formatQuantity } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const timeFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -29,10 +29,10 @@ export const toRecordRow = (record) => ({
     amount: (
       <span className={cn("tabular-nums", record.amount >= 0 ? "text-up" : "text-down")}>
         {record.amount >= 0 ? "+" : ""}
-        {formatPrice(record.amount)}
+        {formatQuantity(record.amount)}
       </span>
     ),
-    balance: <span className="text-neutral-300 tabular-nums">{formatPrice(record.balanceAfter)}</span>,
+    balance: <span className="text-neutral-300 tabular-nums">{formatQuantity(record.balanceAfter)}</span>,
     status: <StatusBadge tone="success">Completed</StatusBadge>,
   },
 });

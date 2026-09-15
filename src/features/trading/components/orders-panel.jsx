@@ -11,10 +11,11 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { SegmentedTabs } from "@/components/ui/segmented-tabs";
 import { SignInPrompt } from "@/components/ui/sign-in-prompt";
+import { IconButton } from "@/components/ui/icon-button";
 import { useActionSubmit } from "@/hooks/use-action-submit";
 import { useMarkPrices } from "@/hooks/use-mark-prices";
 import { useNow } from "@/hooks/use-now";
-import { formatPercent, formatPrice } from "@/lib/format";
+import { formatPercent, formatPrice, formatQuantity, formatUsdt } from "@/lib/format";
 import { cancelOrder, closeAllPositions, closePosition } from "@/features/trading/actions/place-order";
 import { AddMarginDialog } from "@/features/trading/components/add-margin-dialog";
 import {
@@ -85,7 +86,6 @@ const columns = {
   ],
 };
 
-const iconButton = "inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/10 px-2.5 text-xs text-neutral-300 disabled:opacity-50";
 
 const formatRemaining = (ms) => {
   if (ms <= 0) return "Settling…";
@@ -115,14 +115,14 @@ const useSettlementToasts = (market, items) => {
         const pair = pairLabel(item.symbol);
         if (market === "timed") {
           const profit = (item.payout ?? 0) - item.amount;
-          if (item.status === "won") toast.success(`${pair} ${item.direction} won`, { description: `+${formatPrice(profit)} USDT` });
-          if (item.status === "lost") toast.error(`${pair} ${item.direction} lost`, { description: `-${formatPrice(item.amount)} USDT` });
+          if (item.status === "won") toast.success(`${pair} ${item.direction} won`, { description: `+${formatUsdt(profit)} USDT` });
+          if (item.status === "lost") toast.error(`${pair} ${item.direction} lost`, { description: `-${formatUsdt(item.amount)} USDT` });
           if (item.status === "draw") toast(`${pair} ${item.direction} ended in a draw`, { description: "Stake refunded" });
           return;
         }
         if (item.status === "open") toast.success(`${pair} limit order filled`);
         if (item.status === "liquidated") toast.error(`${pair} position liquidated`);
-        if (item.status === "closed" && item.closeReason !== "manual") toast(`${pair} ${closeReasons[item.closeReason]?.toLowerCase()} hit`, { description: `PnL ${formatPrice(item.pnl)} USDT` });
+        if (item.status === "closed" && item.closeReason !== "manual") toast(`${pair} ${closeReasons[item.closeReason]?.toLowerCase()} hit`, { description: `PnL ${formatUsdt(item.pnl)} USDT` });
       });
     }
     previous.current = statuses;
@@ -174,7 +174,7 @@ export const OrdersPanel = ({ market }) => {
           cells: {
             pair: <PairLink market={market} item={item}>{item.duration}s · {Math.round(item.payoutRate * 100)}%</PairLink>,
             direction: <SideText value={item.direction} />,
-            amount: <span className="text-white tabular-nums">{formatPrice(item.amount)}</span>,
+            amount: <span className="text-white tabular-nums">{formatUsdt(item.amount)}</span>,
             open: <span className="tabular-nums">{formatPrice(item.openPrice)}</span>,
             mark: <span className={winning === null ? "text-neutral-400" : winning ? "text-up" : "text-down"}>{mark ? formatPrice(mark) : "--"}</span>,
             remaining: <span className="font-medium text-white tabular-nums">{formatRemaining(new Date(item.expiresAt).getTime() - now)}</span>,
@@ -196,7 +196,7 @@ export const OrdersPanel = ({ market }) => {
                 cells: {
                   pair: <PairLink market={market} item={item}>{item.duration}s</PairLink>,
                   direction: <SideText value={item.direction} />,
-                  amount: <span className="tabular-nums">{formatPrice(item.amount)}</span>,
+                  amount: <span className="tabular-nums">{formatUsdt(item.amount)}</span>,
                   prices: <span className="tabular-nums text-neutral-300">{formatPrice(item.openPrice)} → {item.closePrice ? formatPrice(item.closePrice) : "--"}</span>,
                   time: <span className="text-neutral-400">{dateTime.format(new Date(item.settledAt ?? item.expiresAt))}</span>,
                   result: (
@@ -246,11 +246,11 @@ export const OrdersPanel = ({ market }) => {
                 <SideText value={item.side} /> {item.leverage}x
               </PairLink>
             ),
-            size: <span className="tabular-nums">{formatPrice(item.size)}</span>,
+            size: <span className="tabular-nums">{formatQuantity(item.size)}</span>,
             entry: <span className="tabular-nums">{formatPrice(item.entryPrice)}</span>,
             mark: <span className="tabular-nums text-white">{mark ? formatPrice(mark) : "--"}</span>,
             liquidation: <span className="tabular-nums text-down">{formatPrice(item.liquidationPrice)}</span>,
-            margin: <span className="tabular-nums">{formatPrice(item.margin)}</span>,
+            margin: <span className="tabular-nums">{formatUsdt(item.margin)}</span>,
             pnl: (
               <span className="inline-flex flex-col items-end">
                 <SignedAmount value={pnl} suffix="" />
@@ -259,14 +259,14 @@ export const OrdersPanel = ({ market }) => {
             ),
             actions: (
               <span className="inline-flex gap-2">
-                <button type="button" className={iconButton} onClick={() => setMarginTarget(item)} aria-label={`Add margin to ${pairLabel(item.symbol)}`}>
+                <IconButton label={`Add margin to ${pairLabel(item.symbol)}`} onClick={() => setMarginTarget(item)}>
                   <Plus className="size-3.5" />
                   <span className="hidden xl:inline">Margin</span>
-                </button>
-                <button type="button" className={iconButton} disabled={close.pending} onClick={() => close.submit(item.id)} aria-label={`Close ${pairLabel(item.symbol)}`}>
+                </IconButton>
+                <IconButton label={`Close ${pairLabel(item.symbol)}`} disabled={close.pending} onClick={() => close.submit(item.id)}>
                   <X className="size-3.5" />
                   Close
-                </button>
+                </IconButton>
               </span>
             ),
           },
@@ -287,13 +287,13 @@ export const OrdersPanel = ({ market }) => {
             </PairLink>
           ),
           limit: <span className="tabular-nums text-white">{formatPrice(item.limitPrice)}</span>,
-          margin: <span className="tabular-nums">{formatPrice(item.margin)}</span>,
+          margin: <span className="tabular-nums">{formatUsdt(item.margin)}</span>,
           created: <span className="text-neutral-400">{dateTime.format(new Date(item.createdAt))}</span>,
           actions: (
-            <button type="button" className={iconButton} disabled={cancel.pending} onClick={() => cancel.submit(item.id)}>
+            <IconButton label={`Cancel ${pairLabel(item.symbol)} order`} disabled={cancel.pending} onClick={() => cancel.submit(item.id)}>
               <X className="size-3.5" />
               Cancel
-            </button>
+            </IconButton>
           ),
         },
       })),
@@ -305,7 +305,7 @@ export const OrdersPanel = ({ market }) => {
   const tabItems = tabs.map((item) => ({ ...item, label: counts[item.value] ? `${item.label} (${counts[item.value]})` : item.label }));
 
   const emptyState = data && !data.signedIn ? (
-    <SignInPrompt title="Sign in to see your orders" text="Your positions, open orders and trade history appear here." />
+    <SignInPrompt title="Log in to see your orders" text="Your positions, open orders and trade history appear here." />
   ) : isPending ? (
     <EmptyState icon={ListChecks} title="Loading orders…" />
   ) : (
@@ -318,7 +318,7 @@ export const OrdersPanel = ({ market }) => {
         tabs={<SegmentedTabs items={tabItems} value={tab} onChange={setTab} variant="pill" label="Your orders" />}
         filters={
           tab === "positions" && openPositions.length > 1 ? (
-            <GradientButton variant="dark" size="xs" onClick={() => setConfirmCloseAll(true)}>
+            <GradientButton variant="dark" size="sm" onClick={() => setConfirmCloseAll(true)}>
               Close All
             </GradientButton>
           ) : null

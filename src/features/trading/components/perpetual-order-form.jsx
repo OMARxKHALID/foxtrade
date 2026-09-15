@@ -12,7 +12,7 @@ import { SegmentedTabs } from "@/components/ui/segmented-tabs";
 import { Slider } from "@/components/ui/slider";
 import { useActionSubmit } from "@/hooks/use-action-submit";
 import { useLiveTickers } from "@/hooks/use-live-tickers";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, formatUsdt } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { placePerpetualOrder } from "@/features/trading/actions/place-order";
 import { perpetualRules } from "@/lib/market/trading-rules";
@@ -106,7 +106,7 @@ export const PerpetualOrderForm = ({ symbol, enabled = true, maxLeverage = perpe
         error={errors.amount?.message}
         aside={
           <span className="text-xs text-neutral-500">
-            Available <span className="text-white tabular-nums">{orders?.signedIn ? formatPrice(orders.available) : "--"}</span>{" "}
+            Available <span className="text-white tabular-nums">{orders?.signedIn ? formatUsdt(orders.available) : "--"}</span>{" "}
             <Link href="/assets/transfer" className="text-brand">
               Transfer
             </Link>
@@ -149,13 +149,13 @@ export const PerpetualOrderForm = ({ symbol, enabled = true, maxLeverage = perpe
       <SummaryList
         items={[
           { label: "Entry price", value: entry ? formatPrice(entry) : "--" },
-          { label: "Position size", value: `${formatPrice(notional)} USDT` },
+          { label: "Position size", value: `${formatUsdt(notional)} USDT` },
           { label: "Est. liquidation", value: liquidation ? formatPrice(liquidation) : "--", className: "text-down" },
-          { label: `Fee (${perpetualRules.takerFeeRate * 100}%)`, value: `${formatPrice(fee)} USDT` },
+          { label: `Fee (${perpetualRules.takerFeeRate * 100}%)`, value: `${formatUsdt(fee)} USDT` },
         ]}
       />
 
-      {!enabled && <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-xs text-amber-400">Option trading on this pair is paused by the admin.</p>}
+      {!enabled && <p className="rounded-lg border border-warning/30 bg-warning/10 px-3 py-2.5 text-xs text-warning">Futures trading on this pair is paused by the admin.</p>}
       <GradientButton type="submit" variant={side === "long" ? "up" : "down"} size="lg" disabled={pending || !enabled}>
         {side === "long" ? "Open Long" : "Open Short"}
       </GradientButton>

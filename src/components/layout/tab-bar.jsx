@@ -6,7 +6,7 @@ import { CandlestickChart, House, Timer, TrendingUp, Wallet } from "lucide-react
 import { appNavLinks } from "@/components/layout/nav-links";
 import { cn } from "@/lib/utils";
 
-const icons = { home: House, markets: TrendingUp, futures: Timer, option: CandlestickChart, assets: Wallet };
+const icons = { home: House, markets: TrendingUp, futures: CandlestickChart, options: Timer, assets: Wallet };
 
 export const TabBar = () => {
   const pathname = usePathname();

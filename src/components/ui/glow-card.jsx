@@ -3,7 +3,6 @@ import { cn } from "@/lib/utils";
 const variants = {
   plain: "border border-white/10 bg-gradient-to-b from-panel to-surface",
   warm: "border border-white/10 bg-[radial-gradient(120%_70%_at_50%_0%,#2e1609_0%,#140b06_45%,#0d0d0d_100%)]",
-  glass: "border border-white/10 bg-surface/60 backdrop-blur-md",
 };
 
 export const GlowCard = ({ as: Tag = "div", variant = "plain", className, children, ...props }) => (

@@ -21,27 +21,27 @@ const withUser = async (message, work) => {
 export const requestWithdrawal = async (input) => {
   const parsed = withdrawSchema.safeParse(input);
   if (!parsed.success) return validationFailure(parsed.error);
-  return withUser("Sign in to manage withdrawals.", (user) => checkWithdrawal(user.id, parsed.data));
+  return withUser("Log in to manage withdrawals.", (user) => checkWithdrawal(user.id, parsed.data));
 };
 
 export const convertAssets = async (input) => {
   const parsed = convertSchema.safeParse(input);
   if (!parsed.success) return validationFailure(parsed.error);
-  return withUser("Sign in to convert assets.", async (user) => ({ ok: true, data: await convert(user.id, parsed.data) }));
+  return withUser("Log in to convert assets.", async (user) => ({ ok: true, data: await convert(user.id, parsed.data) }));
 };
 
 export const transferAssets = async (input) => {
   const parsed = transferSchema.safeParse(input);
   if (!parsed.success) return validationFailure(parsed.error);
-  return withUser("Sign in to transfer between wallets.", (user) => transfer(user.id, parsed.data));
+  return withUser("Log in to transfer between wallets.", (user) => transfer(user.id, parsed.data));
 };
 
-export const claimDemoAssets = async () => withUser("Sign in to claim demo assets.", (user) => claimFaucet(user.id));
+export const claimDemoAssets = async () => withUser("Log in to claim demo assets.", (user) => claimFaucet(user.id));
 
 export const saveWithdrawalAddress = async (input) => {
   const parsed = addressSchema.safeParse(input);
   if (!parsed.success) return validationFailure(parsed.error);
-  return withUser("Sign in to save withdrawal addresses.", (user) => saveAddress(user.id, parsed.data));
+  return withUser("Log in to save withdrawal addresses.", (user) => saveAddress(user.id, parsed.data));
 };
 
-export const removeWithdrawalAddress = async (id) => withUser("Sign in to manage addresses.", (user) => deleteAddress(user.id, String(id)));
+export const removeWithdrawalAddress = async (id) => withUser("Log in to manage addresses.", (user) => deleteAddress(user.id, String(id)));

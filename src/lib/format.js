@@ -13,6 +13,18 @@ export const formatPrice = (value) => {
   return number.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 };
 
+export const formatUsdt = (value) => {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "--";
+  return number.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
+export const formatQuantity = (value) => {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "--";
+  return number.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 8 });
+};
+
 export const formatPercent = (value) => {
   const number = Number(value);
   if (!Number.isFinite(number)) return "--";

@@ -35,7 +35,7 @@ const SecurityPage = async () => {
       <PageHeader title="Security Center" description="Keep your account protected." backHref="/account" />
       <div className="grid gap-4 lg:gap-6 xl:grid-cols-2">
         <GlowCard as="section" aria-labelledby="password-title">
-          <CardHeader id="password-title" title="Login Password" description="Changing your password signs out your other devices." />
+          <CardHeader id="password-title" title="Login password" description="Changing your password signs out your other devices." />
           <CardBody>
             <ChangePasswordForm />
           </CardBody>
@@ -53,7 +53,7 @@ const SecurityPage = async () => {
         </GlowCard>
       </div>
       <GlowCard as="section" aria-labelledby="sessions-title">
-        <CardHeader id="sessions-title" title="Active Sessions" description="Devices currently signed in to your account." />
+        <CardHeader id="sessions-title" title="Active sessions" description="Devices currently signed in to your account." />
         <CardBody>
           {sessions.length ? (
             <ul className="grid gap-3 md:grid-cols-2">
@@ -73,7 +73,7 @@ const SecurityPage = async () => {
               })}
             </ul>
           ) : (
-            <p className="text-sm text-neutral-500">Sign in to see your active sessions.</p>
+            <p className="text-sm text-neutral-500">Log in to see your active sessions.</p>
           )}
         </CardBody>
       </GlowCard>

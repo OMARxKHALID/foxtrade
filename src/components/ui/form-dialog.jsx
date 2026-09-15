@@ -4,13 +4,19 @@ import { Dialog } from "@base-ui/react/dialog";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const FormDialog = ({ open, onOpenChange, title, description, className, children }) => (
+const sizes = {
+  sm: "w-[min(28rem,calc(100vw-2rem))]",
+  md: "w-[min(40rem,calc(100vw-2rem))]",
+};
+
+export const FormDialog = ({ open, onOpenChange, title, description, size = "md", className, children }) => (
   <Dialog.Root open={open} onOpenChange={onOpenChange}>
     <Dialog.Portal>
       <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm" />
       <Dialog.Popup
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[min(40rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col rounded-2xl border border-white/10 bg-panel shadow-[0_24px_60px_rgba(0,0,0,0.7)] outline-none",
+          "fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100dvh-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-2xl border border-white/10 bg-panel shadow-[0_24px_60px_rgba(0,0,0,0.7)] outline-none",
+          sizes[size],
           className,
         )}
       >

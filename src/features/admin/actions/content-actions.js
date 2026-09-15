@@ -54,6 +54,6 @@ export const updatePairSetting = async (input) => {
   return asAdmin(async (admin) => {
     const { symbol, ...setting } = parsed.data;
     await savePairSetting(symbol, setting);
-    await writeAudit(admin, "pair.update", symbol, `Futures ${setting.timedEnabled ? "on" : "off"}, Option ${setting.perpetualEnabled ? "on" : "off"}, max ${setting.maxLeverage}x`);
+    await writeAudit(admin, "pair.update", symbol, `Futures ${setting.perpetualEnabled ? "on" : "off"}, Options ${setting.timedEnabled ? "on" : "off"}, max ${setting.maxLeverage}x`);
   });
 };

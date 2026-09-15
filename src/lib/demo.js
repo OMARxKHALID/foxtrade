@@ -4,8 +4,8 @@ export const FAUCET_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 export const walletLabels = {
   spot: "Spot Wallet",
-  timed: "Futures Wallet",
-  perpetual: "Option Wallet",
+  timed: "Options Wallet",
+  perpetual: "Futures Wallet",
 };
 
 export const CONVERT_SPREAD = 0.001;

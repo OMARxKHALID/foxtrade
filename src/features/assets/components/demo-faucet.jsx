@@ -5,7 +5,7 @@ import { CardBody, CardHeader, GlowCard } from "@/components/ui/glow-card";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { IconTile } from "@/components/ui/icon-tile";
 import { useActionSubmit } from "@/hooks/use-action-submit";
-import { formatPrice } from "@/lib/format";
+import { formatUsdt } from "@/lib/format";
 import { claimDemoAssets } from "@/features/assets/actions/assets-actions";
 import { DEMO_FAUCET_AMOUNT } from "@/features/assets/data/assets-config";
 
@@ -25,11 +25,11 @@ export const DemoFaucet = ({ usdtTotal }) => {
       <GlowCard variant="warm">
         <CardBody>
           <IconTile icon={Gift} size="lg" />
-          <h2 className="mt-6 font-heading text-2xl font-bold text-white sm:text-3xl">Top up to {formatPrice(DEMO_FAUCET_AMOUNT)} USDT</h2>
+          <h2 className="mt-6 font-heading text-2xl font-bold text-white sm:text-3xl">Top up to {formatUsdt(DEMO_FAUCET_AMOUNT)} USDT</h2>
           <p className="mt-3 max-w-md text-sm leading-6 text-neutral-400">
             Refill your demo Spot Wallet and keep practicing timed trades and leveraged positions with live market prices.
           </p>
-          {usdtTotal !== null && <p className="mt-4 text-sm text-neutral-300">USDT across wallets: <span className="text-white tabular-nums">{formatPrice(usdtTotal)}</span></p>}
+          {usdtTotal !== null && <p className="mt-4 text-sm text-neutral-300">USDT across wallets: <span className="text-white tabular-nums">{formatUsdt(usdtTotal)}</span></p>}
           <GradientButton onClick={handleClaim} disabled={pending} className="mt-6">
             {pending ? "Claiming…" : "Claim Demo Assets"}
           </GradientButton>

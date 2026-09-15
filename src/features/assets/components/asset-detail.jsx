@@ -10,7 +10,7 @@ import { CardBody, CardHeader, GlowCard } from "@/components/ui/glow-card";
 import { IconTile } from "@/components/ui/icon-tile";
 import { SignInPrompt } from "@/components/ui/sign-in-prompt";
 import { useLiveTickers } from "@/hooks/use-live-tickers";
-import { formatCompact, formatPrice } from "@/lib/format";
+import { formatCompact, formatPrice, formatQuantity } from "@/lib/format";
 import { toRecordRow } from "@/features/assets/components/record-rows";
 import { wallets } from "@/features/assets/data/assets-config";
 
@@ -91,7 +91,7 @@ export const AssetDetail = ({ asset, pairSymbol, holding, records }) => {
                 <li key={wallet.value} className="flex items-center justify-between gap-3 rounded-xl border border-white/5 bg-field px-4 py-3">
                   <p className="text-sm text-white">{wallet.label}</p>
                   <p className="shrink-0 text-sm text-neutral-400 tabular-nums">
-                    {holding ? formatPrice(holding.byWallet?.[wallet.value] ?? 0) : "--"} {asset.symbol}
+                    {holding ? formatQuantity(holding.byWallet?.[wallet.value] ?? 0) : "--"} {asset.symbol}
                   </p>
                 </li>
               ))}
@@ -110,7 +110,7 @@ export const AssetDetail = ({ asset, pairSymbol, holding, records }) => {
           records ? (
             <EmptyState icon={ReceiptText} title={`No ${asset.symbol} activity yet`} text="Conversions, transfers and trades of this asset appear here." />
           ) : (
-            <SignInPrompt title="Sign in to see this asset's history" text={`Deposits, conversions and transfers of ${asset.symbol} appear here.`} />
+            <SignInPrompt title="Log in to see this asset's history" text={`Deposits, conversions and transfers of ${asset.symbol} appear here.`} />
           )
         }
       />

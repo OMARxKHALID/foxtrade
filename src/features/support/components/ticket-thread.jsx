@@ -7,22 +7,17 @@ import { CardBody, CardHeader, GlowCard } from "@/components/ui/glow-card";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useActionSubmit } from "@/hooks/use-action-submit";
+import { ticketStatus } from "@/lib/status";
 import { cn } from "@/lib/utils";
 
 const dateFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
-
-export const ticketStatusBadges = {
-  open: { tone: "brand", label: "Open" },
-  answered: { tone: "success", label: "Answered" },
-  closed: { tone: "neutral", label: "Closed" },
-};
 
 export const TicketThread = ({ ticket, viewer, replyAction, statusAction, statusLabel, statusValue }) => {
   const [message, setMessage] = useState("");
   const reply = useActionSubmit({ action: replyAction, successMessage: "Reply sent.", onSuccess: () => setMessage("") });
   const status = useActionSubmit({ action: statusAction, successMessage: statusValue === "closed" || !statusValue ? "Ticket closed." : "Ticket reopened." });
   const closed = ticket.status === "closed";
-  const badge = ticketStatusBadges[ticket.status];
+  const badge = ticketStatus[ticket.status];
 
   const handleMessage = (event) => setMessage(event.target.value);
   const handleReply = (event) => {

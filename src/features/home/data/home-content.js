@@ -19,12 +19,12 @@ export const moreGroups = [
   {
     title: "Trade",
     items: [
-      { label: "Option", href: "/trade/perpetual/btcusdt", icon: "option" },
-      { label: "Futures", href: "/trade/timed/btcusdt", icon: "futures" },
+      { label: "Futures", href: "/trade/perpetual/btcusdt", icon: "futures" },
+      { label: "Options", href: "/trade/timed/btcusdt", icon: "options" },
       { label: "Markets", href: "/markets", icon: "markets" },
       { label: "Copy Trading", href: "/copy-trading", icon: "copy" },
-      { label: "Futures Rules", href: "/trade/rules/timed", icon: "rules" },
-      { label: "Option Rules", href: "/trade/rules/perpetual", icon: "rules" },
+      { label: "Futures Rules", href: "/trade/rules/perpetual", icon: "rules" },
+      { label: "Options Rules", href: "/trade/rules/timed", icon: "rules" },
     ],
   },
   {
@@ -35,7 +35,6 @@ export const moreGroups = [
       { label: "Notices", href: "/notices", icon: "notices" },
       { label: "Invite Friends", href: "/account/share", icon: "share" },
       { label: "Security", href: "/account/security", icon: "security" },
-      { label: "Language", href: "/account/language", icon: "language" },
       { label: "Download App", href: "/download", icon: "download" },
       { label: "About Us", href: "/about", icon: "about" },
     ],

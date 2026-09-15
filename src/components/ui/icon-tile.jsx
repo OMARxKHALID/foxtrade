@@ -9,7 +9,7 @@ const sizes = {
 export const IconTile = ({ icon: Icon, size = "sm", className }) => (
   <span
     className={cn(
-      "flex shrink-0 items-center justify-center rounded-full bg-gradient-to-b from-[#f46a2c] to-brand-dark",
+      "flex shrink-0 items-center justify-center rounded-full bg-gradient-to-b from-brand to-brand-dark",
       sizes[size].tile,
       className,
     )}

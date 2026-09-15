@@ -7,17 +7,17 @@ import { DataTable } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SegmentedTabs } from "@/components/ui/segmented-tabs";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { IconButton } from "@/components/ui/icon-button";
 import { useActionSubmit } from "@/hooks/use-action-submit";
+import { kycStatus } from "@/lib/status";
 import { reviewClientVerification } from "@/features/admin/actions/admin-actions";
 
 const dateFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
-const tones = { pending: "brand", approved: "success", rejected: "danger" };
-
 const tabs = [
-  { value: "pending", label: "Pending" },
-  { value: "approved", label: "Approved" },
-  { value: "rejected", label: "Rejected" },
+  { value: "pending", label: kycStatus.pending.label },
+  { value: "approved", label: kycStatus.approved.label },
+  { value: "rejected", label: kycStatus.rejected.label },
 ];
 
 const columns = [
@@ -58,19 +58,19 @@ export const KycTable = ({ submissions }) => {
         submittedAt: <span className="text-neutral-400">{dateFormat.format(new Date(item.submittedAt))}</span>,
         status: (
           <span className="block">
-            <StatusBadge tone={tones[item.status]}>{item.status}</StatusBadge>
+            <StatusBadge tone={kycStatus[item.status].tone}>{kycStatus[item.status].label}</StatusBadge>
             {item.reason && <span className="mt-1 block max-w-[12rem] truncate text-xs text-neutral-500">{item.reason}</span>}
           </span>
         ),
         actions:
           item.status === "pending" ? (
             <span className="inline-flex gap-2">
-              <button type="button" aria-label={`Approve ${item.email}`} disabled={review.pending} onClick={() => review.submit({ id: item.id, decision: "approved" })} className="inline-flex size-8 items-center justify-center rounded-lg border border-white/10 disabled:opacity-50">
+              <IconButton label={`Approve ${item.email}`} disabled={review.pending} onClick={() => review.submit({ id: item.id, decision: "approved" })}>
                 <Check className="size-4 text-up" />
-              </button>
-              <button type="button" aria-label={`Reject ${item.email}`} onClick={() => setRejecting(item)} className="inline-flex size-8 items-center justify-center rounded-lg border border-white/10">
+              </IconButton>
+              <IconButton label={`Reject ${item.email}`} onClick={() => setRejecting(item)}>
                 <X className="size-4 text-down" />
-              </button>
+              </IconButton>
             </span>
           ) : null,
       },
@@ -84,7 +84,7 @@ export const KycTable = ({ submissions }) => {
         columns={columns}
         rows={rows}
         initialSort={{ key: "submittedAt", direction: "desc" }}
-        emptyState={<EmptyState icon={IdCard} title={`No ${tab} submissions`} text="Identity submissions from clients appear here." />}
+        emptyState={<EmptyState icon={IdCard} title={`No submissions ${kycStatus[tab].label.toLowerCase()}`} text="Identity submissions from clients appear here." />}
       />
       <ConfirmDialog
         open={Boolean(rejecting)}

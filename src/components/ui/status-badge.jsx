@@ -4,7 +4,7 @@ const tones = {
   neutral: "bg-white/10 text-neutral-300",
   success: "bg-up/12 text-up",
   danger: "bg-down/12 text-down",
-  warning: "bg-amber-500/12 text-amber-400",
+  warning: "bg-warning/12 text-warning",
   brand: "bg-brand/12 text-brand",
 };
 

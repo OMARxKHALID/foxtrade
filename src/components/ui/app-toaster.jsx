@@ -7,7 +7,7 @@ const icons = {
   error: <CircleAlert className="size-4 text-down" />,
   success: <CircleCheck className="size-4 text-up" />,
   info: <Info className="size-4 text-brand" />,
-  warning: <CircleAlert className="size-4 text-amber-400" />,
+  warning: <CircleAlert className="size-4 text-warning" />,
   loading: <LoaderCircle className="size-4 animate-spin text-brand" />,
 };
 

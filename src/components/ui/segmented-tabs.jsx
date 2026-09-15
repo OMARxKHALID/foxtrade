@@ -8,7 +8,7 @@ export const SegmentedTabs = ({ items, value, onChange, variant = "underline", c
     aria-label={label}
     className={cn(
       "flex max-w-full overflow-x-auto scrollbar-none",
-      variant === "underline" ? "gap-6 border-b border-white/10" : "w-fit gap-1 rounded-lg border border-white/10 bg-field p-1",
+      variant === "underline" ? "gap-6 border-b border-white/10" : "h-9 w-fit gap-1 rounded-lg border border-white/10 bg-field p-0.5",
       className,
     )}
   >
@@ -23,7 +23,7 @@ export const SegmentedTabs = ({ items, value, onChange, variant = "underline", c
           onClick={() => onChange(item.value)}
           className={cn(
             "relative shrink-0 text-sm whitespace-nowrap transition-colors",
-            variant === "underline" ? "h-11" : "h-8 rounded-md px-3",
+            variant === "underline" ? "h-11" : "rounded-md px-3",
             variant === "underline" && (active ? "text-white" : "text-neutral-500"),
             variant === "pill" && (active ? "bg-white/10 text-white" : "text-neutral-500"),
           )}

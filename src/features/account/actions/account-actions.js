@@ -13,7 +13,7 @@ export const submitBasicVerification = async (input) => {
   const parsed = basicVerificationSchema.safeParse(input);
   if (!parsed.success) return validationFailure(parsed.error);
   const user = await getCurrentUser();
-  if (!user) return signInRequired("Sign in to submit verification.");
+  if (!user) return signInRequired("Log in to submit verification.");
   try {
     const limit = await rateLimit(`kyc-submit:${user.id}`, { limit: 5, windowSeconds: 3600 });
     if (!limit.allowed) return tooManyAttempts(limit.retryAfter);
@@ -35,7 +35,7 @@ export const changePassword = async (input) => {
   const parsed = changePasswordSchema.safeParse(input);
   if (!parsed.success) return validationFailure(parsed.error);
   const user = await getCurrentUser();
-  if (!user) return signInRequired("Sign in to change your password.");
+  if (!user) return signInRequired("Log in to change your password.");
   try {
     const limit = await rateLimit(`password-change:${user.id}`, { limit: 5, windowSeconds: 900 });
     if (!limit.allowed) return tooManyAttempts(limit.retryAfter);
@@ -53,7 +53,7 @@ export const setWithdrawalPin = async (input) => {
   const parsed = withdrawalPinSchema.safeParse(input);
   if (!parsed.success) return validationFailure(parsed.error);
   const user = await getCurrentUser();
-  if (!user) return signInRequired("Sign in to set a withdrawal PIN.");
+  if (!user) return signInRequired("Log in to set a withdrawal PIN.");
   try {
     const limit = await rateLimit(`pin-set:${user.id}`, { limit: 5, windowSeconds: 3600 });
     if (!limit.allowed) return tooManyAttempts(limit.retryAfter);

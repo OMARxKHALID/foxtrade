@@ -2,8 +2,8 @@ import { perpetualRules } from "@/lib/market/trading-rules";
 
 export const tradingGuides = {
   timed: {
-    title: "Futures Rules",
-    label: "Futures · Timed",
+    title: "Options Rules",
+    label: "Options · Timed",
     tradeHref: "/trade/timed/btcusdt",
     summary: "Predict whether the price will be higher or lower when the timer ends.",
     sections: [
@@ -31,8 +31,8 @@ export const tradingGuides = {
     ],
   },
   perpetual: {
-    title: "Option Rules",
-    label: "Option · Perpetual",
+    title: "Futures Rules",
+    label: "Futures · Perpetual",
     tradeHref: "/trade/perpetual/btcusdt",
     summary: "Open leveraged long or short positions with isolated margin and no expiry.",
     sections: [
@@ -59,7 +59,7 @@ export const tradingGuides = {
         items: [
           `A taker fee of ${perpetualRules.takerFeeRate * 100}% of position value is charged when opening and closing.`,
           "Unrealised PnL = (mark price − entry price) × size for longs, reversed for shorts.",
-          "Realised PnL is credited to your Option Wallet when the position closes.",
+          "Realised PnL is credited to your Futures Wallet when the position closes.",
         ],
       },
     ],

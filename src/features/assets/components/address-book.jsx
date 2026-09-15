@@ -10,6 +10,7 @@ import { CardBody, CardHeader, GlowCard } from "@/components/ui/glow-card";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { SelectMenu } from "@/components/ui/select-menu";
 import { SignInPrompt } from "@/components/ui/sign-in-prompt";
+import { IconButton } from "@/components/ui/icon-button";
 import { useActionSubmit } from "@/hooks/use-action-submit";
 import { removeWithdrawalAddress, saveWithdrawalAddress } from "@/features/assets/actions/assets-actions";
 import { assetOptions, networkOptions } from "@/features/assets/components/asset-options";
@@ -54,9 +55,9 @@ export const AddressBook = ({ addresses, signedIn }) => {
       network: item.network,
       address: <span className="block max-w-[14rem] truncate font-mono text-xs text-neutral-300 sm:max-w-xs">{item.address}</span>,
       actions: (
-        <button type="button" onClick={() => remove(item.id)} disabled={removing} aria-label={`Remove ${item.label}`} className="inline-flex size-8 items-center justify-center rounded-lg text-neutral-500 disabled:opacity-50">
-          <Trash2 className="size-4" />
-        </button>
+        <IconButton label={`Remove ${item.label}`} onClick={() => remove(item.id)} disabled={removing}>
+          <Trash2 className="size-4 text-down" />
+        </IconButton>
       ),
     },
   }));
@@ -101,7 +102,7 @@ export const AddressBook = ({ addresses, signedIn }) => {
         searchPlaceholder="Search addresses"
         columns={columns}
         rows={rows}
-        emptyState={signedIn ? <EmptyState icon={BookUser} title="No saved addresses" text="Addresses you save appear here." /> : <SignInPrompt title="Sign in to manage addresses" text="Your saved withdrawal addresses appear here." />}
+        emptyState={signedIn ? <EmptyState icon={BookUser} title="No saved addresses" text="Addresses you save appear here." /> : <SignInPrompt title="Log in to manage addresses" text="Your saved withdrawal addresses appear here." />}
       />
     </div>
   );

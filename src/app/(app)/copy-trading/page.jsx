@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { CardBody, GlowCard } from "@/components/ui/glow-card";
 import { IconTile } from "@/components/ui/icon-tile";
 import { PageHeader } from "@/components/ui/page-header";
-import { formatPrice } from "@/lib/format";
+import { formatUsdt } from "@/lib/format";
 import { getLeaderboard } from "@/lib/leaderboard";
 import { cn } from "@/lib/utils";
 
@@ -39,7 +39,7 @@ const CopyTradingPage = async () => {
       trader: <span className="text-white">{row.trader}</span>,
       roi: <span className={cn("tabular-nums", row.roi >= 0 ? "text-up" : "text-down")}>{row.roi >= 0 ? "+" : ""}{row.roi.toFixed(2)}%</span>,
       winRate: <span className="tabular-nums">{row.winRate}%</span>,
-      pnl: <span className={cn("tabular-nums", row.pnl >= 0 ? "text-up" : "text-down")}>{formatPrice(row.pnl)}</span>,
+      pnl: <span className={cn("tabular-nums", row.pnl >= 0 ? "text-up" : "text-down")}>{formatUsdt(row.pnl)}</span>,
       trades: <span className="tabular-nums text-neutral-300">{row.trades}</span>,
     },
   }));

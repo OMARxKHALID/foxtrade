@@ -9,7 +9,7 @@ import { CardBody, CardHeader, GlowCard } from "@/components/ui/glow-card";
 import { IconTile } from "@/components/ui/icon-tile";
 import { SignInPrompt } from "@/components/ui/sign-in-prompt";
 import { useLiveTickers } from "@/hooks/use-live-tickers";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, formatQuantity, formatUsdt } from "@/lib/format";
 import { allSymbols } from "@/lib/market/pairs";
 import { assets, wallets } from "@/features/assets/data/assets-config";
 
@@ -55,8 +55,8 @@ export const AssetsOverview = ({ overview }) => {
         ),
         price: <span className="text-white">{price ? formatPrice(price) : "--"}</span>,
         change: <ChangePill value={change} size="sm" />,
-        balance: <span className={balance ? "text-white" : "text-neutral-500"}>{overview ? formatPrice(balance) : "--"}</span>,
-        value: <span className={value ? "text-white" : "text-neutral-500"}>{overview ? formatPrice(value) : "--"}</span>,
+        balance: <span className={balance ? "text-white" : "text-neutral-500"}>{overview ? formatQuantity(balance) : "--"}</span>,
+        value: <span className={value ? "text-white" : "text-neutral-500"}>{overview ? formatUsdt(value) : "--"}</span>,
       },
     };
   });
@@ -69,7 +69,7 @@ export const AssetsOverview = ({ overview }) => {
         <GlowCard variant="warm">
           <CardBody>
             <p className="text-sm text-neutral-400">Total Assets (USDT)</p>
-            <p className="mt-3 font-heading text-4xl font-bold tracking-tight text-white tabular-nums sm:text-5xl">{liveTotal === null ? "--" : formatPrice(liveTotal)}</p>
+            <p className="mt-3 font-heading text-4xl font-bold tracking-tight text-white tabular-nums sm:text-5xl">{liveTotal === null ? "--" : formatUsdt(liveTotal)}</p>
             <p className="mt-2 text-sm text-neutral-400">
               {overview?.pricesStale ? "Live prices unavailable — non-USDT balances valued at 0" : "Valued at live market prices"}
             </p>
@@ -95,7 +95,7 @@ export const AssetsOverview = ({ overview }) => {
                     <p className="text-sm text-white">{wallet.label}</p>
                     <p className="truncate text-xs text-neutral-500">{wallet.description}</p>
                   </div>
-                  <p className="shrink-0 text-sm text-neutral-300 tabular-nums">{overview ? formatPrice(overview.walletTotals[wallet.value] ?? 0) : "--"} USDT</p>
+                  <p className="shrink-0 text-sm text-neutral-300 tabular-nums">{overview ? formatUsdt(overview.walletTotals[wallet.value] ?? 0) : "--"} USDT</p>
                 </li>
               ))}
             </ul>
@@ -110,7 +110,7 @@ export const AssetsOverview = ({ overview }) => {
         columns={columns}
         rows={rows}
         initialSort={overview ? { key: "value", direction: "desc" } : undefined}
-        footer={overview ? null : <SignInPrompt title="Sign in to see your balances" text="Every new account receives demo USDT to start trading." className="border-t border-white/10" />}
+        footer={overview ? null : <SignInPrompt title="Log in to see your balances" text="Every new account receives demo USDT to start trading." className="border-t border-white/10" />}
       />
     </div>
   );

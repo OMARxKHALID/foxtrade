@@ -7,7 +7,7 @@ export const validationFailure = (error) => ({
 
 export const formFailure = (message) => ({ ok: false, formError: message });
 
-export const signInRequired = (message = "Sign in to continue.") => formFailure(message);
+export const signInRequired = (message = "Log in to continue.") => formFailure(message);
 
 export const serverFailure = (error) => {
   const message = error?.body?.message ?? error?.message ?? "";

@@ -5,7 +5,7 @@ import { CardBody, CardHeader, GlowCard } from "@/components/ui/glow-card";
 import { IconTile } from "@/components/ui/icon-tile";
 import { PageHeader } from "@/components/ui/page-header";
 import { walletLabels } from "@/lib/demo";
-import { formatPrice } from "@/lib/format";
+import { formatUsdt } from "@/lib/format";
 import { collections } from "@/lib/mongo";
 import { hasPin } from "@/lib/pin";
 import { requireUser } from "@/lib/session";
@@ -24,8 +24,8 @@ export const instant = false;
 const actions = [
   { label: "Deposit", href: "/assets/deposit", icon: ArrowDownToLine },
   { label: "Transfer", href: "/assets/transfer", icon: ArrowRightLeft },
-  { label: "Futures", href: "/trade/timed/btcusdt", icon: Timer },
-  { label: "Option", href: "/trade/perpetual/btcusdt", icon: CandlestickChart },
+  { label: "Futures", href: "/trade/perpetual/btcusdt", icon: CandlestickChart },
+  { label: "Options", href: "/trade/timed/btcusdt", icon: Timer },
   { label: "Records", href: "/assets/records", icon: ReceiptText },
 ];
 
@@ -67,12 +67,12 @@ const DashboardPage = async () => {
         <GlowCard variant="warm">
           <CardBody>
             <p className="text-sm text-neutral-400">Total Assets (USDT)</p>
-            <p className="mt-3 font-heading text-4xl font-bold tracking-tight text-white tabular-nums sm:text-5xl">{formatPrice(overview.totalUsdt)}</p>
+            <p className="mt-3 font-heading text-4xl font-bold tracking-tight text-white tabular-nums sm:text-5xl">{formatUsdt(overview.totalUsdt)}</p>
             <ul className="mt-5 grid grid-cols-3 gap-3 text-xs">
               {Object.entries(walletLabels).map(([wallet, label]) => (
                 <li key={wallet} className="rounded-xl border border-white/5 bg-black/20 px-3 py-2">
                   <span className="block truncate text-neutral-500">{label}</span>
-                  <span className="mt-0.5 block text-sm text-white tabular-nums">{formatPrice(overview.walletTotals[wallet] ?? 0)}</span>
+                  <span className="mt-0.5 block text-sm text-white tabular-nums">{formatUsdt(overview.walletTotals[wallet] ?? 0)}</span>
                 </li>
               ))}
             </ul>
@@ -110,7 +110,7 @@ const DashboardPage = async () => {
 
       <ul className="grid grid-cols-2 gap-4 lg:gap-6 xl:grid-cols-4">
         <li>
-          <Stat label="Realised PnL (recent)" value={`${realised > 0 ? "+" : ""}${formatPrice(realised)}`} hint="Last 50 closed trades" tone={realised > 0 ? "text-up" : realised < 0 ? "text-down" : undefined} />
+          <Stat label="Realised PnL (recent)" value={`${realised > 0 ? "+" : ""}${formatUsdt(realised)}`} hint="Last 50 closed trades" tone={realised > 0 ? "text-up" : realised < 0 ? "text-down" : undefined} />
         </li>
         <li>
           <Stat label="Timed win rate" value={winRate === null ? "--" : `${winRate}%`} hint={settledTimed.length ? `${wins} of ${settledTimed.length} settled` : "No settled trades yet"} />

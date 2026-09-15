@@ -51,7 +51,7 @@ export const LoginForm = ({ next }) => {
         Remember me
       </label>
       <GradientButton type="submit" disabled={pending} className="w-full">
-        {pending ? "Signing in…" : "Login"}
+        {pending ? "Logging in…" : "Log In"}
       </GradientButton>
     </form>
   );
@@ -90,7 +90,7 @@ export const RegisterForm = () => {
         {errors.terms && <p className="mt-2 text-xs text-down">{errors.terms.message}</p>}
       </div>
       <GradientButton type="submit" disabled={pending} className="w-full">
-        {pending ? "Creating account…" : "Create Account"}
+        {pending ? "Signing up…" : "Sign Up"}
       </GradientButton>
     </form>
   );

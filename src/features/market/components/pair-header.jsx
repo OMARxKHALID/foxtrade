@@ -36,7 +36,7 @@ export const PairHeader = ({ symbol, market }) => {
             {pair.base}/{pair.quote}
             <ChevronDown className={cn("size-4 text-neutral-400 transition-transform", open && "rotate-180")} />
           </span>
-          <span className="block text-[11px] text-neutral-500">{market === "timed" ? "Futures · Timed" : "Option · Perpetual"}</span>
+          <span className="block text-[11px] text-neutral-500">{market === "timed" ? "Options · Timed" : "Futures · Perpetual"}</span>
         </span>
       </button>
       <div className="flex min-w-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-3">

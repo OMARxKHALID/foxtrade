@@ -11,7 +11,7 @@ import { GradientButton } from "@/components/ui/gradient-button";
 import { useLiveTickers } from "@/hooks/use-live-tickers";
 import { applyFieldErrors } from "@/lib/action-result";
 import { notifyResult } from "@/lib/notify";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, formatUsdt } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { placeTimedOrder } from "@/features/trading/actions/place-order";
 import { formatDuration, timedDurations } from "@/lib/market/trading-rules";
@@ -75,7 +75,7 @@ export const TimedTradePanel = ({ symbol, enabled = true }) => {
   return (
     <form className="flex flex-col gap-5 p-4 sm:p-6" noValidate onSubmit={(event) => event.preventDefault()}>
       <div className="flex items-center justify-between">
-        <h2 className="font-heading text-base font-semibold text-white">Timed Trade</h2>
+        <h2 className="font-heading text-base font-semibold text-white">Timed trade</h2>
         <span className="text-xs text-neutral-500">
           Price <span className="text-white tabular-nums">{ticker ? formatPrice(ticker.price) : "--"}</span>
         </span>
@@ -106,7 +106,7 @@ export const TimedTradePanel = ({ symbol, enabled = true }) => {
       <Field id="timed-amount" label="Amount (USDT)" error={errors.amount?.message} hint={`Minimum ${rule.minAmount} USDT`}
         aside={
           <span className="text-xs text-neutral-500">
-            Available <span className="text-white tabular-nums">{orders?.signedIn ? formatPrice(orders.available) : "--"}</span>{" "}
+            Available <span className="text-white tabular-nums">{orders?.signedIn ? formatUsdt(orders.available) : "--"}</span>{" "}
             <Link href="/assets/transfer" className="text-brand">
               Transfer
             </Link>
@@ -126,11 +126,11 @@ export const TimedTradePanel = ({ symbol, enabled = true }) => {
       <SummaryList
         items={[
           { label: "Payout rate", value: `${Math.round(rule.payoutRate * 100)}%` },
-          { label: "Payout if correct", value: `${formatPrice(payout)} USDT`, className: "text-up" },
+          { label: "Payout if correct", value: `${formatUsdt(payout)} USDT`, className: "text-up" },
         ]}
       />
 
-      {!enabled && <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-xs text-amber-400">Futures trading on this pair is paused by the admin.</p>}
+      {!enabled && <p className="rounded-lg border border-warning/30 bg-warning/10 px-3 py-2.5 text-xs text-warning">Options trading on this pair is paused by the admin.</p>}
       <div className="grid grid-cols-2 gap-3">
         {directions.map((item) => {
           const active = activeDirection === item.value;

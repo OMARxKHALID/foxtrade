@@ -9,13 +9,14 @@ import { controlClass } from "@/components/ui/field";
 import { FormDialog } from "@/components/ui/form-dialog";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { IconButton } from "@/components/ui/icon-button";
 import { useActionSubmit } from "@/hooks/use-action-submit";
 import { updatePairSetting } from "@/features/admin/actions/content-actions";
 
 const columns = [
   { key: "pair", header: "Pair", sortable: true },
-  { key: "timed", header: "Futures" },
-  { key: "perpetual", header: "Option" },
+  { key: "perpetual", header: "Futures" },
+  { key: "timed", header: "Options" },
   { key: "leverage", header: "Max Leverage", align: "right", sortable: true, hideBelow: "sm" },
   { key: "actions", header: <span className="sr-only">Actions</span>, align: "right" },
 ];
@@ -35,12 +36,12 @@ const PairForm = ({ pair, setting, onDone }) => {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       <label className="flex items-center gap-2 text-sm text-neutral-300">
-        <Checkbox checked={timedEnabled} onChange={setTimedEnabled} />
-        Futures (timed trades) enabled
+        <Checkbox checked={perpetualEnabled} onChange={setPerpetualEnabled} />
+        Futures (perpetual positions) enabled
       </label>
       <label className="flex items-center gap-2 text-sm text-neutral-300">
-        <Checkbox checked={perpetualEnabled} onChange={setPerpetualEnabled} />
-        Option (perpetual) enabled
+        <Checkbox checked={timedEnabled} onChange={setTimedEnabled} />
+        Options (timed trades) enabled
       </label>
       <label className="flex flex-col gap-2 text-xs text-neutral-300">
         Maximum leverage (1–100)
@@ -78,9 +79,9 @@ export const PairsManager = ({ pairs, settings }) => {
         perpetual: <StatusBadge tone={setting.perpetualEnabled ? "success" : "neutral"}>{setting.perpetualEnabled ? "Enabled" : "Paused"}</StatusBadge>,
         leverage: <span className="text-white tabular-nums">{setting.maxLeverage}x</span>,
         actions: (
-          <button type="button" aria-label={`Edit ${pair.base}`} onClick={() => setEditing(pair)} className="inline-flex size-8 items-center justify-center rounded-lg border border-white/10 text-neutral-300">
+          <IconButton label={`Edit ${pair.base}`} onClick={() => setEditing(pair)}>
             <Pencil className="size-4" />
-          </button>
+          </IconButton>
         ),
       },
     };

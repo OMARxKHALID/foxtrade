@@ -7,18 +7,13 @@ import { DataTable } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SegmentedTabs } from "@/components/ui/segmented-tabs";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { IconButton } from "@/components/ui/icon-button";
 import { useActionSubmit } from "@/hooks/use-action-submit";
-import { formatPrice } from "@/lib/format";
+import { formatUsdt } from "@/lib/format";
+import { kycStatus } from "@/lib/status";
 import { banClient, resetClientBalance, unbanClient } from "@/features/admin/actions/admin-actions";
 
 const dateFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" });
-
-const kycBadges = {
-  none: { tone: "neutral", label: "None" },
-  pending: { tone: "brand", label: "Pending" },
-  approved: { tone: "success", label: "Verified" },
-  rejected: { tone: "danger", label: "Rejected" },
-};
 
 const tabs = [
   { value: "all", label: "All" },
@@ -35,7 +30,6 @@ const columns = [
   { key: "actions", header: <span className="sr-only">Actions</span>, align: "right" },
 ];
 
-const iconButton = "inline-flex size-8 items-center justify-center rounded-lg border border-white/10 text-neutral-300 disabled:opacity-50";
 
 export const ClientsTable = ({ clients }) => {
   const [tab, setTab] = useState("all");
@@ -63,23 +57,23 @@ export const ClientsTable = ({ clients }) => {
           {client.banReason && <span className="block max-w-xs truncate text-xs text-down">{client.banReason}</span>}
         </span>
       ),
-      usdt: <span className="text-white tabular-nums">{formatPrice(client.usdt)}</span>,
-      kyc: <StatusBadge tone={kycBadges[client.kyc].tone}>{kycBadges[client.kyc].label}</StatusBadge>,
+      usdt: <span className="text-white tabular-nums">{formatUsdt(client.usdt)}</span>,
+      kyc: <StatusBadge tone={kycStatus[client.kyc].tone}>{kycStatus[client.kyc].label}</StatusBadge>,
       status: <StatusBadge tone={client.banned ? "danger" : "success"}>{client.banned ? "Banned" : "Active"}</StatusBadge>,
       createdAt: <span className="text-neutral-400">{dateFormat.format(new Date(client.createdAt))}</span>,
       actions: (
         <span className="inline-flex gap-2">
-          <button type="button" aria-label={`Reset balance for ${client.email}`} title="Reset demo balance" className={iconButton} onClick={() => setDialog({ type: "reset", client })}>
+          <IconButton label={`Reset balance for ${client.email}`} onClick={() => setDialog({ type: "reset", client })}>
             <RotateCcw className="size-4" />
-          </button>
+          </IconButton>
           {client.banned ? (
-            <button type="button" aria-label={`Unban ${client.email}`} title="Unban" disabled={unban.pending} className={iconButton} onClick={() => unban.submit(client.id)}>
+            <IconButton label={`Unban ${client.email}`} disabled={unban.pending} onClick={() => unban.submit(client.id)}>
               <ShieldCheck className="size-4 text-up" />
-            </button>
+            </IconButton>
           ) : (
-            <button type="button" aria-label={`Ban ${client.email}`} title="Ban" className={iconButton} onClick={() => setDialog({ type: "ban", client })}>
+            <IconButton label={`Ban ${client.email}`} onClick={() => setDialog({ type: "ban", client })}>
               <Ban className="size-4 text-down" />
-            </button>
+            </IconButton>
           )}
         </span>
       ),

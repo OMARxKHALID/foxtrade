@@ -1,5 +1,5 @@
 import { StatusBadge } from "@/components/ui/status-badge";
-import { formatPrice } from "@/lib/format";
+import { formatUsdt } from "@/lib/format";
 import { perpetualRules } from "@/lib/market/trading-rules";
 import { pairBySymbol } from "@/lib/market/pairs";
 import { cn } from "@/lib/utils";
@@ -48,7 +48,7 @@ export const SignedAmount = ({ value, suffix = "USDT", className }) => {
   return (
     <span className={cn("tabular-nums", value > 0 ? "text-up" : value < 0 ? "text-down" : "text-neutral-300", className)}>
       {value > 0 ? "+" : ""}
-      {formatPrice(value)} {suffix}
+      {formatUsdt(value)} {suffix}
     </span>
   );
 };

@@ -9,7 +9,7 @@ export const QuickTradeBanner = () => (
         <span className="block font-heading text-lg font-bold text-white sm:text-xl">Quick Transaction</span>
         <span className="mt-1 block text-sm text-neutral-300">Safe and convenient</span>
       </span>
-      <span className="relative flex size-12 items-center justify-center rounded-full border border-orange-400/30 bg-gradient-to-b from-[#f25a1d] to-brand-dark">
+      <span className="relative flex size-12 items-center justify-center rounded-full border border-brand-light/30 bg-gradient-to-b from-brand to-brand-dark">
         <ArrowRight className="size-5 text-white" />
       </span>
     </Link>

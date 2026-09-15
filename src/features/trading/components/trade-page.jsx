@@ -18,8 +18,8 @@ import { getPairSetting } from "@/lib/pair-settings";
 import { getQueryClient } from "@/lib/query-client";
 
 const marketMeta = {
-  timed: { label: "Futures" },
-  perpetual: { label: "Option" },
+  timed: { label: "Options" },
+  perpetual: { label: "Futures" },
 };
 
 export const tradePageMetadata = async ({ params }, market) => {

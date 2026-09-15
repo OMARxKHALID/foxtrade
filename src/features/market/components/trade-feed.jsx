@@ -31,7 +31,7 @@ export const TradeFeed = ({ symbol, className }) => {
 
   return (
     <section aria-label="Recent trades" className={cn("flex flex-col", className)}>
-      <CardHeader title="Last Trades" size="sm" as="h2" />
+      <CardHeader title="Last trades" size="sm" as="h2" />
       <div className={cn("py-2 text-[11px] text-neutral-500", rowGrid)}>
         <span>Price</span>
         <span className="text-right">Amount</span>

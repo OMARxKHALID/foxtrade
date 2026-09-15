@@ -9,7 +9,7 @@ import { SelectMenu } from "@/components/ui/select-menu";
 import { useActionSubmit } from "@/hooks/use-action-submit";
 import { useLiveTickers } from "@/hooks/use-live-tickers";
 import { CONVERT_SPREAD } from "@/lib/demo";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, formatQuantity } from "@/lib/format";
 import { allSymbols } from "@/lib/market/pairs";
 import { convertAssets } from "@/features/assets/actions/assets-actions";
 import { assetOptions } from "@/features/assets/components/asset-options";
@@ -53,7 +53,7 @@ export const ConvertForm = ({ holdings }) => {
         id="convert-amount"
         label="From"
         error={errors.amount?.message}
-        hint={`Available: ${holdings ? formatPrice(available) : "--"} ${from}`}
+        hint={`Available: ${holdings ? formatQuantity(available) : "--"} ${from}`}
         aside={holdings && <button type="button" onClick={handleMax} className="text-xs text-brand">Max</button>}
       >
         <div className="flex gap-2">
@@ -70,7 +70,7 @@ export const ConvertForm = ({ holdings }) => {
       </button>
       <Field id="convert-to" label="To" error={errors.to?.message}>
         <div className="flex gap-2">
-          <output className={`${controlClass} flex items-center text-neutral-300 tabular-nums`}>{receive ? formatPrice(receive) : "0.00"}</output>
+          <output className={`${controlClass} flex items-center text-neutral-300 tabular-nums`}>{receive ? formatQuantity(receive) : "0.00"}</output>
           <Controller
             name="to"
             control={control}

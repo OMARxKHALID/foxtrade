@@ -1,13 +1,12 @@
-import { Bell, BookUser, LayoutDashboard, Download, Globe, CircleQuestionMark, Headset, Info, IdCard, KeyRound, ReceiptText, Settings, ShieldCheck, UserPlus, UserRound, Wallet } from "lucide-react";
-import { cookies } from "next/headers";
+import { Bell, BookUser, LayoutDashboard, Download, CircleQuestionMark, Headset, Info, IdCard, KeyRound, ReceiptText, Settings, ShieldCheck, UserPlus, UserRound, Wallet } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { CardHeader, GlowCard } from "@/components/ui/glow-card";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { MenuRow } from "@/components/ui/menu-row";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { locales } from "@/lib/content/locales";
 import { collections } from "@/lib/mongo";
+import { kycStatus } from "@/lib/status";
 import { getCurrentUser, isAdmin } from "@/lib/session";
 import { SignOutButton } from "@/features/auth/components/sign-out-button";
 
@@ -17,14 +16,12 @@ export const metadata = {
 
 export const instant = false;
 
-const verificationLabels = { none: "Unverified", pending: "Under review", approved: "Verified", rejected: "Rejected" };
-
-const buildGroups = (verification, language) => [
+const buildGroups = (verification) => [
   {
     title: "Profile",
     rows: [
       { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", description: "Balances, open trades and activity" },
-      { href: "/account/verification", icon: IdCard, label: "Identity Verification", description: "Basic and advanced verification", value: verificationLabels[verification] },
+      { href: "/account/verification", icon: IdCard, label: "Identity Verification", description: "Basic and advanced verification", value: kycStatus[verification].label },
       { href: "/assets/records", icon: ReceiptText, label: "Transaction History", description: "Every balance change" },
       { href: "/assets", icon: Wallet, label: "Assets", description: "Wallets and holdings" },
       { href: "/account/share", icon: UserPlus, label: "Invite Friends", description: "Share your invite link" },
@@ -41,8 +38,7 @@ const buildGroups = (verification, language) => [
   {
     title: "Preferences & Support",
     rows: [
-      { href: "/account/settings", icon: Settings, label: "Settings", description: "Currency and app preferences" },
-      { href: "/account/language", icon: Globe, label: "Language", value: language },
+      { href: "/account/settings", icon: Settings, label: "Settings", description: "Policies and app information" },
       { href: "/notices", icon: Bell, label: "Notices" },
       { href: "/help", icon: CircleQuestionMark, label: "Help Center" },
       { href: "/support", icon: Headset, label: "Customer Support" },
@@ -55,8 +51,6 @@ const buildGroups = (verification, language) => [
 const AccountPage = async () => {
   const user = await getCurrentUser();
   const verification = user ? (await collections.verifications().findOne({ userId: user.id }))?.status ?? "none" : "none";
-  const localeCode = (await cookies()).get("NEXT_LOCALE")?.value;
-  const language = (locales.find((item) => item.code === localeCode) ?? locales[0]).native;
   const joined = user ? new Intl.DateTimeFormat("en", { month: "short", year: "numeric" }).format(new Date(user.createdAt)) : null;
 
   return (
@@ -87,20 +81,20 @@ const AccountPage = async () => {
             </>
           ) : (
             <>
-              <p className="mt-5 text-sm leading-6 text-neutral-400">Create an account to get demo funds, place trades and track your performance.</p>
+              <p className="mt-5 text-sm leading-6 text-neutral-400">Sign up to get demo funds, place trades and track your performance.</p>
               <div className="mt-6 grid grid-cols-2 gap-3">
                 <GradientButton href="/login" variant="dark" size="sm">
-                  Login
+                  Log In
                 </GradientButton>
                 <GradientButton href="/register" size="sm">
-                  Register
+                  Sign Up
                 </GradientButton>
               </div>
             </>
           )}
         </GlowCard>
         <div className="flex flex-col gap-4 lg:gap-6">
-          {buildGroups(verification, language).map((group) => (
+          {buildGroups(verification).map((group) => (
             <GlowCard key={group.title} as="section" aria-labelledby={`account-${group.title}`}>
               <CardHeader id={`account-${group.title}`} title={group.title} />
               <div className="p-2">

@@ -14,8 +14,8 @@ import { usePreferencesStore } from "@/store/use-preferences-store";
 import { PairCell, compactText, marketColumns, mutedPrice, priceText, tickerSortValues } from "@/features/market/components/market-cells";
 
 const markets = [
-  { value: "perpetual", label: "Option", path: "perpetual" },
-  { value: "timed", label: "Futures", path: "timed" },
+  { value: "perpetual", label: "Futures", path: "perpetual" },
+  { value: "timed", label: "Options", path: "timed" },
   { value: "favorites", label: "Favorites", path: "perpetual" },
 ];
 

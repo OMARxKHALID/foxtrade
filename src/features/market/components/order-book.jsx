@@ -55,7 +55,7 @@ export const OrderBook = ({ symbol, className }) => {
 
   return (
     <section aria-label="Order book" className={cn("flex flex-col", className)}>
-      <CardHeader title="Order Book" size="sm" as="h2" />
+      <CardHeader title="Order book" size="sm" as="h2" />
       <div className={cn("py-2 text-[11px] text-neutral-500", rowGrid)}>
         <span>Price</span>
         <span className="text-right">Amount</span>

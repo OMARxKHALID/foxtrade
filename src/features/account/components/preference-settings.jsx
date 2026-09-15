@@ -3,27 +3,9 @@
 import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import { FlagIcon } from "@/components/icons/flag-icon";
-import { SelectMenu } from "@/components/ui/select-menu";
-import { currencies, locales } from "@/lib/content/locales";
+import { locales } from "@/lib/content/locales";
 import { cn } from "@/lib/utils";
 import { usePreferencesStore } from "@/store/use-preferences-store";
-
-const currencyOptions = currencies.map((item) => ({ value: item, label: item }));
-
-export const CurrencySetting = () => {
-  const currency = usePreferencesStore((state) => state.currency);
-  const setCurrency = usePreferencesStore((state) => state.setCurrency);
-
-  return (
-    <div className="flex items-center justify-between gap-4 px-4 py-3.5">
-      <label htmlFor="currency" className="text-sm text-white">
-        Display currency
-        <span className="block text-xs text-neutral-500">Used for portfolio valuations</span>
-      </label>
-      <SelectMenu id="currency" options={currencyOptions} value={currency} onChange={setCurrency} className="w-28" />
-    </div>
-  );
-};
 
 export const LanguageList = () => {
   const locale = usePreferencesStore((state) => state.locale);

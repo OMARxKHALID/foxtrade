@@ -54,7 +54,7 @@ const SupportPage = async () => {
           </GlowCard>
           <GlowCard as="section" aria-labelledby="tickets-title">
             <CardHeader id="tickets-title" title="Your tickets" />
-            {tickets ? <TicketList tickets={tickets} /> : <SignInPrompt title="Sign in to see your tickets" />}
+            {tickets ? <TicketList tickets={tickets} /> : <SignInPrompt title="Log in to see your tickets" />}
           </GlowCard>
         </div>
       </div>

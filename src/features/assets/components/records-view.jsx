@@ -62,7 +62,7 @@ export const RecordsView = ({ records, limit }) => {
         records ? (
           <EmptyState icon={ReceiptText} title={tab === "withdraw" ? "No withdrawals" : "No records found"} text={tab === "withdraw" ? "Demo balances cannot be withdrawn to external wallets." : "Try another type or date range."} />
         ) : (
-          <SignInPrompt title="Sign in to see your records" text="Every balance change is recorded in your ledger." />
+          <SignInPrompt title="Log in to see your records" text="Every balance change is recorded in your ledger." />
         )
       }
     />

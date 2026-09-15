@@ -3,7 +3,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { LoginForm } from "@/features/auth/components/auth-forms";
 
 export const metadata = {
-  title: "Login",
+  title: "Log In",
 };
 
 export const instant = false;
@@ -13,14 +13,14 @@ const LoginPage = async ({ searchParams }) => {
 
   return (
     <>
-      <h1 className="font-heading text-3xl font-bold tracking-tight text-white">Login</h1>
-      <p className="mt-2 text-sm text-neutral-400">Welcome back. Sign in to your account.</p>
+      <h1 className="font-heading text-3xl font-bold tracking-tight text-white">Log In</h1>
+      <p className="mt-2 text-sm text-neutral-400">Welcome back. Log in to your account.</p>
       <div className="mt-8">
-        {reset && <StatusBadge tone="success" className="mb-5">Password updated. Sign in with your new password.</StatusBadge>}
+        {reset && <StatusBadge tone="success" className="mb-5">Password updated. Log in with your new password.</StatusBadge>}
         <LoginForm next={typeof next === "string" ? next : "/"} />
       </div>
       <p className="mt-8 text-center text-sm text-neutral-400">
-        New to Foxtrade? <Link href="/register" className="text-brand">Create an account</Link>
+        New to Foxtrade? <Link href="/register" className="text-brand">Sign up</Link>
       </p>
     </>
   );

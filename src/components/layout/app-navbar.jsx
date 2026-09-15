@@ -60,10 +60,10 @@ export const AppNavbar = ({ user, signOutAction }) => {
                   <UserRound className="size-[18px]" />
                 </Link>
                 <Link href="/login" className="hidden h-8 items-center rounded-lg px-3 text-sm text-white sm:flex">
-                  Login
+                  Log In
                 </Link>
                 <Link href="/register" className="hidden h-8 items-center rounded-lg bg-white px-4 text-sm font-medium text-neutral-900 sm:flex">
-                  Register
+                  Sign Up
                 </Link>
               </>
             )}

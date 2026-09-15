@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { CardHeader, GlowCard } from "@/components/ui/glow-card";
 import { useMarkPrices } from "@/hooks/use-mark-prices";
 import { useNow } from "@/hooks/use-now";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, formatUsdt } from "@/lib/format";
 import { SideText, SignedAmount, pairLabel, unrealizedPnl } from "@/features/trading/components/trade-format";
 
 const rowClass = "flex items-center justify-between gap-3 px-4 py-3 sm:px-6";
@@ -35,7 +35,7 @@ export const OpenActivity = ({ positions, timed }) => {
                       <SideText value={item.side} /> {item.leverage}x · {item.status === "pending" ? `limit ${formatPrice(item.limitPrice)}` : `entry ${formatPrice(item.entryPrice)}`}
                     </span>
                   </span>
-                  {item.status === "pending" ? <span className="text-xs text-amber-400">Pending</span> : <SignedAmount value={unrealizedPnl(item, marks[item.symbol])} className="text-sm" />}
+                  {item.status === "pending" ? <span className="text-xs text-warning">Pending</span> : <SignedAmount value={unrealizedPnl(item, marks[item.symbol])} className="text-sm" />}
                 </Link>
               </li>
             ))}
@@ -58,7 +58,7 @@ export const OpenActivity = ({ positions, timed }) => {
                     <span className="min-w-0">
                       <span className="block text-sm font-medium text-white">{pairLabel(item.symbol)}</span>
                       <span className="block text-xs text-neutral-500">
-                        <SideText value={item.direction} /> · {formatPrice(item.amount)} USDT
+                        <SideText value={item.direction} /> · {formatUsdt(item.amount)} USDT
                       </span>
                     </span>
                     <span className="text-right">

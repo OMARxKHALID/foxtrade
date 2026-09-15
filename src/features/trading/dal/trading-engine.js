@@ -53,7 +53,7 @@ export const placeTimedOrder = async (userId, { symbol, direction, duration, amo
   const pair = findPair(symbol);
   const rule = timedDurations.find((item) => item.seconds === duration);
   if (!pair || !rule) throw new LedgerError("This market is not available.");
-  if (!(await getPairSetting(pair.symbol)).timedEnabled) throw new LedgerError(`Futures trading on ${pair.base}/USDT is paused.`);
+  if (!(await getPairSetting(pair.symbol)).timedEnabled) throw new LedgerError(`Options trading on ${pair.base}/USDT is paused.`);
   if (amount < rule.minAmount) throw new LedgerError(`Minimum stake for ${duration}s is ${rule.minAmount} USDT.`);
   const openPrice = await latestPrice(pair.symbol);
   const openedAt = new Date();
@@ -108,7 +108,7 @@ export const placePerpetualOrder = async (userId, { symbol, side, type, price, a
   const pair = findPair(symbol);
   if (!pair) throw new LedgerError("This market is not available.");
   const setting = await getPairSetting(pair.symbol);
-  if (!setting.perpetualEnabled) throw new LedgerError(`Option trading on ${pair.base}/USDT is paused.`);
+  if (!setting.perpetualEnabled) throw new LedgerError(`Futures trading on ${pair.base}/USDT is paused.`);
   if (leverage > setting.maxLeverage) throw new LedgerError(`Maximum leverage for ${pair.base}/USDT is ${setting.maxLeverage}x.`);
   const market = await latestPrice(pair.symbol);
   if (type === "limit" && (side === "long" ? price >= market : price <= market)) {

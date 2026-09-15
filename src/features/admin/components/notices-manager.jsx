@@ -13,6 +13,7 @@ import { FormDialog } from "@/components/ui/form-dialog";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { SelectMenu } from "@/components/ui/select-menu";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { IconButton } from "@/components/ui/icon-button";
 import { useActionSubmit } from "@/hooks/use-action-submit";
 import { cn } from "@/lib/utils";
 import { removeNotice, upsertNotice } from "@/features/admin/actions/content-actions";
@@ -32,7 +33,6 @@ const columns = [
 
 const emptyNotice = { title: "", category: "Announcement", summary: "", body: "", published: true };
 
-const iconButton = "inline-flex size-8 items-center justify-center rounded-lg border border-white/10 text-neutral-300 disabled:opacity-50";
 
 const NoticeForm = ({ notice, onDone }) => {
   const {
@@ -96,12 +96,12 @@ export const NoticesManager = ({ notices }) => {
       status: <StatusBadge tone={notice.published ? "success" : "neutral"}>{notice.published ? "Published" : "Draft"}</StatusBadge>,
       actions: (
         <span className="inline-flex gap-2">
-          <button type="button" aria-label={`Edit ${notice.title}`} className={iconButton} onClick={() => setEditing(notice)}>
+          <IconButton label={`Edit ${notice.title}`} onClick={() => setEditing(notice)}>
             <Pencil className="size-4" />
-          </button>
-          <button type="button" aria-label={`Delete ${notice.title}`} className={iconButton} onClick={() => setDeleting(notice)}>
+          </IconButton>
+          <IconButton label={`Delete ${notice.title}`} onClick={() => setDeleting(notice)}>
             <Trash2 className="size-4 text-down" />
-          </button>
+          </IconButton>
         </span>
       ),
     },
@@ -113,7 +113,7 @@ export const NoticesManager = ({ notices }) => {
         title={`Notices (${notices.length})`}
         titleId="notices-title"
         filters={
-          <GradientButton size="xs" onClick={() => setEditing("new")}>
+          <GradientButton size="sm" onClick={() => setEditing("new")}>
             <Plus className="size-3.5" />
             New Notice
           </GradientButton>

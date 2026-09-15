@@ -7,14 +7,9 @@ import { DataTable } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SegmentedTabs } from "@/components/ui/segmented-tabs";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { ticketStatus } from "@/lib/status";
 
 const dateFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
-
-const badges = {
-  open: { tone: "brand", label: "Needs reply" },
-  answered: { tone: "success", label: "Answered" },
-  closed: { tone: "neutral", label: "Closed" },
-};
 
 const tabs = [
   { value: "open", label: "Needs reply" },
@@ -51,7 +46,7 @@ export const TicketsTable = ({ tickets }) => {
         category: <span className="text-neutral-300">{ticket.category}</span>,
         messages: <span className="text-neutral-400 tabular-nums">{ticket.messageCount}</span>,
         updatedAt: <span className="text-neutral-400">{dateFormat.format(new Date(ticket.updatedAt))}</span>,
-        status: <StatusBadge tone={badges[ticket.status].tone}>{badges[ticket.status].label}</StatusBadge>,
+        status: <StatusBadge tone={ticketStatus[ticket.status].tone}>{ticketStatus[ticket.status].label}</StatusBadge>,
       },
     }));
 

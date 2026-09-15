@@ -32,7 +32,7 @@ const AboutPage = () => (
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <GradientButton href="/register">Create Account</GradientButton>
+          <GradientButton href="/register">Sign Up</GradientButton>
           <GradientButton href="/markets" variant="dark">
             View Markets
           </GradientButton>

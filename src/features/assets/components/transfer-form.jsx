@@ -7,7 +7,7 @@ import { Field, controlClass } from "@/components/ui/field";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { SelectMenu } from "@/components/ui/select-menu";
 import { useActionSubmit } from "@/hooks/use-action-submit";
-import { formatPrice } from "@/lib/format";
+import { formatQuantity } from "@/lib/format";
 import { transferAssets } from "@/features/assets/actions/assets-actions";
 import { assetOptions, walletOptions } from "@/features/assets/components/asset-options";
 import { transferSchema } from "@/features/assets/schemas/assets-schema";
@@ -60,7 +60,7 @@ export const TransferForm = ({ holdings }) => {
           id="transfer-amount"
           label="Amount"
           error={errors.amount?.message}
-          hint={`Available: ${holdings ? formatPrice(available) : "--"} ${asset}`}
+          hint={`Available: ${holdings ? formatQuantity(available) : "--"} ${asset}`}
           aside={holdings && <button type="button" onClick={handleMax} className="text-xs text-brand">Max</button>}
         >
           <input id="transfer-amount" type="number" step="any" inputMode="decimal" aria-invalid={Boolean(errors.amount)} className={controlClass} {...register("amount")} />

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ChevronRight, LifeBuoy } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { ticketStatusBadges } from "@/features/support/components/ticket-thread";
+import { ticketStatus } from "@/lib/status";
 
 const dateFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric" });
 
@@ -17,7 +17,7 @@ export const TicketList = ({ tickets }) => {
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm text-white">{ticket.subject}</span>
               <span className="mt-1 flex items-center gap-2 text-xs text-neutral-500">
-                <StatusBadge tone={ticketStatusBadges[ticket.status].tone}>{ticketStatusBadges[ticket.status].label}</StatusBadge>
+                <StatusBadge tone={ticketStatus[ticket.status].tone}>{ticketStatus[ticket.status].label}</StatusBadge>
                 {ticket.category} · {dateFormat.format(new Date(ticket.updatedAt))}
               </span>
             </span>

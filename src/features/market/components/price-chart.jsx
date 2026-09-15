@@ -16,8 +16,19 @@ const intervals = chartIntervals.map((value) => ({ value, label: value }));
 const intervalSeconds = { "1m": 60, "5m": 300, "15m": 900, "1h": 3600, "4h": 14400, "1d": 86400 };
 
 const RETRY_DELAY = 5000;
-const UP = "#22c55e";
-const DOWN = "#ef4444";
+
+const cssColor = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+const toRgba = (hex, alpha) => {
+  const value = parseInt(hex.slice(1), 16);
+  return `rgba(${value >> 16}, ${(value >> 8) & 255}, ${value & 255}, ${alpha})`;
+};
+
+const readPalette = () => {
+  const up = cssColor("--up");
+  const down = cssColor("--down");
+  return { up, down, upVolume: toRgba(up, 0.35), downVolume: toRgba(down, 0.35), crosshair: toRgba(cssColor("--brand"), 0.5), crosshairLabel: cssColor("--brand-dark") };
+};
 
 const toLocalTime = (utcSeconds) => utcSeconds - new Date(utcSeconds * 1000).getTimezoneOffset() * 60;
 
@@ -29,10 +40,10 @@ const toCandle = (kline) => ({
   close: kline.close,
 });
 
-const toVolume = (kline) => ({
+const toVolume = (kline, palette) => ({
   time: toLocalTime(kline.time),
   value: kline.volume,
-  color: kline.close >= kline.open ? "rgba(34,197,94,0.35)" : "rgba(239,68,68,0.35)",
+  color: kline.close >= kline.open ? palette.upVolume : palette.downVolume,
 });
 
 const fromStream = ({ k }) => ({ time: Math.floor(k.t / 1000), open: +k.o, high: +k.h, low: +k.l, close: +k.c, volume: +k.v });
@@ -48,11 +59,6 @@ const chartOptions = {
   grid: {
     vertLines: { color: "rgba(255,255,255,0.04)" },
     horzLines: { color: "rgba(255,255,255,0.04)" },
-  },
-  crosshair: {
-    mode: CrosshairMode.Normal,
-    vertLine: { color: "rgba(255,106,42,0.5)", labelBackgroundColor: "#c9380f" },
-    horzLine: { color: "rgba(255,106,42,0.5)", labelBackgroundColor: "#c9380f" },
   },
   rightPriceScale: { borderColor: "rgba(255,255,255,0.08)" },
   timeScale: { borderColor: "rgba(255,255,255,0.08)", timeVisible: true, secondsVisible: false },
@@ -70,13 +76,19 @@ export const PriceChart = ({ symbol, className }) => {
   useEffect(() => {
     if (!hydrated || !containerRef.current) return;
     const fontFamily = getComputedStyle(document.body).fontFamily;
-    const chart = createChart(containerRef.current, { ...chartOptions, layout: { ...chartOptions.layout, fontFamily } });
+    const palette = readPalette();
+    const crosshairLine = { color: palette.crosshair, labelBackgroundColor: palette.crosshairLabel };
+    const chart = createChart(containerRef.current, {
+      ...chartOptions,
+      layout: { ...chartOptions.layout, fontFamily },
+      crosshair: { mode: CrosshairMode.Normal, vertLine: crosshairLine, horzLine: crosshairLine },
+    });
     const candles = chart.addSeries(CandlestickSeries, {
-      upColor: UP,
-      downColor: DOWN,
+      upColor: palette.up,
+      downColor: palette.down,
       borderVisible: false,
-      wickUpColor: UP,
-      wickDownColor: DOWN,
+      wickUpColor: palette.up,
+      wickDownColor: palette.down,
     });
     const volume = chart.addSeries(HistogramSeries, { priceFormat: { type: "volume" }, priceScaleId: "" });
     volume.priceScale().applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
@@ -92,7 +104,7 @@ export const PriceChart = ({ symbol, className }) => {
     const applyKline = (kline) => {
       if (kline.time < lastTime) return;
       candles.update(toCandle(kline));
-      volume.update(toVolume(kline));
+      volume.update(toVolume(kline, palette));
       lastTime = kline.time;
     };
 
@@ -109,7 +121,7 @@ export const PriceChart = ({ symbol, className }) => {
             candles.applyOptions({ priceFormat: { type: "price", precision, minMove: 1 / 10 ** precision } });
           }
           candles.setData(klines.map(toCandle));
-          volume.setData(klines.map(toVolume));
+          volume.setData(klines.map((kline) => toVolume(kline, palette)));
           lastTime = last?.time ?? 0;
           loading = false;
           buffered.forEach(applyKline);

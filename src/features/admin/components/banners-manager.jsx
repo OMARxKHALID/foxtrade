@@ -12,6 +12,7 @@ import { Field, controlClass } from "@/components/ui/field";
 import { FormDialog } from "@/components/ui/form-dialog";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { IconButton } from "@/components/ui/icon-button";
 import { useActionSubmit } from "@/hooks/use-action-submit";
 import { removeBanner, upsertBanner } from "@/features/admin/actions/content-actions";
 import { bannerSchema } from "@/features/admin/schemas/admin-schema";
@@ -24,7 +25,6 @@ const columns = [
   { key: "actions", header: <span className="sr-only">Actions</span>, align: "right" },
 ];
 
-const iconButton = "inline-flex size-8 items-center justify-center rounded-lg border border-white/10 text-neutral-300";
 
 const BannerForm = ({ banner, nextOrder, onDone }) => {
   const {
@@ -103,12 +103,12 @@ export const BannersManager = ({ banners }) => {
       status: <StatusBadge tone={banner.active ? "success" : "neutral"}>{banner.active ? "Active" : "Hidden"}</StatusBadge>,
       actions: (
         <span className="inline-flex gap-2">
-          <button type="button" aria-label={`Edit ${banner.title}`} className={iconButton} onClick={() => setEditing(banner)}>
+          <IconButton label={`Edit ${banner.title}`} onClick={() => setEditing(banner)}>
             <Pencil className="size-4" />
-          </button>
-          <button type="button" aria-label={`Delete ${banner.title}`} className={iconButton} onClick={() => setDeleting(banner)}>
+          </IconButton>
+          <IconButton label={`Delete ${banner.title}`} onClick={() => setDeleting(banner)}>
             <Trash2 className="size-4 text-down" />
-          </button>
+          </IconButton>
         </span>
       ),
     },
@@ -120,7 +120,7 @@ export const BannersManager = ({ banners }) => {
         title={`Banners (${banners.length})`}
         titleId="banners-title"
         filters={
-          <GradientButton size="xs" onClick={() => setEditing("new")}>
+          <GradientButton size="sm" onClick={() => setEditing("new")}>
             <Plus className="size-3.5" />
             New Banner
           </GradientButton>
