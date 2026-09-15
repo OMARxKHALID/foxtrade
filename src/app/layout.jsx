@@ -1,5 +1,6 @@
 import { Inter, Inter_Tight } from "next/font/google";
 import { AppProviders } from "@/providers/app-providers";
+import { LocaleProvider } from "@/components/locale-provider";
 import { site } from "@/lib/site";
 import "./globals.css";
 
@@ -33,7 +34,9 @@ export const viewport = {
 const RootLayout = ({ children }) => (
   <html lang="en" className={`${inter.variable} ${interTight.variable} h-full antialiased`}>
     <body className="flex min-h-full flex-col overflow-x-hidden">
-      <AppProviders>{children}</AppProviders>
+      <LocaleProvider>
+        <AppProviders>{children}</AppProviders>
+      </LocaleProvider>
     </body>
   </html>
 );

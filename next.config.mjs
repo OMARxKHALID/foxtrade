@@ -1,3 +1,5 @@
+import createNextIntlPlugin from 'next-intl/plugin';
+
 const isDev = process.env.NODE_ENV === "development";
 
 const contentSecurityPolicy = [
@@ -29,4 +31,5 @@ const nextConfig = {
   headers: async () => [{ source: "/(.*)", headers: securityHeaders }],
 };
 
-export default nextConfig;
+const withNextIntl = createNextIntlPlugin("./src/i18n/request.js");
+export default withNextIntl(nextConfig);

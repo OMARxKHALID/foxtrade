@@ -29,7 +29,10 @@ export const usePreferencesStore = create()(
           favorites: state.favorites.includes(symbol) ? state.favorites.filter((item) => item !== symbol) : [...state.favorites, symbol],
         })),
       setCurrency: (currency) => set({ currency }),
-      setLocale: (locale) => set({ locale }),
+      setLocale: (locale) => {
+        document.cookie = `NEXT_LOCALE=${locale}; path=/; max-age=31536000; SameSite=Lax`;
+        set({ locale });
+      },
       setChartInterval: (chartInterval) => set({ chartInterval }),
     }),
     {

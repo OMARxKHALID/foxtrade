@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import { FlagIcon } from "@/components/icons/flag-icon";
 import { SelectMenu } from "@/components/ui/select-menu";
@@ -27,6 +28,12 @@ export const CurrencySetting = () => {
 export const LanguageList = () => {
   const locale = usePreferencesStore((state) => state.locale);
   const setLocale = usePreferencesStore((state) => state.setLocale);
+  const router = useRouter();
+
+  const handleLocaleChange = (code) => {
+    setLocale(code);
+    router.refresh();
+  };
 
   return (
     <ul role="radiogroup" aria-label="Language" className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
@@ -38,7 +45,7 @@ export const LanguageList = () => {
               type="button"
               role="radio"
               aria-checked={active}
-              onClick={() => setLocale(item.code)}
+              onClick={() => handleLocaleChange(item.code)}
               className={cn(
                 "flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left",
                 active ? "border-brand/50 bg-brand/5" : "border-white/5 bg-field",
