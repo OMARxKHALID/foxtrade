@@ -1,10 +1,22 @@
 import "server-only";
 import { ObjectId } from "mongodb";
+import { formFailure, serverFailure, signInRequired } from "@/lib/action-result";
 import { toAmount } from "@/lib/money";
 import { collections } from "@/lib/mongo";
-import { requireAdmin } from "@/lib/session";
+import { getCurrentUser, isAdmin, requireAdmin } from "@/lib/session";
 
 const DAY = 24 * 60 * 60 * 1000;
+
+export const asAdmin = async (work) => {
+  const admin = await getCurrentUser().catch(() => null);
+  if (!admin) return signInRequired();
+  if (!isAdmin(admin)) return formFailure("Only the admin can do this.");
+  try {
+    return (await work(admin)) ?? { ok: true };
+  } catch (error) {
+    return serverFailure(error);
+  }
+};
 
 export const writeAudit = async (admin, action, target, detail = null) => {
   await collections.audit().insertOne({ adminId: admin.id, adminEmail: admin.email, action, target, detail, createdAt: new Date() });

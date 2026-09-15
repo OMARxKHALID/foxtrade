@@ -1,25 +1,13 @@
 "use server";
 
 import { headers } from "next/headers";
-import { formFailure, serverFailure, signInRequired, validationFailure } from "@/lib/action-result";
+import { formFailure, validationFailure } from "@/lib/action-result";
 import { getAuth } from "@/lib/auth";
 import { DEMO_FAUCET_AMOUNT } from "@/lib/demo";
 import { getBalances, postEntries, withTransaction } from "@/lib/ledger";
-import { getCurrentUser, isAdmin } from "@/lib/session";
 import { addTicketMessage, setTicketStatus } from "@/lib/ticket-store";
-import { findClient, reviewVerification, writeAudit } from "@/features/admin/dal/admin-dal";
+import { asAdmin, findClient, reviewVerification, writeAudit } from "@/features/admin/dal/admin-dal";
 import { banSchema, objectIdSchema, reviewSchema, ticketReplySchema, ticketStatusSchema } from "@/features/admin/schemas/admin-schema";
-
-const asAdmin = async (work) => {
-  const admin = await getCurrentUser().catch(() => null);
-  if (!admin) return signInRequired();
-  if (!isAdmin(admin)) return formFailure("Only the admin can do this.");
-  try {
-    return (await work(admin)) ?? { ok: true };
-  } catch (error) {
-    return serverFailure(error);
-  }
-};
 
 export const banClient = async (input) => {
   const parsed = banSchema.safeParse(input);

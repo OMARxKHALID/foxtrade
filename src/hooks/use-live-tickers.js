@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useShallow } from "zustand/react/shallow";
 import { subscribeStream } from "@/lib/market/binance-socket";
@@ -35,17 +35,9 @@ export const useLiveTickers = (symbols) => {
   }, [key, applyBatch]);
 
   const live = useTickerStore(useShallow((state) => symbols.map((symbol) => state.tickers[symbol])));
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
-  }, []);
 
   return useMemo(() => {
-    if (!mounted) {
-      return symbols.map((symbol) => snapshot.find((t) => t.symbol === symbol)).filter(Boolean);
-    }
     const bySymbol = Object.fromEntries(snapshot.map((ticker) => [ticker.symbol, ticker]));
     return symbols.map((symbol, i) => live[i] ?? bySymbol[symbol]).filter(Boolean);
-  }, [snapshot, live, symbols, mounted]);
+  }, [snapshot, live, symbols]);
 };

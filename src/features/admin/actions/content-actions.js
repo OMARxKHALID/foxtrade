@@ -1,23 +1,11 @@
 "use server";
 
-import { formFailure, serverFailure, signInRequired, validationFailure } from "@/lib/action-result";
+import { formFailure, validationFailure } from "@/lib/action-result";
 import { deleteBanner, deleteNotice, saveBanner, saveNotice } from "@/lib/content-store";
 import { pairBySymbol } from "@/lib/market/pairs";
 import { savePairSetting } from "@/lib/pair-settings";
-import { getCurrentUser, isAdmin } from "@/lib/session";
-import { writeAudit } from "@/features/admin/dal/admin-dal";
+import { asAdmin, writeAudit } from "@/features/admin/dal/admin-dal";
 import { bannerSchema, noticeSchema, objectIdSchema, pairSettingSchema } from "@/features/admin/schemas/admin-schema";
-
-const asAdmin = async (work) => {
-  const admin = await getCurrentUser().catch(() => null);
-  if (!admin) return signInRequired();
-  if (!isAdmin(admin)) return formFailure("Only the admin can do this.");
-  try {
-    return (await work(admin)) ?? { ok: true };
-  } catch (error) {
-    return serverFailure(error);
-  }
-};
 
 export const upsertNotice = async (input) => {
   const parsed = noticeSchema.safeParse(input);

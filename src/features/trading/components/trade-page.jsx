@@ -6,7 +6,7 @@ import { Container } from "@/components/ui/container";
 import { PageLoader } from "@/components/ui/page-loader";
 import { OrderBook } from "@/features/market/components/order-book";
 import { PairHeader } from "@/features/market/components/pair-header";
-import PriceChart from "@/features/trading/components/price-chart-loader";
+import { PriceChart } from "@/features/trading/components/price-chart-loader";
 import { TradeFeed } from "@/features/market/components/trade-feed";
 import { OrdersPanel } from "@/features/trading/components/orders-panel";
 import { PerpetualOrderForm } from "@/features/trading/components/perpetual-order-form";
