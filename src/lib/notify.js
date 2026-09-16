@@ -5,5 +5,7 @@ export const notifyResult = (result, successMessage) => {
     if (successMessage) toast.success(successMessage);
     return;
   }
-  if (result.formError) toast.error(result.formError);
+  if (result.formError) return toast.error(result.formError);
+  const [firstFieldError] = Object.values(result.fieldErrors ?? {}).flat();
+  if (firstFieldError) toast.error(firstFieldError);
 };

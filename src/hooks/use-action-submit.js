@@ -2,6 +2,7 @@
 
 import { useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { applyFieldErrors } from "@/lib/action-result";
 import { notifyResult } from "@/lib/notify";
 
@@ -22,6 +23,8 @@ export const useActionSubmit = ({ action, setError, successMessage, onSuccess })
         if (!result.ok) return;
         onSuccess?.(result);
         router.refresh();
+      } catch {
+        toast.error("Something went wrong. Please try again.");
       } finally {
         locked.current = false;
       }

@@ -12,6 +12,7 @@ vi.mock("@/lib/auth", () => ({ getAuth: () => ({ api: { removeUser: vi.fn(async 
 vi.mock("@/lib/document-storage", () => ({ deletePrivateImages: vi.fn(async () => {}) }));
 
 const { getCurrentUser } = await import("@/lib/session");
+const { deletePrivateImages } = await import("@/lib/document-storage");
 const { adjustClientBalance, deleteClient } = await import("./admin-actions");
 
 const adminId = new ObjectId();
@@ -94,6 +95,17 @@ describe("Deleting a client", () => {
     expect(await collections.invites().countDocuments({ userId: clientId.toString() })).toBe(0);
     expect((await collections.invites().findOne({ userId: "u-friend" })).referrerId).toBeNull();
     expect((await collections.audit().findOne({})).action).toBe("client.delete");
+  });
+
+  it("still deletes the client when document storage is down", async () => {
+    await collections.verifications().insertOne({ userId: clientId.toString(), documents: { front: { publicId: "kyc/c/front" } } });
+    deletePrivateImages.mockRejectedValueOnce(new Error("Cloudinary 503"));
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    const result = await deleteClient(clientId.toString());
+    expect(result.ok).toBe(true);
+    expect(await collections.verifications().countDocuments({ userId: clientId.toString() })).toBe(0);
+    expect(logged).toHaveBeenCalledWith(expect.stringContaining("Could not delete KYC files"), expect.any(Error));
+    logged.mockRestore();
   });
 
   it("refuses to delete an admin account", async () => {

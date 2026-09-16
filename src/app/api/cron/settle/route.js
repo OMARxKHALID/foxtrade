@@ -13,6 +13,11 @@ const authorized = (request) => {
 export const GET = async (request) => {
   await connection();
   if (!authorized(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const users = await settleAll();
-  return NextResponse.json({ ok: true, users });
+  try {
+    const users = await settleAll();
+    return NextResponse.json({ ok: true, users });
+  } catch (error) {
+    console.error("Settlement sweep failed:", error);
+    return NextResponse.json({ error: "Settlement sweep failed" }, { status: 500 });
+  }
 };

@@ -86,8 +86,8 @@ export const reviewClientDocuments = async (input) => {
     const previous = await reviewVerificationDocuments(parsed.data.id, parsed.data.decision, parsed.data.reason);
     if (!previous) return formFailure(`These documents are already ${parsed.data.decision} or were not submitted.`);
     if (parsed.data.decision === "rejected") {
-      await deletePrivateImages([previous.documents.front.publicId, previous.documents.back.publicId]);
       await collections.verifications().updateOne({ _id: previous._id }, { $unset: { "documents.front": "", "documents.back": "" } });
+      await deletePrivateImages([previous.documents.front.publicId, previous.documents.back.publicId]).catch((error) => console.error(`Could not delete rejected KYC files for ${previous.email}:`, error));
     }
     await writeAudit(admin, `kyc.documents_${parsed.data.decision}`, previous.email, parsed.data.reason ?? null);
   });
@@ -209,7 +209,7 @@ export const deleteClient = async (userId) => {
     if (user.role === "admin") return formFailure("Remove the admin role before deleting this account.");
     const owned = { userId: parsed.data };
     const verification = await collections.verifications().findOne(owned);
-    await deletePrivateImages([verification?.documents?.front?.publicId, verification?.documents?.back?.publicId].filter(Boolean));
+    const documents = [verification?.documents?.front?.publicId, verification?.documents?.back?.publicId].filter(Boolean);
     await withTransaction(async (session) => {
       for (const collection of [collections.wallets(), collections.ledger(), collections.orders(), collections.positions(), collections.tickets(), collections.verifications(), collections.addresses(), collections.security(), collections.invites()]) {
         await collection.deleteMany(owned, { session });
@@ -217,6 +217,7 @@ export const deleteClient = async (userId) => {
       await collections.invites().updateMany({ referrerId: parsed.data }, { $set: { referrerId: null } }, { session });
     });
     await getAuth().api.removeUser({ body: { userId: parsed.data }, headers: await headers() });
+    await deletePrivateImages(documents).catch((error) => console.error(`Could not delete KYC files for ${parsed.data}:`, error));
     await writeAudit(admin, "client.delete", user.email);
   });
 };
