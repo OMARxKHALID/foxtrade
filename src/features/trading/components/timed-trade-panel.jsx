@@ -91,6 +91,7 @@ export const TimedTradePanel = ({ symbol, enabled = true }) => {
               key={item.seconds}
               type="button"
               onClick={() => handleDuration(item.seconds)}
+              aria-label={`${formatDuration(item.seconds)} · ${Math.round(item.payoutRate * 100)}% payout`}
               aria-pressed={item.seconds === rule.seconds}
               className={cn(
                 "flex flex-col items-center rounded-lg border py-2 text-xs",

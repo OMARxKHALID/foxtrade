@@ -25,6 +25,8 @@ export const formatQuantity = (value) => {
   return number.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 8 });
 };
 
+export const formatAmount = (value, asset) => (asset === "USDT" ? formatUsdt(value) : formatQuantity(value));
+
 export const formatPercent = (value) => {
   const number = Number(value);
   if (!Number.isFinite(number)) return "--";
