@@ -16,9 +16,9 @@ export const TradeScreen = ({ header, chart, orderBook, tradeFeed, orderPanel, o
       <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_320px] lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_300px_340px]">
         <GlowCard className={cn("flex flex-col overflow-hidden", chartHeight)}>{chart}</GlowCard>
         {showWide && <GlowCard className={cn("hidden flex-col overflow-hidden xl:flex", chartHeight)}>{orderBook}</GlowCard>}
-        <GlowCard className="md:row-span-2 xl:row-span-1">{orderPanel}</GlowCard>
+        <GlowCard>{orderPanel}</GlowCard>
         {showNarrow && (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 xl:hidden">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:col-span-2 lg:grid-cols-2 xl:hidden">
             <GlowCard className={cn("flex flex-col overflow-hidden", panelHeight)}>{orderBook}</GlowCard>
             <GlowCard className={cn("flex flex-col overflow-hidden", panelHeight)}>{tradeFeed}</GlowCard>
           </div>
