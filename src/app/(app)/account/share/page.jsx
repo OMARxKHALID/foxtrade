@@ -11,6 +11,8 @@ export const metadata = {
   title: "Invite Friends",
 };
 
+export const instant = false;
+
 const SharePage = async () => {
   const user = await requireUser("/account/share");
   const invite = await getInvite(user.id, user.email);
