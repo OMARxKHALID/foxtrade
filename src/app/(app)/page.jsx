@@ -9,20 +9,29 @@ import { QuickTradeBanner } from "@/features/home/components/quick-trade-banner"
 import { MarketList } from "@/features/market/components/market-list";
 import { TickerTrio } from "@/features/market/components/ticker-trio";
 import { getActiveBanners, getPublishedNotices } from "@/lib/content-store";
-import { getPairs } from "@/lib/cached-settings";
+import { getPairs, getPlatformSettings } from "@/lib/cached-settings";
 import { featuredSymbolsOf } from "@/lib/market/pairs";
 import { getTickerHydrationState } from "@/lib/market/ticker-snapshot";
+import { absoluteUrl } from "@/lib/site-url";
 
 export const metadata = {
   title: "Home",
 };
 
 const HomePage = async () => {
-  const [banners, notices, pairs] = await Promise.all([getActiveBanners(), getPublishedNotices(), getPairs()]);
+  const [banners, notices, pairs, settings] = await Promise.all([getActiveBanners(), getPublishedNotices(), getPairs(), getPlatformSettings()]);
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      { "@type": "Organization", "@id": absoluteUrl("/#organization"), name: settings.siteName, url: absoluteUrl("/"), logo: absoluteUrl("/icons/512"), email: settings.supportEmail },
+      { "@type": "WebSite", "@id": absoluteUrl("/#website"), name: settings.siteName, url: absoluteUrl("/"), description: settings.description, publisher: { "@id": absoluteUrl("/#organization") } },
+    ],
+  };
   const tickerState = await getTickerHydrationState([featuredSymbolsOf(pairs), pairs.map((pair) => pair.symbol)]);
 
   return (
     <Container className="flex flex-col gap-4 lg:gap-6">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }} />
       <BannerCarousel banners={banners} />
       <NoticeBar notices={notices.slice(0, 5)} />
       <HydrationBoundary state={tickerState}>
