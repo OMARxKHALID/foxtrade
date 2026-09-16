@@ -126,8 +126,11 @@ describe("Cancel pending order after unseen fill + liquidation", () => {
   it("keeps the order pending with a clear error when market data is unavailable", async () => {
     const userId = "u-cancel-outage";
     const { positionId, balanceAfterPlace } = await placeBackdatedLimitLong(userId);
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
     fetchKlineRange.mockRejectedValue(new Error("Binance request failed: 503"));
     await expect(cancelPendingOrder(userId, positionId)).rejects.toThrow("Market data is unavailable");
+    expect(logged).toHaveBeenCalledWith(expect.stringContaining("Could not replay pending order"), expect.any(Error));
+    logged.mockRestore();
     const order = await collections.positions().findOne({ _id: new ObjectId(positionId) });
     expect(order.status).toBe("pending");
     const wallet = await collections.wallets().findOne({ userId, wallet: "perpetual" });
@@ -306,6 +309,7 @@ describe("Off-by-one openTime validation (H1)", () => {
 
   it("settles via fallback close when openTime mismatches and 5 min have passed", async () => {
     const userId = "u-exact-fallback";
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
     const expiresAt = await insertExpiredOrder(userId, -6 * 60_000);
     const wrongOpenTime = expiresAt.getTime() + 4000;
     fetchKlineRange.mockResolvedValue([{ openTime: wrongOpenTime, close: 66000 }]);
@@ -313,10 +317,13 @@ describe("Off-by-one openTime validation (H1)", () => {
     const order = await collections.orders().findOne({ userId, status: "won" });
     expect(order).not.toBeNull();
     expect(order.closePrice).toBe(66000);
+    expect(logged).toHaveBeenCalledWith(expect.stringContaining("Timed settlement fallback"));
+    logged.mockRestore();
   });
 
   it("falls back to latest price when no kline is returned at all after fallback window", async () => {
     const userId = "u-no-kline-fallback";
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
     await insertExpiredOrder(userId, -6 * 60_000);
     fetchKlineRange.mockResolvedValue([]);
     fetchLatestPrices.mockResolvedValue({ BTCUSDT: "65500" });
@@ -324,5 +331,7 @@ describe("Off-by-one openTime validation (H1)", () => {
     const order = await collections.orders().findOne({ userId, status: "won" });
     expect(order).not.toBeNull();
     expect(order.closePrice).toBe(65500);
+    expect(logged).toHaveBeenCalledWith(expect.stringContaining("Timed settlement fallback"));
+    logged.mockRestore();
   });
 });
