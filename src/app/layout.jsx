@@ -1,17 +1,35 @@
 import { AppProviders } from "@/providers/app-providers";
 import { getPairs, getPlatformSettings } from "@/lib/cached-settings";
 import { fontVariables } from "@/lib/fonts";
+import { siteUrl } from "@/lib/site-url";
 import { PlatformProvider } from "@/providers/platform-provider";
 import "./globals.css";
 
 export const generateMetadata = async () => {
   const { siteName, tagline, description } = await getPlatformSettings();
+  const title = `${siteName} — ${tagline}`;
   return {
+    metadataBase: new URL(siteUrl()),
     title: {
-      default: `${siteName} — ${tagline}`,
+      default: title,
       template: `%s · ${siteName}`,
     },
     description,
+    applicationName: siteName,
+    alternates: { canonical: "/" },
+    openGraph: {
+      type: "website",
+      siteName,
+      title,
+      description,
+      url: "/",
+      locale: "en_US",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
     appleWebApp: {
       capable: true,
       title: siteName,

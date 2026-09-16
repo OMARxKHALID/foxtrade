@@ -3,6 +3,7 @@ import { Container } from "@/components/ui/container";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { PageHeader } from "@/components/ui/page-header";
 import { getInvite, listInvited } from "@/lib/referrals";
+import { absoluteUrl } from "@/lib/site-url";
 import { requireUser } from "@/lib/session";
 import { ShareCard } from "@/features/account/components/share-card";
 
@@ -14,7 +15,6 @@ const SharePage = async () => {
   const user = await requireUser("/account/share");
   const invite = await getInvite(user.id, user.email);
   const invited = await listInvited(user.id);
-  const baseUrl = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
 
   return (
     <Container className="flex flex-col gap-4 lg:gap-6">
@@ -27,7 +27,7 @@ const SharePage = async () => {
           </GradientButton>
         }
       />
-      <ShareCard inviteUrl={`${baseUrl}/register?ref=${invite.code}`} inviteCode={invite.code} invited={invited} />
+      <ShareCard inviteUrl={absoluteUrl(`/register?ref=${invite.code}`)} inviteCode={invite.code} invited={invited} />
     </Container>
   );
 };
