@@ -49,6 +49,8 @@ export const SignedAmount = ({ value, suffix = "USDT", className }) => {
   );
 };
 
+export const directionLabels = { call: "Buy High", put: "Buy Low", long: "Long", short: "Short" };
+
 export const SideText = ({ value }) => (
-  <span className={cn("font-medium capitalize", ["long", "call"].includes(value) ? "text-up" : "text-down")}>{value}</span>
+  <span className={cn("font-medium", ["long", "call"].includes(value) ? "text-up" : "text-down")}>{directionLabels[value] ?? value}</span>
 );

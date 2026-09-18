@@ -5,6 +5,7 @@ import { Popover } from "@base-ui/react/popover";
 import { DayPicker } from "react-day-picker";
 import { CalendarDays, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { controlClass } from "@/components/ui/field";
+import { hitArea } from "@/components/ui/gradient-button";
 import { cn } from "@/lib/utils";
 
 const dateFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" });
@@ -62,7 +63,7 @@ export const DatePicker = ({ id, value, onChange, placeholder = "Select date", f
           <span className={cn("min-w-0 truncate", !value && "text-neutral-600")}>{value ? dateFormat.format(value) : placeholder}</span>
         </Popover.Trigger>
         {value && (
-          <button type="button" onClick={handleClear} aria-label="Clear date" className="absolute top-1/2 right-2 flex size-5 -translate-y-1/2 cursor-pointer items-center justify-center rounded text-neutral-500">
+          <button type="button" onClick={handleClear} aria-label="Clear date" className={cn(hitArea, "absolute top-1/2 right-2 flex size-5 -translate-y-1/2 cursor-pointer items-center justify-center rounded text-neutral-500 after:-inset-2.5")}>
             <X className="size-3.5" />
           </button>
         )}

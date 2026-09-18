@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { Menu } from "@base-ui/react/menu";
 import { ChevronDown, LayoutDashboard, LogOut, ShieldCheck, UserRound, Wallet } from "lucide-react";
+import { hitArea } from "@/components/ui/gradient-button";
 import { useActionSubmit } from "@/hooks/use-action-submit";
+import { cn } from "@/lib/utils";
 
 const itemClass = "flex h-9 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 text-sm text-neutral-300 outline-none select-none data-[highlighted]:bg-white/5 data-[highlighted]:text-white";
 
@@ -21,7 +23,7 @@ export const UserMenu = ({ user, signOutAction }) => {
 
   return (
     <Menu.Root>
-      <Menu.Trigger aria-label="Account menu" className="flex h-8 cursor-pointer items-center gap-2 rounded-lg text-sm text-white outline-none">
+      <Menu.Trigger aria-label="Account menu" className={cn(hitArea, "flex h-8 cursor-pointer items-center gap-2 rounded-lg text-sm text-white outline-none")}>
         <span className="flex size-8 items-center justify-center rounded-full border border-white/10 bg-white/5 font-heading text-xs font-semibold uppercase">{user.email.slice(0, 1)}</span>
         <span className="hidden max-w-40 truncate md:block">{user.email}</span>
         <ChevronDown className="hidden size-4 text-neutral-500 md:block" />

@@ -29,6 +29,7 @@ const nextConfig = {
     serverActions: { bodySizeLimit: "5mb" },
   },
   poweredByHeader: false,
+  logging: { serverFunctions: false },
   headers: async () => [{ source: "/(.*)", headers: securityHeaders }],
 };
 

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { ChangePill } from "@/components/ui/change-pill";
 import { DataTable } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
-import { GradientButton } from "@/components/ui/gradient-button";
+import { GradientButton, hitArea } from "@/components/ui/gradient-button";
 import { SegmentedTabs } from "@/components/ui/segmented-tabs";
 import { useLiveTickers } from "@/hooks/use-live-tickers";
 import { usePlatform } from "@/hooks/use-platform";
@@ -57,7 +57,7 @@ export const MarketsTable = () => {
                 onClick={() => toggleFavorite(ticker.symbol)}
                 aria-pressed={favorite}
                 aria-label={favorite ? `Remove ${pair.base} from favorites` : `Add ${pair.base} to favorites`}
-                className="flex size-8 items-center justify-center"
+                className={cn(hitArea, "flex size-8 items-center justify-center")}
               >
                 <Star className={cn("size-4", favorite ? "fill-brand text-brand" : "text-neutral-600")} />
               </button>

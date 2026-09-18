@@ -3,6 +3,8 @@ import { cn } from "@/lib/utils";
 
 export const focusRing = "outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
 
+export const hitArea = "relative after:absolute after:-inset-1.5";
+
 const variants = {
   orange: "border border-brand-light/30 bg-gradient-to-b from-brand to-brand-dark text-white hover:opacity-90",
   dark: "border border-white/15 bg-cell text-white hover:opacity-90",
@@ -22,7 +24,7 @@ const sizes = {
 
 const buttonClass = ({ variant = "orange", size = "md", className } = {}) =>
   cn(
-    "inline-flex shrink-0 items-center justify-center rounded-lg font-semibold whitespace-nowrap transition disabled:pointer-events-none disabled:opacity-50",
+    "inline-flex shrink-0 items-center justify-center rounded-lg font-semibold whitespace-nowrap transition active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50",
     focusRing,
     variants[variant],
     sizes[size],

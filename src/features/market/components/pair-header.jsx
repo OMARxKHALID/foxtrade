@@ -5,6 +5,7 @@ import Link from "next/link";
 import { BookOpen, ChevronDown } from "lucide-react";
 import { CoinIcon } from "@/components/icons/coin-icon";
 import { ChangePill } from "@/components/ui/change-pill";
+import { SentimentBar } from "@/features/market/components/sentiment-bar";
 import { useLiveTickers } from "@/hooks/use-live-tickers";
 import { formatCompact, formatPrice } from "@/lib/format";
 import { usePlatform } from "@/hooks/use-platform";
@@ -54,6 +55,7 @@ export const PairHeader = ({ symbol, market }) => {
         <Stat label="24h Volume" value={ticker ? formatCompact(ticker.volume) : "--"} />
         <Stat label="24h Turnover" value={ticker ? formatCompact(ticker.quoteVolume) : "--"} />
       </div>
+      <SentimentBar symbol={symbol} className="w-full md:order-last md:basis-full" />
       <Link href={`/trade/rules/${market}`} className="inline-flex items-center gap-1.5 self-start text-xs text-neutral-400 md:ml-auto md:self-center">
         <BookOpen className="size-3.5" />
         Trading Rules

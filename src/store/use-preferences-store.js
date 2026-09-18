@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-export const chartIntervals = ["1m", "5m", "15m", "1h", "4h", "1d"];
+export const chartIntervals = ["1m", "5m", "15m", "30m", "1h", "1d", "1w"];
 
 const defaults = {
   favorites: [],

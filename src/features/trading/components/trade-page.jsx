@@ -9,7 +9,7 @@ import { PairHeader } from "@/features/market/components/pair-header";
 import { PriceChart } from "@/features/trading/components/price-chart-loader";
 import { TradeFeed } from "@/features/market/components/trade-feed";
 import { OrdersPanel } from "@/features/trading/components/orders-panel";
-import { PerpetualOrderForm } from "@/features/trading/components/perpetual-order-form";
+import { PerpetualOrderPanel } from "@/features/trading/components/perpetual-order-panel";
 import { TimedTradePanel } from "@/features/trading/components/timed-trade-panel";
 import { TradeScreen } from "@/features/trading/components/trade-screen";
 import { tickersQuery, klinesQuery } from "@/lib/market/market-queries";
@@ -43,7 +43,7 @@ export const TradePage = async ({ params, market }) => {
     market === "timed" ? (
       <TimedTradePanel symbol={pair.symbol} enabled={pair.timedEnabled} />
     ) : (
-      <PerpetualOrderForm symbol={pair.symbol} enabled={pair.perpetualEnabled} maxLeverage={Math.min(pair.maxLeverage, settings.maxLeverage)} />
+      <PerpetualOrderPanel symbol={pair.symbol} enabled={pair.perpetualEnabled} maxLeverage={Math.min(pair.maxLeverage, settings.maxLeverage)} />
     );
 
   return (

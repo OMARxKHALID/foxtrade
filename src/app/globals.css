@@ -78,10 +78,16 @@
     @apply border-border outline-ring/50;
   }
   html {
-    @apply font-sans;
+    @apply font-sans [-webkit-tap-highlight-color:transparent];
   }
   body {
     @apply bg-background text-foreground;
+  }
+  :is(a, button, [role="button"], [role="tab"], summary, label) {
+    @apply touch-manipulation;
+  }
+  :is(a, button, [role="button"], [role="tab"], summary):not(:disabled, [aria-disabled="true"]):active {
+    @apply opacity-75;
   }
   * {
     scrollbar-width: thin;

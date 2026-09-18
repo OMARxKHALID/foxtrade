@@ -11,9 +11,9 @@ import { klinesQuery } from "@/lib/market/market-queries";
 import { cn } from "@/lib/utils";
 import { chartIntervals, usePreferencesStore } from "@/store/use-preferences-store";
 
-const intervals = chartIntervals.map((value) => ({ value, label: value }));
+const intervals = chartIntervals.map((value) => ({ value, label: value === "1w" ? "7D" : value.toUpperCase() }));
 
-const intervalSeconds = { "1m": 60, "5m": 300, "15m": 900, "1h": 3600, "4h": 14400, "1d": 86400 };
+const intervalSeconds = { "1m": 60, "5m": 300, "15m": 900, "30m": 1800, "1h": 3600, "1d": 86400, "1w": 604800 };
 
 const RETRY_DELAY = 5000;
 
@@ -163,7 +163,15 @@ export const PriceChart = ({ symbol, className }) => {
   return (
     <div className={cn("flex flex-col", className)}>
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-white/10 px-4 py-2">
-        <SegmentedTabs items={intervals} value={interval} onChange={setChartInterval} variant="pill" label="Chart interval" />
+        <SegmentedTabs
+          items={intervals}
+          value={interval}
+          onChange={setChartInterval}
+          variant="pill"
+          fill
+          label="Chart interval"
+          className="sm:w-fit [&>button]:px-1 [&>button]:text-xs sm:[&>button]:px-3 sm:[&>button]:text-sm"
+        />
         <span className="hidden text-2xs text-neutral-500 sm:block">Binance · {symbol}</span>
       </div>
       <div className="relative min-h-0 flex-1">

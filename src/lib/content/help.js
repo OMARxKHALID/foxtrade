@@ -23,7 +23,7 @@ export const helpTopics = [
     questions: [
       {
         question: "How do timed trades work?",
-        answer: "Choose Call if you expect the price to be higher when the timer ends, or Put if lower. A correct prediction returns your stake plus the payout rate shown for that duration. Equal prices refund your stake.",
+        answer: "Choose Buy High if you expect the price to be higher when the timer ends, or Buy Low if lower. A correct prediction returns your stake plus the payout rate shown for that duration. Equal prices refund your stake.",
       },
       {
         question: "How is the liquidation price calculated?",

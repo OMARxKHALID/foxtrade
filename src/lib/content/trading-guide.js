@@ -9,7 +9,7 @@ export const tradingGuides = {
         heading: "Placing a trade",
         items: [
           "Choose a pair, a duration and a stake in USDT.",
-          "Pick Call if you expect the price to be higher at expiry, or Put if you expect it to be lower.",
+          "Pick Buy High if you expect the price to be higher at expiry, or Buy Low if you expect it to be lower.",
           "The opening price is the live market price recorded by the server when the order is accepted.",
         ],
       },

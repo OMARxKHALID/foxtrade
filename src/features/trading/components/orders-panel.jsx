@@ -25,6 +25,7 @@ import {
   Status,
   closeReasons,
   dateTime,
+  directionLabels,
   pairLabel,
   positionStatus,
   timedStatus,
@@ -116,9 +117,9 @@ const useSettlementToasts = (market, items) => {
         const pair = pairLabel(item.symbol);
         if (market === "timed") {
           const profit = (item.payout ?? 0) - item.amount;
-          if (item.status === "won") toast.success(`${pair} ${item.direction} won`, { description: `+${formatUsdt(profit)} USDT` });
-          if (item.status === "lost") toast.error(`${pair} ${item.direction} lost`, { description: `-${formatUsdt(item.amount)} USDT` });
-          if (item.status === "draw") toast(`${pair} ${item.direction} ended in a draw`, { description: "Stake refunded" });
+          if (item.status === "won") toast.success(`${pair} ${directionLabels[item.direction]} won`, { description: `+${formatUsdt(profit)} USDT` });
+          if (item.status === "lost") toast.error(`${pair} ${directionLabels[item.direction]} lost`, { description: `-${formatUsdt(item.amount)} USDT` });
+          if (item.status === "draw") toast(`${pair} ${directionLabels[item.direction]} ended in a draw`, { description: "Stake refunded" });
           return;
         }
         if (item.status === "open") toast.success(`${pair} limit order filled`);

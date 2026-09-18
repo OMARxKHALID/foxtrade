@@ -7,8 +7,13 @@ export const useNow = (active = true, intervalMs = 1000) => {
 
   useEffect(() => {
     if (!active) return;
-    const timer = setInterval(() => setNow(Date.now()), intervalMs);
-    return () => clearInterval(timer);
+    const tick = () => setNow(Date.now());
+    const first = setTimeout(tick, 0);
+    const timer = setInterval(tick, intervalMs);
+    return () => {
+      clearTimeout(first);
+      clearInterval(timer);
+    };
   }, [active, intervalMs]);
 
   return now;

@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { hitArea } from "@/components/ui/gradient-button";
 import { cn } from "@/lib/utils";
 
 const pageWindow = (page, pageCount) => {
@@ -7,7 +8,7 @@ const pageWindow = (page, pageCount) => {
   return Array.from({ length: end - start + 1 }, (_, i) => start + i);
 };
 
-const pageButton = "flex size-8 items-center justify-center rounded-md text-xs tabular-nums disabled:opacity-40";
+const pageButton = cn(hitArea, "flex size-8 items-center justify-center rounded-md text-xs tabular-nums disabled:opacity-40");
 
 export const Pagination = ({ page, pageCount, total, pageSize, onPageChange }) => {
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1;

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Headset, ShieldCheck, UserRound } from "lucide-react";
 import { Container } from "@/components/ui/container";
-import { GradientButton, focusRing } from "@/components/ui/gradient-button";
+import { GradientButton, focusRing, hitArea } from "@/components/ui/gradient-button";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { appNavLinks } from "@/components/layout/nav-links";
 import { UserMenu } from "@/components/layout/user-menu";
@@ -46,7 +46,7 @@ export const AppNavbar = ({ user, signOutAction }) => {
             </ul>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
-            <Link href="/support" aria-label="Customer support" className={cn("flex size-8 items-center justify-center rounded-lg text-white transition-colors hover:bg-white/5", focusRing)}>
+            <Link href="/support" aria-label="Customer support" className={cn(hitArea, "flex size-8 items-center justify-center rounded-lg text-white transition-colors hover:bg-white/5", focusRing)}>
               <Headset className="size-[18px]" />
             </Link>
             {user?.role === "admin" && (
@@ -59,7 +59,7 @@ export const AppNavbar = ({ user, signOutAction }) => {
               <UserMenu user={user} signOutAction={signOutAction} />
             ) : (
               <>
-                <Link href="/account" aria-label="Account" className={cn("flex size-8 items-center justify-center rounded-lg text-white transition-colors hover:bg-white/5 sm:hidden", focusRing)}>
+                <Link href="/account" aria-label="Account" className={cn(hitArea, "flex size-8 items-center justify-center rounded-lg text-white transition-colors hover:bg-white/5 sm:hidden", focusRing)}>
                   <UserRound className="size-[18px]" />
                 </Link>
                 <GradientButton href="/login" variant="ghost" size="xs" className="hidden text-sm font-medium sm:inline-flex">

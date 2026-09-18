@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field, SummaryList, controlClass } from "@/components/ui/field";
-import { GradientButton } from "@/components/ui/gradient-button";
+import { GradientButton, hitArea } from "@/components/ui/gradient-button";
 import { SegmentedTabs } from "@/components/ui/segmented-tabs";
 import { Slider } from "@/components/ui/slider";
 import { useActionSubmit } from "@/hooks/use-action-submit";
@@ -31,7 +31,7 @@ const types = [
 
 const leverageMarks = [1, 10, 25, 50, 100];
 
-export const PerpetualOrderForm = ({ symbol, enabled = true, maxLeverage }) => {
+export const PerpetualOrderForm = ({ symbol, enabled = true, maxLeverage, defaultSide = "long", onPlaced, className }) => {
   const { takerFeeRate, maintenanceMarginRate } = usePlatform().settings;
   const [ticker] = useLiveTickers([symbol]);
   const [showTpSl, setShowTpSl] = useState(false);
@@ -44,7 +44,7 @@ export const PerpetualOrderForm = ({ symbol, enabled = true, maxLeverage }) => {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(perpetualOrderSchemaFor(maxLeverage)),
-    defaultValues: { symbol, side: "long", type: "market", amount: 100, leverage: Math.min(10, maxLeverage) },
+    defaultValues: { symbol, side: defaultSide, type: "market", amount: 100, leverage: Math.min(10, maxLeverage) },
   });
   const [side, type, amount, leverage, limitPrice] = useWatch({ control, name: ["side", "type", "amount", "leverage", "price"] });
 
@@ -69,11 +69,14 @@ export const PerpetualOrderForm = ({ symbol, enabled = true, maxLeverage }) => {
     action: placePerpetualOrder,
     setError,
     successMessage: type === "limit" ? "Limit order placed." : "Position opened.",
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: tradingKeys.orders("perpetual") }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: tradingKeys.orders("perpetual") });
+      onPlaced?.();
+    },
   });
 
   return (
-    <form className="flex flex-col gap-5 p-4 sm:p-6" noValidate onSubmit={handleSubmit(handlePlace)}>
+    <form className={cn("flex flex-col gap-5 p-4 sm:p-6", className)} noValidate onSubmit={handleSubmit(handlePlace)}>
       <SegmentedTabs items={sides} value={side} onChange={handleSide} variant="pill" fill toggle className="h-11 p-1" label="Order side" />
 
       <SegmentedTabs items={types} value={type} onChange={handleType} label="Order type" />
@@ -108,7 +111,7 @@ export const PerpetualOrderForm = ({ symbol, enabled = true, maxLeverage }) => {
         />
         <div className="flex justify-between">
           {leverageMarks.filter((mark) => mark <= maxLeverage).map((mark) => (
-            <button key={mark} type="button" onClick={() => handleLeverage(mark)} className={cn("text-2xs", lev === mark ? "text-brand" : "text-neutral-500")}>
+            <button key={mark} type="button" onClick={() => handleLeverage(mark)} className={cn(hitArea, "text-2xs after:-inset-x-2 after:-inset-y-3", lev === mark ? "text-brand" : "text-neutral-500")}>
               {mark}x
             </button>
           ))}

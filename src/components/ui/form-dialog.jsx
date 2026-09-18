@@ -2,6 +2,7 @@
 
 import { Dialog } from "@base-ui/react/dialog";
 import { X } from "lucide-react";
+import { hitArea } from "@/components/ui/gradient-button";
 import { cn } from "@/lib/utils";
 
 const sizes = {
@@ -25,7 +26,7 @@ export const FormDialog = ({ open, onOpenChange, title, description, size = "md"
             <Dialog.Title className="font-heading text-lg font-semibold text-white">{title}</Dialog.Title>
             {description && <Dialog.Description className="mt-1 text-sm text-neutral-400">{description}</Dialog.Description>}
           </div>
-          <Dialog.Close aria-label="Close" className="flex size-8 shrink-0 items-center justify-center rounded-lg text-neutral-400">
+          <Dialog.Close aria-label="Close" className={cn(hitArea, "flex size-8 shrink-0 items-center justify-center rounded-lg text-neutral-400")}>
             <X className="size-4" />
           </Dialog.Close>
         </div>
