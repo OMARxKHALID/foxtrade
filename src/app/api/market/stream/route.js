@@ -53,7 +53,7 @@ const transformMessage = async (userId, parsed, data) => {
 export const GET = async (request) => {
   await connection();
   const throttle = await rateLimit(`market:stream:${await clientIp()}`, { limit: 30, windowSeconds: 60 });
-  if (!throttle.allowed) return new Response("Too many requests", { status: 429 });
+  if (!throttle.allowed) return new Response("Too many requests", { status: 429, headers: { "Retry-After": String(throttle.retryAfter) } });
   const parsed = parseStreams(request.nextUrl.searchParams.get("streams"));
   if (!parsed) return new Response("Invalid streams", { status: 400 });
   const user = await getCurrentUser().catch(() => null);

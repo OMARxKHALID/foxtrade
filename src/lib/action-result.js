@@ -9,10 +9,13 @@ export const formFailure = (message) => ({ ok: false, formError: message });
 
 export const signInRequired = (message = "Log in to continue.") => formFailure(message);
 
+const readableMessage = (message) => /[a-z]/.test(message) && /\s/.test(message) && message.length <= 160 && !/[{}<>]|https?:\/\//.test(message);
+
 export const serverFailure = (error) => {
-  const message = error?.body?.message ?? error?.message ?? "";
+  const message = (error?.body?.message ?? error?.message ?? "").trim();
   if (message.startsWith("Invalid environment configuration")) return formFailure("The server is not configured yet. Add the keys from .env.example to .env.local.");
-  if (error?.name === "LedgerError" || error?.body?.message) return formFailure(message);
+  if (error?.name === "LedgerError") return formFailure(message);
+  if (error?.body?.message && readableMessage(message)) return formFailure(message);
   console.error(error);
   return formFailure("Something went wrong. Please try again.");
 };

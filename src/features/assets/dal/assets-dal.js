@@ -10,7 +10,7 @@ import { toAmount, toAmountString, toBig } from "@/lib/money";
 import { collections } from "@/lib/mongo";
 import { readPlatformSettings } from "@/lib/platform-settings";
 import { verifyPin } from "@/lib/pin";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimit, retryAfterText } from "@/lib/rate-limit";
 import { getCurrentUser } from "@/lib/session";
 
 const priceMap = async (assets, latest = false) => {
@@ -167,7 +167,7 @@ export const listAddresses = async (userId) => {
 
 export const saveAddress = async (userId, input) => {
   const limit = await rateLimit(`address-save:${userId}`, { limit: 30, windowSeconds: 3600 });
-  if (!limit.allowed) throw new LedgerError("Too many changes. Try again later.");
+  if (!limit.allowed) throw new LedgerError(`You can save up to 30 addresses per hour. Try again in ${retryAfterText(limit.retryAfter)}.`);
   if (!assetsOf(await readPairs()).some((item) => item.symbol === input.asset)) throw new LedgerError("This asset is not supported.");
   const count = await collections.addresses().countDocuments({ userId });
   if (count >= 20) throw new LedgerError("You can save up to 20 addresses.");

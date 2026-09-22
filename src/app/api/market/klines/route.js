@@ -2,7 +2,7 @@ import { connection } from "next/server";
 import { getCurrentUser } from "@/lib/session";
 import { fetchKlines } from "@/lib/market/binance-rest";
 import { transformCandles } from "@/lib/market/overlay";
-import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { clientIp, rateLimit, rateLimitedResponse } from "@/lib/rate-limit";
 
 
 const INTERVALS = new Set(["1m", "3m", "5m", "15m", "30m", "1h", "2h", "4h", "6h", "8h", "12h", "1d", "3d", "1w"]);
@@ -17,7 +17,7 @@ const intervalSeconds = (interval) => {
 export const GET = async (request) => {
   await connection();
   const throttle = await rateLimit(`market:klines:${await clientIp()}`, { limit: 120, windowSeconds: 60 });
-  if (!throttle.allowed) return Response.json({ error: "Too many requests" }, { status: 429 });
+  if (!throttle.allowed) return rateLimitedResponse(throttle.retryAfter);
   const params = request.nextUrl.searchParams;
   const symbol = params.get("symbol") ?? "";
   const interval = params.get("interval") ?? "";

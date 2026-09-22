@@ -138,7 +138,7 @@ export const OrdersPanel = ({ market }) => {
   const [confirmCloseAll, setConfirmCloseAll] = useState(false);
   const queryClient = useQueryClient();
   const { takerFeeRate } = usePlatform().settings;
-  const { data, isPending, isError } = useQuery(ordersQuery(market));
+  const { data, isPending, isError, error } = useQuery(ordersQuery(market));
   const items = data?.items;
   useSettlementToasts(market, items);
 
@@ -312,7 +312,7 @@ export const OrdersPanel = ({ market }) => {
   ) : isPending ? (
     <EmptyState icon={ListChecks} title="Loading orders…" />
   ) : isError ? (
-    <EmptyState icon={ListChecks} title="Could not load your orders" text="Your positions are safe. Retrying automatically." />
+    <EmptyState icon={ListChecks} title="Could not load your orders" text={error?.message ?? "Your positions are safe. Retrying automatically."} />
   ) : (
     <EmptyState icon={ListChecks} title={view.empty.title} text={view.empty.text} />
   );

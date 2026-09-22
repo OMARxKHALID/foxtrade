@@ -11,9 +11,12 @@ export const ordersQuery = (market) =>
   queryOptions({
     queryKey: tradingKeys.orders(market),
     queryFn: async () => {
-      const response = await fetch(`/api/trading/orders?market=${market}`, { cache: "no-store" });
-      if (!response.ok) throw new Error("Could not load orders");
-      return response.json();
+      const response = await fetch(`/api/trading/orders?market=${market}`, { cache: "no-store" }).catch(() => {
+        throw new Error("You appear to be offline. Your trades keep settling on our servers.");
+      });
+      if (response.ok) return response.json();
+      const body = await response.json().catch(() => null);
+      throw new Error(body?.error ?? "We couldn't refresh your orders. Retrying automatically.");
     },
     staleTime: 0,
     refetchInterval: (query) => (hasActive(query.state.data) ? 2000 : 15000),
