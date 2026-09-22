@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { beforeEach, describe, expect, it } from "vitest";
 import { collections } from "@/lib/mongo";
-import { activeWindow, forcedClosePrice, invalidateOverlay, steeredPrice, transformCandles, transformDepth, transformTicker, transformRecentTrades } from "./overlay";
+import { activeWindow, forcedClosePrice, invalidateOverlay, positionWindow, steeredPrice, transformCandles, transformCandlesForWindow, transformDepth, transformTicker, transformRecentTrades } from "./overlay";
 
 const SECOND = 1000;
 const MINUTE = 60 * SECOND;
@@ -133,5 +133,30 @@ describe("Overlay user scoping", () => {
     const other = await activeWindow(hexId("aa"), "BTCUSDT");
     expect(mine).not.toBeNull();
     expect(other).toBeNull();
+  });
+
+  it("stops steering once a settled trade invalidates the cache", async () => {
+    const { orderId } = await insertForcedOrder({ direction: "call", openPrice: 65000 });
+    expect(await steeredPrice("overlay-user", "BTCUSDT")).not.toBeNull();
+    await collections.orders().updateOne({ _id: orderId }, { $set: { status: "won" } });
+    invalidateOverlay("overlay-user");
+    expect(await steeredPrice("overlay-user", "BTCUSDT")).toBeNull();
+  });
+});
+
+describe("Per-position window scoping", () => {
+  const positionAt = (openedAt, takeProfit) => ({ _id: new ObjectId(), symbol: "BTCUSDT", side: "long", entryPrice: 65000, takeProfit, openedAt });
+
+  it("steers each position off its own take profit when two share a symbol", () => {
+    const openedAt = new Date(Date.now() - 30 * MINUTE);
+    const near = positionAt(openedAt, 65650);
+    const far = positionAt(openedAt, 97500);
+    const candles = [{ openTime: openedAt.getTime() + 20 * MINUTE, open: 65000, high: 65000, low: 65000, close: 65000 }];
+    const [steeredNear] = transformCandlesForWindow(positionWindow(near), candles, MINUTE);
+    const [steeredFar] = transformCandlesForWindow(positionWindow(far), candles, MINUTE);
+    expect(steeredNear.high).toBeGreaterThan(near.entryPrice);
+    expect(steeredNear.high).toBeLessThanOrEqual(near.takeProfit);
+    expect(near.takeProfit - steeredNear.high).toBeLessThan(near.entryPrice * 0.002);
+    expect(steeredFar.high).toBeGreaterThan(near.takeProfit * 1.2);
   });
 });

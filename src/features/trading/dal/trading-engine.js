@@ -2,7 +2,7 @@ import "server-only";
 import { ObjectId } from "mongodb";
 import { LedgerError, getBalance, postEntries, withTransaction } from "@/lib/ledger";
 import { fetchKlineRange, fetchLatestPrices } from "@/lib/market/binance-rest";
-import { forcedClosePrice, forcedExitPrice, invalidateOverlay, transformCandles } from "@/lib/market/overlay";
+import { forcedClosePrice, forcedExitPrice, invalidateOverlay, positionWindow, transformCandlesForWindow } from "@/lib/market/overlay";
 import { readPairs } from "@/lib/market/pair-store";
 import { findPair } from "@/lib/market/pairs";
 import { toAmount, toAmountString, toBig } from "@/lib/money";
@@ -13,7 +13,7 @@ const SECOND = 1000;
 const MINUTE = 60 * SECOND;
 const SETTLE_DELAY = 1500;
 const SETTLE_FALLBACK_MS = 5 * MINUTE;
-const SETTLE_DEBOUNCE_MS = 5000;
+const SETTLE_DEBOUNCE_MS = 2000;
 const CHECK_OVERLAP_MS = 2 * SECOND;
 const SETTLE_BATCH_SIZE = 10;
 const MAX_ACTIVE_POSITIONS = 50;
@@ -241,6 +241,7 @@ const closePositionAt = async (position, exitPrice, reason) => {
       await postEntries([{ userId: position.userId, wallet: "perpetual", asset: "USDT", type: "perp_close", amount: payout, refId: position._id.toString(), note: reason === "manual" ? "Closed" : reason.replace("_", " ") }], session);
     }
   });
+  if (position.forcedWin) invalidateOverlay(position.userId);
 };
 
 const triggerFor = (position, candle) => {
@@ -266,7 +267,7 @@ const evaluatePosition = async (position) => {
     const requestedAt = Date.now();
     const { step, ...range } = evaluationWindow(cursor);
     const candles = await fetchKlineRange({ symbol: current.symbol, ...range });
-    const steered = current.forcedWin && current.openedAt ? await transformCandles(current.userId, current.symbol, candles, step) : candles;
+    const steered = current.forcedWin && current.openedAt ? transformCandlesForWindow(positionWindow(current), candles, step) : candles;
     for (const candle of steered) {
       if (current.status === "pending") {
         const fills = current.side === "long" ? candle.low <= current.limitPrice : candle.high >= current.limitPrice;
@@ -403,7 +404,7 @@ export const addMargin = async (userId, id, amount) => {
     const claimed = await collections
       .positions()
       .findOneAndUpdate({ _id: position._id, status: "open", margin: position.margin }, { $set: { margin, liquidationPrice: liquidationPrice(updated) } }, { session });
-    if (!claimed) throw new LedgerError("Position changed. Try again.");
+    if (!claimed) throw new LedgerError("This position changed while you were adding margin. Check its current margin and try again.");
     await postEntries([{ userId, wallet: "perpetual", asset: "USDT", type: "perp_margin", amount: -amount, refId: position._id.toString(), note: "Margin added" }], session);
   });
 };

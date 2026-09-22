@@ -13,10 +13,14 @@ const seedOf = (id) => {
   return parseInt(hex, 16) >>> 0;
 };
 
-const param = (seed, salt, min, max) => {
-  const span = (seed >>> (salt * 4)) & 0xffff;
-  return min + (span / 0xffff) * (max - min);
+const rand01 = (seed, salt) => {
+  let x = (seed ^ Math.imul(salt + 1, 0x9e3779b9)) >>> 0;
+  x = Math.imul(x ^ (x >>> 16), 0x45d9f3b);
+  x = Math.imul(x ^ (x >>> 16), 0x45d9f3b);
+  return ((x ^ (x >>> 16)) >>> 0) / 4294967296;
 };
+
+const param = (seed, salt, min, max) => min + rand01(seed, salt) * (max - min);
 
 const orderSteer = (order, at) => {
   const seed = seedOf(order._id);
@@ -56,28 +60,37 @@ const positionSteer = (position, at) => {
 const steeredFor = (window, at) => (window.kind === "order" ? orderSteer(window, at) : positionSteer(window, at));
 
 const windowsCache = new Map();
+const WINDOWS_CACHE_PRUNE_AT = 1000;
+
+const pruneWindowsCache = (now) => {
+  windowsCache.forEach((entry, userId) => {
+    if (now - entry.at >= CACHE_TTL) windowsCache.delete(userId);
+  });
+};
 
 const readWindows = (userId) => {
+  const now = Date.now();
   const cached = windowsCache.get(userId);
-  if (cached && Date.now() - cached.at < CACHE_TTL) return cached.windows;
+  if (cached && now - cached.at < CACHE_TTL) return cached.windows;
+  if (windowsCache.size > WINDOWS_CACHE_PRUNE_AT) pruneWindowsCache(now);
   const windows = queryWindows(userId).catch((error) => {
     windowsCache.delete(userId);
     throw error;
   });
-  windowsCache.set(userId, { at: Date.now(), windows });
+  windowsCache.set(userId, { at: now, windows });
   return windows;
 };
+
+const orderWindow = (order) => ({ kind: "order", _id: order._id, symbol: order.symbol, direction: order.direction, openPrice: order.openPrice, openedAt: order.openedAt, expiresAt: order.expiresAt });
+
+export const positionWindow = (position) => ({ kind: "position", _id: position._id, symbol: position.symbol, side: position.side, entryPrice: position.entryPrice, takeProfit: position.takeProfit, openedAt: position.openedAt });
 
 const queryWindows = async (userId) => {
   const [orders, positions] = await Promise.all([
     collections.orders().find({ userId, forcedWin: true, status: "open" }).toArray(),
     collections.positions().find({ userId, forcedWin: true, status: "open" }).toArray(),
   ]);
-  const windows = [
-    ...orders.map((order) => ({ kind: "order", _id: order._id, symbol: order.symbol, direction: order.direction, openPrice: order.openPrice, openedAt: order.openedAt, expiresAt: order.expiresAt })),
-    ...positions.map((position) => ({ kind: "position", _id: position._id, symbol: position.symbol, side: position.side, entryPrice: position.entryPrice, takeProfit: position.takeProfit, openedAt: position.openedAt })),
-  ].filter((window) => window.openedAt);
-  return windows;
+  return [...orders.map(orderWindow), ...positions.map(positionWindow)].filter((window) => window.openedAt);
 };
 
 export const invalidateOverlay = (userId) => {
@@ -106,10 +119,8 @@ const samplesFor = (window, startMs, endMs, count) => {
   return Array.from({ length: count + 1 }, (_, index) => steeredFor(window, Math.min(endMs, startMs + index * step)));
 };
 
-export const transformCandles = async (userId, symbol, candles, stepMs) => {
-  const windows = (await readWindows(userId)).filter((window) => window.symbol === symbol);
-  if (!windows.length || !candles.length) return candles;
-  const window = windows.filter((item) => item.kind === "order" || item.takeProfit).reduce((latest, item) => (item.openedAt > latest.openedAt ? item : latest), windows[0]);
+export const transformCandlesForWindow = (window, candles, stepMs) => {
+  if (!candles.length) return candles;
   const startMs = window.openedAt.getTime();
   const endMs = Math.min(Date.now(), window.expiresAt ? window.expiresAt.getTime() : Date.now());
   if (endMs <= startMs) return candles;
@@ -125,6 +136,13 @@ export const transformCandles = async (userId, symbol, candles, stepMs) => {
     const high = Math.max(...values);
     return { ...candle, open: values[0], close: values.at(-1), low, high };
   });
+};
+
+export const transformCandles = async (userId, symbol, candles, stepMs) => {
+  const windows = (await readWindows(userId)).filter((item) => item.symbol === symbol);
+  if (!windows.length) return candles;
+  const window = windows.filter((item) => item.kind === "order" || item.takeProfit).reduce((latest, item) => (item.openedAt > latest.openedAt ? item : latest), windows[0]);
+  return transformCandlesForWindow(window, candles, stepMs);
 };
 
 export const transformDepth = async (userId, symbol, { bids, asks }) => {
