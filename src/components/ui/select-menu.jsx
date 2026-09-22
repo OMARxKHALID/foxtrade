@@ -3,6 +3,7 @@
 import { Select } from "@base-ui/react/select";
 import { Check, ChevronDown } from "lucide-react";
 import { controlClass } from "@/components/ui/field";
+import { menuItemClass, menuPopupClass, menuSideOffset } from "@/components/ui/menu-styles";
 import { cn } from "@/lib/utils";
 
 export const SelectMenu = ({ id, value, onChange, onBlur, options, placeholder = "Select", invalid, disabled, name, className, "aria-label": ariaLabel }) => (
@@ -31,14 +32,14 @@ export const SelectMenu = ({ id, value, onChange, onBlur, options, placeholder =
       </Select.Icon>
     </Select.Trigger>
     <Select.Portal>
-      <Select.Positioner sideOffset={6} alignItemWithTrigger={false} className="z-50 outline-none">
-        <Select.Popup className="max-h-[min(var(--available-height),18rem)] min-w-[var(--anchor-width)] overflow-y-auto rounded-xl border border-white/10 bg-field p-1 shadow-[0_16px_40px_rgba(0,0,0,0.6)] outline-none">
+      <Select.Positioner sideOffset={menuSideOffset} alignItemWithTrigger={false} className="z-50 outline-none">
+        <Select.Popup className={cn("max-h-[min(var(--available-height),18rem)] min-w-[var(--anchor-width)] overflow-y-auto", menuPopupClass)}>
           <Select.List>
             {options.map((option) => (
               <Select.Item
                 key={option.value}
                 value={option.value}
-                className="flex h-9 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 text-sm text-neutral-300 outline-none select-none data-[highlighted]:bg-white/5 data-[highlighted]:text-white data-[selected]:text-white"
+                className={menuItemClass}
               >
                 {option.icon}
                 <Select.ItemText className="min-w-0 flex-1 truncate">{option.label}</Select.ItemText>

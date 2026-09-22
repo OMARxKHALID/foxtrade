@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import { Menu } from "@base-ui/react/menu";
 import { BookOpen, ChevronDown } from "lucide-react";
 import { CoinIcon } from "@/components/icons/coin-icon";
 import { ChangePill } from "@/components/ui/change-pill";
+import { menuItemClass, menuPopupClass, menuSideOffset } from "@/components/ui/menu-styles";
 import { SentimentBar } from "@/features/market/components/sentiment-bar";
 import { useLiveTickers } from "@/hooks/use-live-tickers";
 import { formatCompact, formatPrice } from "@/lib/format";
@@ -19,29 +20,44 @@ const Stat = ({ label, value }) => (
 );
 
 export const PairHeader = ({ symbol, market }) => {
-  const [open, setOpen] = useState(false);
   const [ticker] = useLiveTickers([symbol]);
   const { pairs, pairBySymbol } = usePlatform();
   const marketPairs = pairs.filter((item) => (market === "timed" ? item.timedEnabled : item.perpetualEnabled) || item.symbol === symbol);
   const pair = pairBySymbol[symbol];
   const up = (ticker?.changePercent ?? 0) >= 0;
 
-  const handleToggle = () => setOpen((value) => !value);
-  const handleClose = () => setOpen(false);
-
   return (
     <div className="relative flex flex-col gap-3 px-4 py-3 sm:px-6 md:flex-row md:flex-wrap md:items-center md:gap-x-8">
       <div className="flex items-center justify-between gap-4 md:contents">
-      <button type="button" onClick={handleToggle} aria-expanded={open} className="flex min-w-0 items-center gap-3">
-        <CoinIcon symbol={pair.base} color={pair.color} />
-        <span className="text-left">
-          <span className="flex items-center gap-1 font-heading text-base font-semibold text-white">
-            {pair.base}/{pair.quote}
-            <ChevronDown className={cn("size-4 text-neutral-400 transition-transform", open && "rotate-180")} />
+      <Menu.Root>
+        <Menu.Trigger aria-label={`Change market, currently ${pair.base}/${pair.quote}`} className="group flex min-w-0 cursor-pointer items-center gap-3 outline-none">
+          <CoinIcon symbol={pair.base} color={pair.color} />
+          <span className="text-left">
+            <span className="flex items-center gap-1 font-heading text-base font-semibold text-white">
+              {pair.base}/{pair.quote}
+              <ChevronDown className="size-4 text-neutral-400 transition-transform group-data-[popup-open]:rotate-180" />
+            </span>
+            <span className="block text-2xs text-neutral-500">{market === "timed" ? "Options · Timed" : "Futures · Perpetual"}</span>
           </span>
-          <span className="block text-2xs text-neutral-500">{market === "timed" ? "Options · Timed" : "Futures · Perpetual"}</span>
-        </span>
-      </button>
+        </Menu.Trigger>
+        <Menu.Portal>
+          <Menu.Positioner sideOffset={menuSideOffset} align="start" className="z-50 outline-none">
+            <Menu.Popup className={cn("max-h-80 w-[min(18rem,calc(100vw-2rem))] overflow-y-auto", menuPopupClass)}>
+              {marketPairs.map((item) => (
+                <Menu.Item
+                  key={item.symbol}
+                  className={cn(menuItemClass, item.symbol === symbol && "bg-white/5 text-brand")}
+                  render={<Link href={`/trade/${market}/${item.symbol.toLowerCase()}`} />}
+                >
+                  <CoinIcon symbol={item.base} color={item.color} size="sm" />
+                  {item.base}/{item.quote}
+                  <span className="ml-auto text-xs text-neutral-500">{item.name}</span>
+                </Menu.Item>
+              ))}
+            </Menu.Popup>
+          </Menu.Positioner>
+        </Menu.Portal>
+      </Menu.Root>
       <div className="flex min-w-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-3">
         <span className={cn("font-heading text-lg font-semibold tabular-nums sm:text-xl", up ? "text-up" : "text-down")}>
           {ticker ? formatPrice(ticker.price) : "--"}
@@ -60,28 +76,6 @@ export const PairHeader = ({ symbol, market }) => {
         <BookOpen className="size-3.5" />
         Trading Rules
       </Link>
-      {open && (
-        <div className="absolute top-full left-3 z-30 mt-1 w-[min(18rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-white/10 bg-field shadow-[0_16px_40px_rgba(0,0,0,0.6)]">
-          <ul className="max-h-80 overflow-y-auto py-1">
-            {marketPairs.map((item) => (
-              <li key={item.symbol}>
-                <Link
-                  href={`/trade/${market}/${item.symbol.toLowerCase()}`}
-                  onClick={handleClose}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2 text-sm",
-                    item.symbol === symbol ? "bg-white/5 text-brand" : "text-white",
-                  )}
-                >
-                  <CoinIcon symbol={item.base} color={item.color} size="sm" />
-                  {item.base}/{item.quote}
-                  <span className="ml-auto text-xs text-neutral-500">{item.name}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   );
 };

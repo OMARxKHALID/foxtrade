@@ -4,10 +4,9 @@ import Link from "next/link";
 import { Menu } from "@base-ui/react/menu";
 import { ChevronDown, LayoutDashboard, LogOut, ShieldCheck, UserRound, Wallet } from "lucide-react";
 import { hitArea } from "@/components/ui/gradient-button";
+import { menuItemClass, menuPopupClass, menuSideOffset } from "@/components/ui/menu-styles";
 import { useActionSubmit } from "@/hooks/use-action-submit";
 import { cn } from "@/lib/utils";
-
-const itemClass = "flex h-9 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 text-sm text-neutral-300 outline-none select-none data-[highlighted]:bg-white/5 data-[highlighted]:text-white";
 
 export const UserMenu = ({ user, signOutAction }) => {
   const { pending, submit } = useActionSubmit({ action: signOutAction });
@@ -29,22 +28,22 @@ export const UserMenu = ({ user, signOutAction }) => {
         <ChevronDown className="hidden size-4 text-neutral-500 md:block" />
       </Menu.Trigger>
       <Menu.Portal>
-        <Menu.Positioner sideOffset={8} align="end" className="z-50 outline-none">
-          <Menu.Popup className="w-56 rounded-xl border border-white/10 bg-field p-1 shadow-[0_16px_40px_rgba(0,0,0,0.6)] outline-none">
+        <Menu.Positioner sideOffset={menuSideOffset} align="end" className="z-50 outline-none">
+          <Menu.Popup className={cn("w-56", menuPopupClass)}>
             <div className="border-b border-white/10 px-2.5 pt-1.5 pb-2.5">
               <p className="truncate text-sm text-white">{user.email}</p>
               <p className="text-xs text-neutral-500">{user.role === "admin" ? "Admin" : "Client"}</p>
             </div>
             <div className="py-1">
               {links.map((link) => (
-                <Menu.Item key={link.href} className={itemClass} render={<Link href={link.href} />}>
+                <Menu.Item key={link.href} className={menuItemClass} render={<Link href={link.href} />}>
                   <link.icon className="size-4 text-neutral-500" />
                   {link.label}
                 </Menu.Item>
               ))}
             </div>
             <div className="border-t border-white/10 pt-1">
-              <Menu.Item className={itemClass} onClick={handleSignOut} disabled={pending}>
+              <Menu.Item className={menuItemClass} onClick={handleSignOut} disabled={pending}>
                 <LogOut className="size-4 text-down" />
                 {pending ? "Signing out…" : "Log Out"}
               </Menu.Item>

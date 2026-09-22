@@ -61,15 +61,17 @@ export const BannerCarousel = ({ banners }) => {
           </GradientButton>
         </motion.div>
       </AnimatePresence>
-      <div className="absolute right-5 bottom-4 flex gap-1.5 md:right-8 md:bottom-6">
+      <div className="absolute right-5 bottom-4 flex gap-3 md:right-8 md:bottom-6">
         {banners.map((item, i) => (
           <button
             key={item.id}
             onClick={() => handleSelect(i)}
             aria-label={`Show slide ${i + 1}`}
             aria-current={i === index}
-            className={cn("h-1.5 rounded-full transition-all", i === index ? "w-6 bg-brand" : "w-1.5 bg-white/40")}
-          />
+            className="-mx-1 -my-2 flex h-6 items-center px-2"
+          >
+            <span className={cn("h-2 rounded-full transition-all", i === index ? "w-6 bg-brand" : "w-2 bg-white/40")} />
+          </button>
         ))}
       </div>
     </section>

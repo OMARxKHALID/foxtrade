@@ -6,6 +6,7 @@ import { DayPicker } from "react-day-picker";
 import { CalendarDays, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { controlClass } from "@/components/ui/field";
 import { hitArea } from "@/components/ui/gradient-button";
+import { menuSideOffset, menuSurfaceClass } from "@/components/ui/menu-styles";
 import { cn } from "@/lib/utils";
 
 const dateFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" });
@@ -69,8 +70,8 @@ export const DatePicker = ({ id, value, onChange, placeholder = "Select date", f
         )}
       </div>
       <Popover.Portal>
-        <Popover.Positioner sideOffset={6} align="start" className="z-50 outline-none">
-          <Popover.Popup className="rounded-xl border border-white/10 bg-field p-3 shadow-[0_16px_40px_rgba(0,0,0,0.6)] outline-none">
+        <Popover.Positioner sideOffset={menuSideOffset} align="start" className="z-50 outline-none">
+          <Popover.Popup className={cn(menuSurfaceClass, "p-3")}>
             <DayPicker
               mode="single"
               selected={value}

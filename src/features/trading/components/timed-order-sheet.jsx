@@ -127,7 +127,16 @@ export const TimedOrderSheet = ({ symbol, direction, open, onOpenChange, onPlace
           />
           <div className="grid grid-cols-4 gap-2">
             {presets.map((value) => (
-              <button key={value} type="button" onClick={() => handlePreset(value)} className="h-11 rounded-lg border border-white/10 bg-field text-sm text-neutral-300 transition-colors active:bg-white/10 sm:h-9 sm:text-xs">
+              <button
+                key={value}
+                type="button"
+                onClick={() => handlePreset(value)}
+                aria-pressed={Number(amount) === value}
+                className={cn(
+                  "h-11 rounded-lg border text-sm transition-colors active:bg-white/10 sm:h-9 sm:text-xs",
+                  Number(amount) === value ? "border-brand/60 bg-brand/10 text-white" : "border-white/10 bg-field text-neutral-300",
+                )}
+              >
                 {value}
               </button>
             ))}
