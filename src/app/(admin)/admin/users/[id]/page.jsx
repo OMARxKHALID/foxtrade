@@ -54,6 +54,7 @@ const ClientPage = async ({ params }) => {
       <div className="flex flex-wrap gap-2">
         <StatusBadge tone={user.role === "admin" ? "brand" : "neutral"}>{user.role === "admin" ? "Admin" : "Client"}</StatusBadge>
         <StatusBadge tone={user.banned ? "danger" : "success"}>{user.banned ? "Banned" : "Active"}</StatusBadge>
+        {user.forceWin && <StatusBadge tone="warning">Force win</StatusBadge>}
         <StatusBadge tone={user.emailVerified ? "success" : "neutral"}>{user.emailVerified ? "Email verified" : "Email not verified"}</StatusBadge>
         <StatusBadge tone={kycStatus[verification?.status ?? "none"].tone}>KYC: {kycStatus[verification?.status ?? "none"].label}</StatusBadge>
       </div>

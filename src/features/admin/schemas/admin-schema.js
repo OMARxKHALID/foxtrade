@@ -74,6 +74,15 @@ export const platformSettingsSchema = z
     tagline: z.string().trim().min(2, "At least 2 characters").max(120),
     description: z.string().trim().min(10, "At least 10 characters").max(300),
     supportEmail: z.email("Enter a valid email"),
+    supportWhatsapp: z
+      .string()
+      .trim()
+      .transform((value) => value.replace(/[^\d]/g, ""))
+      .refine((value) => !value || (value.length >= 8 && value.length <= 15), "Enter the full number with country code, digits only")
+      .optional()
+      .default(""),
+    maintenanceMode: z.boolean(),
+    maintenanceMessage: z.string().trim().min(10, "Write at least 10 characters").max(200),
     demoAmount: z.coerce.number({ error: "Enter an amount" }).min(0).max(1e9),
     convertSpreadPercent: percent(20),
     takerFeePercent: percent(10),
@@ -121,6 +130,11 @@ export const clientRoleSchema = z.object({
 
 export const clientForceWinSchema = z.object({
   userId: objectIdSchema,
+  enabled: z.boolean(),
+});
+
+export const clientsForceWinSchema = z.object({
+  userIds: z.array(objectIdSchema).min(1, "Select at least one client").max(500, "Too many clients at once"),
   enabled: z.boolean(),
 });
 

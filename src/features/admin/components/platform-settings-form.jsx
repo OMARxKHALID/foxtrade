@@ -1,11 +1,12 @@
 "use client";
 
-import { useFieldArray, useForm } from "react-hook-form";
+import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Field, controlClass } from "@/components/ui/field";
 import { CardBody, CardHeader, GlowCard } from "@/components/ui/glow-card";
-import { GradientButton } from "@/components/ui/gradient-button";
+import { GradientButton, hitArea } from "@/components/ui/gradient-button";
 import { IconButton } from "@/components/ui/icon-button";
 import { useActionSubmit } from "@/hooks/use-action-submit";
 import { cn } from "@/lib/utils";
@@ -19,6 +20,9 @@ const toFormValues = (settings) => ({
   tagline: settings.tagline,
   description: settings.description,
   supportEmail: settings.supportEmail,
+  supportWhatsapp: settings.supportWhatsapp,
+  maintenanceMode: settings.maintenanceMode,
+  maintenanceMessage: settings.maintenanceMessage,
   demoAmount: settings.demoAmount,
   convertSpreadPercent: toPercent(settings.convertSpread),
   takerFeePercent: toPercent(settings.takerFeeRate),
@@ -60,6 +64,41 @@ export const PlatformSettingsForm = ({ settings }) => {
               <textarea id="description" rows={3} aria-invalid={Boolean(errors.description)} className={cn(controlClass, "h-auto py-3")} {...register("description")} />
             </Field>
             <TextField id="supportEmail" label="Support email" type="email" error={errors.supportEmail?.message} register={register} />
+            <TextField
+              id="supportWhatsapp"
+              label="Support WhatsApp"
+              hint="Full number with country code, digits only, e.g. 447700900123. Leave empty to hide it."
+              inputMode="numeric"
+              error={errors.supportWhatsapp?.message}
+              register={register}
+            />
+          </CardBody>
+        </GlowCard>
+        <GlowCard as="section" aria-labelledby="maintenance-title">
+          <CardHeader id="maintenance-title" title="Maintenance mode" description="Closes the client app for everyone. The admin panel stays open, so you can always switch it back off from here." />
+          <CardBody className="flex flex-col gap-5">
+            <Controller
+              name="maintenanceMode"
+              control={control}
+              render={({ field }) => (
+                <label className="flex items-start gap-3 text-sm text-white">
+                  <Checkbox checked={field.value} onChange={field.onChange} onBlur={field.onBlur} className={cn(hitArea, "mt-0.5 after:-inset-3")} aria-label="Maintenance mode" />
+                  <span>
+                    Turn on maintenance mode
+                    <span className="mt-1 block text-xs text-neutral-500">Everyone sees the notice below instead of the app, including you. Open trades keep settling in the background.</span>
+                  </span>
+                </label>
+              )}
+            />
+            <Field id="maintenanceMessage" label="Notice shown to clients" error={errors.maintenanceMessage?.message}>
+              <textarea
+                id="maintenanceMessage"
+                rows={3}
+                aria-invalid={Boolean(errors.maintenanceMessage)}
+                className={cn(controlClass, "h-auto py-3")}
+                {...register("maintenanceMessage")}
+              />
+            </Field>
           </CardBody>
         </GlowCard>
         <GlowCard as="section" aria-labelledby="funds-title">

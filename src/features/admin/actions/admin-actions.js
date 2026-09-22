@@ -19,6 +19,7 @@ import {
   balanceAdjustSchema,
   banSchema,
   clientForceWinSchema,
+  clientsForceWinSchema,
   clientPasswordSchema,
   clientProfileSchema,
   clientRoleSchema,
@@ -190,6 +191,25 @@ export const setClientForceWin = async (input) => {
     }
     invalidateOverlay(parsed.data.userId);
     await writeAudit(admin, parsed.data.enabled ? "client.force_win_on" : "client.force_win_off", client.email, parsed.data.enabled ? "New trades always win" : "Back to normal settlement");
+  });
+};
+
+export const setClientsForceWin = async (input) => {
+  const parsed = clientsForceWinSchema.safeParse(input);
+  if (!parsed.success) return validationFailure(parsed.error);
+  return asAdmin(async (admin) => {
+    const ids = [...new Set(parsed.data.userIds)].map((id) => new ObjectId(id));
+    const clients = await collections.users().find({ _id: { $in: ids }, role: { $ne: "admin" } }).toArray();
+    if (!clients.length) return formFailure("No clients found.");
+    const userIds = clients.map((client) => client._id.toString());
+    await collections.users().updateMany({ _id: { $in: clients.map((client) => client._id) } }, { $set: { forceWin: parsed.data.enabled } });
+    if (!parsed.data.enabled) {
+      await collections.orders().updateMany({ userId: { $in: userIds }, status: "open", forcedWin: true }, { $set: { forcedWin: false } });
+      await collections.positions().updateMany({ userId: { $in: userIds }, status: { $in: ["open", "pending"] }, forcedWin: true }, { $set: { forcedWin: false } });
+    }
+    userIds.forEach(invalidateOverlay);
+    await writeAudit(admin, parsed.data.enabled ? "client.force_win_on" : "client.force_win_off", `${clients.length} clients`, clients.map((client) => client.email).join(", ").slice(0, 400));
+    return { ok: true, data: { count: clients.length } };
   });
 };
 

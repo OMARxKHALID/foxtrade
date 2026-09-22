@@ -1,4 +1,4 @@
-import { Clock, Mail, MessagesSquare } from "lucide-react";
+import { Clock, Mail, MessageCircle, MessagesSquare } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { CardBody, CardHeader, GlowCard } from "@/components/ui/glow-card";
 import { IconTile } from "@/components/ui/icon-tile";
@@ -16,15 +16,20 @@ export const metadata = {
 
 export const instant = false;
 
-const channelsFor = (supportEmail) => [
+const formatWhatsapp = (digits) => `+${digits}`;
+
+const channelsFor = (supportEmail, supportWhatsapp) => [
   { icon: MessagesSquare, title: "Support tickets", text: "Replies inside your account, usually within a few hours." },
-  { icon: Mail, title: "Email", text: supportEmail },
+  { icon: Mail, title: "Email", text: supportEmail, href: `mailto:${supportEmail}` },
+  ...(supportWhatsapp
+    ? [{ icon: MessageCircle, title: "WhatsApp", text: formatWhatsapp(supportWhatsapp), href: `https://wa.me/${supportWhatsapp}`, external: true }]
+    : []),
   { icon: Clock, title: "Hours", text: "Every day, 08:00 – 22:00 UTC" },
 ];
 
 const SupportPage = async () => {
   const user = await getCurrentUser();
-  const [tickets, { supportEmail }] = await Promise.all([user ? listUserTickets(user.id) : null, getPlatformSettings()]);
+  const [tickets, { supportEmail, supportWhatsapp }] = await Promise.all([user ? listUserTickets(user.id) : null, getPlatformSettings()]);
 
   return (
     <Container className="flex flex-col gap-4 lg:gap-6">
@@ -41,13 +46,29 @@ const SupportPage = async () => {
             <CardHeader id="channels-title" title="Contact channels" />
             <CardBody>
               <ul className="flex flex-col gap-5">
-                {channelsFor(supportEmail).map((channel) => (
-                  <li key={channel.title} className="flex items-start gap-4">
-                    <IconTile icon={channel.icon} />
-                    <div className="min-w-0">
-                      <p className="text-sm text-white">{channel.title}</p>
-                      <p className="mt-1 text-xs text-neutral-400">{channel.text}</p>
-                    </div>
+                {channelsFor(supportEmail, supportWhatsapp).map((channel) => (
+                  <li key={channel.title}>
+                    {channel.href ? (
+                      <a
+                        href={channel.href}
+                        {...(channel.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                        className="-m-2 flex items-start gap-4 rounded-lg p-2 transition-colors hover:bg-white/5"
+                      >
+                        <IconTile icon={channel.icon} />
+                        <div className="min-w-0">
+                          <p className="text-sm text-white">{channel.title}</p>
+                          <p className="mt-1 text-xs break-words text-neutral-400">{channel.text}</p>
+                        </div>
+                      </a>
+                    ) : (
+                      <div className="flex items-start gap-4">
+                        <IconTile icon={channel.icon} />
+                        <div className="min-w-0">
+                          <p className="text-sm text-white">{channel.title}</p>
+                          <p className="mt-1 text-xs break-words text-neutral-400">{channel.text}</p>
+                        </div>
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>

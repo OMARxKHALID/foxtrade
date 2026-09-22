@@ -187,7 +187,7 @@ export const ClientAccessPanel = ({ user, isSelf, isConfiguredAdmin, openCount, 
       <GradientButton variant="dark" size="sm" onClick={() => setDialog("positions")} disabled={!openCount}>
         Close Open Positions
       </GradientButton>
-      {!isAdmin && user.forceWin && <p className="text-sm leading-6 text-up">Force win is active. New trades placed by this client are settled as wins.</p>}
+      {!isAdmin && user.forceWin && <p className="text-sm leading-6 text-warning">Force win is active. New trades placed by this client are settled as wins.</p>}
       {!isAdmin && (
         <GradientButton variant="dark" size="sm" onClick={() => setDialog("forceWin")}>
           {user.forceWin ? "Disable Force Win" : "Enable Force Win"}

@@ -11,13 +11,13 @@ const links = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
   { href: "/admin/users", label: "Clients", icon: Users },
   { href: "/admin/kyc", label: "KYC Review", icon: IdCard },
+  { href: "/admin/tickets", label: "Tickets", icon: LifeBuoy },
   { href: "/admin/pairs", label: "Pairs", icon: Coins },
   { href: "/admin/banners", label: "Banners", icon: Image },
   { href: "/admin/notices", label: "Notices", icon: Bell },
-  { href: "/admin/tickets", label: "Tickets", icon: LifeBuoy },
   { href: "/admin/content", label: "Content", icon: FileText },
-  { href: "/admin/settings", label: "Settings", icon: Settings },
   { href: "/admin/audit", label: "Audit Log", icon: History },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 export const AdminSidebar = ({ email, signOut, mobileSignOut }) => {
