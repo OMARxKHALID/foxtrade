@@ -25,7 +25,7 @@ export const AdminSidebar = ({ email, signOut, mobileSignOut }) => {
   const isActive = (href) => (href === "/admin" ? pathname === href : pathname.startsWith(href));
 
   return (
-    <aside className="flex flex-col border-b border-white/10 lg:sticky lg:top-0 lg:h-screen lg:border-r lg:border-b-0">
+    <aside className="flex flex-col border-b border-white/10 pt-[env(safe-area-inset-top)] lg:sticky lg:top-0 lg:h-screen lg:border-r lg:border-b-0">
       <div className="flex items-center justify-between gap-3 px-5 py-4 lg:py-6">
         <span className="flex items-center gap-2.5">
           <LogoMark />

@@ -31,7 +31,7 @@ export const SentimentBar = ({ symbol, className }) => {
   const sell = 100 - buy;
 
   return (
-    <div className={cn("flex flex-col gap-1.5", className)} aria-label="Order book sentiment">
+    <div className={cn("flex flex-col gap-1.5", className)} role="group" aria-label="Order book sentiment">
       <div className="flex items-center justify-between text-2xs">
         <span className="flex items-center gap-1 text-up">
           <TrendingUp className="size-3.5" />

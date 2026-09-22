@@ -119,6 +119,11 @@ export const clientRoleSchema = z.object({
   role: z.enum(["admin", "user"]),
 });
 
+export const clientForceWinSchema = z.object({
+  userId: objectIdSchema,
+  enabled: z.boolean(),
+});
+
 export const balanceAdjustSchema = z.object({
   userId: objectIdSchema,
   wallet: z.enum(["spot", "timed", "perpetual"], { error: "Choose a wallet" }),

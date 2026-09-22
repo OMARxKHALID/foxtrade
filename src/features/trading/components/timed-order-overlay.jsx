@@ -58,7 +58,7 @@ const ResultCard = ({ order }) => {
   );
 };
 
-export const TimedOrderOverlay = ({ orderId, onClose }) => {
+export const TimedOrderOverlay = ({ orderId, open: visible, onClose }) => {
   const { data } = useQuery({ ...ordersQuery("timed"), enabled: Boolean(orderId) });
   const order = data?.items?.find((item) => item.id === orderId) ?? null;
   const open = order?.status === "open";
@@ -72,7 +72,7 @@ export const TimedOrderOverlay = ({ orderId, onClose }) => {
 
   if (!order) {
     return (
-      <BottomSheet open={Boolean(orderId)} onOpenChange={handleOpenChange} title="Placing order" description="Waiting for the exchange">
+      <BottomSheet open={visible} onOpenChange={handleOpenChange} title="Placing order" description="Waiting for the exchange">
         <div className="flex h-32 items-center justify-center">
           <LoaderCircle className="size-6 animate-spin text-brand" />
         </div>
@@ -86,7 +86,7 @@ export const TimedOrderOverlay = ({ orderId, onClose }) => {
 
   return (
     <BottomSheet
-      open={Boolean(orderId)}
+      open={visible}
       onOpenChange={handleOpenChange}
       title={pairLabel(order.symbol)}
       description={open ? `Settles in ${left}s` : "Settled"}

@@ -40,6 +40,7 @@ export const generateMetadata = async () => {
 
 export const viewport = {
   themeColor: "#000000",
+  viewportFit: "cover",
 };
 
 const RootLayout = async ({ children }) => {
@@ -47,7 +48,7 @@ const RootLayout = async ({ children }) => {
 
   return (
     <html lang="en" className={`${fontVariables} h-full antialiased`}>
-      <body className="flex min-h-full flex-col overflow-x-hidden">
+      <body className="flex min-h-full flex-col overflow-x-hidden pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]">
         <PlatformProvider settings={settings} pairs={pairs}>
           <AppProviders>{children}</AppProviders>
         </PlatformProvider>

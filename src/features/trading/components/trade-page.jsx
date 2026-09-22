@@ -13,9 +13,13 @@ import { PerpetualOrderPanel } from "@/features/trading/components/perpetual-ord
 import { TimedTradePanel } from "@/features/trading/components/timed-trade-panel";
 import { TradeScreen } from "@/features/trading/components/trade-screen";
 import { tickersQuery, klinesQuery } from "@/lib/market/market-queries";
+import { transformCandles, transformTicker } from "@/lib/market/overlay";
 import { getPairs, getPlatformSettings } from "@/lib/cached-settings";
 import { findPair } from "@/lib/market/pairs";
 import { getQueryClient } from "@/lib/query-client";
+import { getCurrentUser } from "@/lib/session";
+
+const KLINE_INTERVAL_MS = 15 * 60 * 1000;
 
 const marketMeta = {
   timed: { label: "Options" },
@@ -36,8 +40,20 @@ export const TradePage = async ({ params, market }) => {
   if (!pair) notFound();
   await connection();
   const queryClient = getQueryClient();
-  void queryClient.prefetchQuery(tickersQuery([pair.symbol]));
-  void queryClient.prefetchQuery(klinesQuery(pair.symbol, "15m"));
+  const user = await getCurrentUser().catch(() => null);
+  const tickerOptions = tickersQuery([pair.symbol]);
+  const klineOptions = klinesQuery(pair.symbol, "15m");
+  if (user?.id) {
+    const [tickers, klines] = await Promise.all([tickerOptions.queryFn(), klineOptions.queryFn()]);
+    const steeredTickers = await Promise.all(tickers.map((ticker) => transformTicker(user.id, ticker)));
+    const withMs = klines.map(({ time, ...rest }) => ({ openTime: time * 1000, ...rest }));
+    const steeredKlines = await transformCandles(user.id, pair.symbol, withMs, KLINE_INTERVAL_MS);
+    queryClient.setQueryData(tickerOptions.queryKey, steeredTickers);
+    queryClient.setQueryData(klineOptions.queryKey, steeredKlines.map(({ openTime, ...rest }) => ({ time: Math.floor(openTime / 1000), ...rest })));
+  } else {
+    void queryClient.prefetchQuery(tickerOptions);
+    void queryClient.prefetchQuery(klineOptions);
+  }
 
   const orderPanel =
     market === "timed" ? (

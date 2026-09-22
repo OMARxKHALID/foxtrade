@@ -9,7 +9,7 @@ export const SegmentedTabs = ({ items, value, onChange, variant = "underline", f
     aria-label={label}
     className={cn(
       "flex max-w-full overflow-x-auto scrollbar-none",
-      variant === "underline" ? "gap-6 border-b border-white/10" : "h-9 gap-1 rounded-lg border border-white/10 bg-field p-0.5",
+      variant === "underline" ? "gap-6 border-b border-white/10" : "h-11 gap-1 rounded-lg sm:h-9 border border-white/10 bg-field p-0.5",
       variant === "pill" && (fill ? "grid w-full auto-cols-fr grid-flow-col" : "w-fit"),
       className,
     )}

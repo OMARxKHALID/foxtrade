@@ -91,6 +91,7 @@ export const listClients = async () => {
       createdAt: user.createdAt.toISOString(),
       banned: Boolean(user.banned),
       banReason: user.banReason ?? null,
+      forceWin: Boolean(user.forceWin),
       usdt: balances[id] ?? 0,
       kyc: kyc[id] ?? "none",
     };
@@ -126,6 +127,7 @@ export const getClientDetail = async (userId) => {
       role: user.role === "admin" ? "admin" : "user",
       banned: Boolean(user.banned),
       banReason: user.banReason ?? null,
+      forceWin: Boolean(user.forceWin),
       emailVerified: Boolean(user.emailVerified),
       createdAt: user.createdAt.toISOString(),
     },

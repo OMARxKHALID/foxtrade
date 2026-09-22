@@ -13,7 +13,7 @@ const AuthLayout = async ({ children }) => {
 
   return (
     <div className="grid grid-cols-1 min-h-screen flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-      <div className="flex flex-col px-5 py-6 md:px-12 md:py-10">
+      <div className="flex flex-col px-5 pt-[max(1.5rem,env(safe-area-inset-top))] pb-6 md:px-12 md:py-10">
         <Link href="/" className="flex items-center gap-2.5 self-start" aria-label={`${siteName} home`}>
           <LogoMark />
           <span className="font-heading text-sm font-semibold text-white">{siteName}</span>

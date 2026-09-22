@@ -7,7 +7,7 @@ It also includes an admin back office for clients, identity verification (KYC), 
 ## Features
 
 **Traders**
-- **Markets:** live prices, candle charts, order book and recent trades, streamed from Binance public data.
+- **Markets:** live prices, candle charts, order book and recent trades, streamed through the app's market data gateway (originating from Binance public data).
 - **Timed options:** predict up or down over 30 seconds to 15 minutes. Payout rates are set per duration.
 - **Perpetual futures:** market and limit orders, up to 100x leverage, take profit and stop loss, add margin, and automatic liquidation.
 - **Assets:** spot, timed and perpetual wallets, plus convert, transfer, transaction records and a demo top-up faucet.
@@ -15,7 +15,7 @@ It also includes an admin back office for clients, identity verification (KYC), 
 - **Also:** support tickets, notices, help center, trading rules, a copy-trading leaderboard, and an installable app (PWA).
 
 **Admins**
-- Dashboard stats; client management (ban, role, password, balance adjustments, delete).
+- Dashboard stats; client management (ban, role, password, balance adjustments, force win toggle, delete).
 - KYC review with private document viewing.
 - Trading pairs (enable or disable, leverage limits).
 - Platform settings: site name, demo amount, fees, maintenance margin, timed durations.
@@ -143,6 +143,13 @@ tests/              Vitest global setup
 ```
 
 ## How it works
+
+### Market data gateway
+The browser never talks to Binance directly. All client market traffic goes through first-party endpoints, which the server can transform per user:
+
+- **REST:** `/api/market/klines`, `/api/market/tickers`, `/api/market/trades` proxy and normalize Binance responses.
+- **Stream:** `/api/market/stream` is an SSE endpoint backed by a single shared WebSocket to Binance per server process (`src/lib/market/upstream.js`), with heartbeats and per-client stream filters.
+- **Overlay:** for clients flagged with *force win*, `src/lib/market/overlay.js` steers a synthetic price during their forced trades. The chart, order book, trade feed, tickers and settlement all read the same deterministic path, so the payout always matches what the trader saw. The chart snaps back to the real price once the trade settles.
 
 ### Ledger
 Every balance change goes through `postEntries` in `src/lib/ledger.js`, inside a MongoDB transaction:

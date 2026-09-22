@@ -19,6 +19,7 @@ import {
   deleteClient,
   resetClientBalance,
   revokeClientSessions,
+  setClientForceWin,
   setClientPassword,
   setClientRole,
   unbanClient,
@@ -117,6 +118,7 @@ const dialogs = {
   ban: { title: "Ban account", confirmLabel: "Ban", tone: "down", reasonLabel: "Reason (shown to the client)" },
   reset: { title: "Reset demo balance", confirmLabel: "Reset Balance", tone: "orange" },
   delete: { title: "Delete account", confirmLabel: "Delete", tone: "down" },
+  forceWin: { title: "Force win", tone: "orange" },
 };
 
 export const ClientAccessPanel = ({ user, isSelf, isConfiguredAdmin, openCount, sessionCount }) => {
@@ -134,6 +136,7 @@ export const ClientAccessPanel = ({ user, isSelf, isConfiguredAdmin, openCount, 
   });
   const ban = useActionSubmit({ action: banClient, successMessage: "Account banned.", onSuccess: handleClose });
   const unban = useActionSubmit({ action: unbanClient, successMessage: "Account unbanned." });
+  const forceWin = useActionSubmit({ action: setClientForceWin, successMessage: "Force win updated.", onSuccess: handleClose });
   const reset = useActionSubmit({ action: resetClientBalance, successMessage: "Balance reset.", onSuccess: handleClose });
   const remove = useActionSubmit({
     action: deleteClient,
@@ -150,6 +153,9 @@ export const ClientAccessPanel = ({ user, isSelf, isConfiguredAdmin, openCount, 
     ban: `${user.email} will be signed out and blocked from logging in.`,
     reset: `Open trades of ${user.email} will be cancelled, and all wallets cleared and refilled with the starting demo USDT.`,
     delete: `${user.email} and all their wallets, trades, tickets and KYC data will be permanently deleted.`,
+    forceWin: user.forceWin
+      ? `${user.email} goes back to normal settlement, including trades already open. Trades that already settled keep their outcome.`
+      : `Every trade ${user.email} places while this is active will be settled as a win, regardless of the market.`,
   };
 
   const handleConfirm = (reason) => {
@@ -159,9 +165,10 @@ export const ClientAccessPanel = ({ user, isSelf, isConfiguredAdmin, openCount, 
     if (dialog === "ban") ban.submit({ userId: user.id, reason });
     if (dialog === "reset") reset.submit(user.id);
     if (dialog === "delete") remove.submit(user.id);
+    if (dialog === "forceWin") forceWin.submit({ userId: user.id, enabled: !user.forceWin });
   };
 
-  const pending = role.pending || sessions.pending || positions.pending || ban.pending || reset.pending || remove.pending;
+  const pending = role.pending || sessions.pending || positions.pending || ban.pending || reset.pending || remove.pending || forceWin.pending;
 
   return (
     <div className="flex flex-col gap-3">
@@ -180,6 +187,12 @@ export const ClientAccessPanel = ({ user, isSelf, isConfiguredAdmin, openCount, 
       <GradientButton variant="dark" size="sm" onClick={() => setDialog("positions")} disabled={!openCount}>
         Close Open Positions
       </GradientButton>
+      {!isAdmin && user.forceWin && <p className="text-sm leading-6 text-up">Force win is active. New trades placed by this client are settled as wins.</p>}
+      {!isAdmin && (
+        <GradientButton variant="dark" size="sm" onClick={() => setDialog("forceWin")}>
+          {user.forceWin ? "Disable Force Win" : "Enable Force Win"}
+        </GradientButton>
+      )}
       {!isAdmin && (
         <GradientButton variant="dark" size="sm" onClick={() => setDialog("reset")}>
           Reset Demo Balance
@@ -205,7 +218,7 @@ export const ClientAccessPanel = ({ user, isSelf, isConfiguredAdmin, openCount, 
         onOpenChange={(open) => !open && handleClose()}
         title={dialogs[dialog]?.title}
         description={descriptions[dialog]}
-        confirmLabel={dialogs[dialog]?.confirmLabel}
+        confirmLabel={dialog === "forceWin" ? (user.forceWin ? "Turn Off" : "Turn On") : dialogs[dialog]?.confirmLabel}
         tone={dialogs[dialog]?.tone}
         reasonLabel={dialogs[dialog]?.reasonLabel}
         pending={pending}

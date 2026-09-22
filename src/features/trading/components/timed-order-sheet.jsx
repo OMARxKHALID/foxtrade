@@ -120,7 +120,6 @@ export const TimedOrderSheet = ({ symbol, direction, open, onOpenChange, onPlace
             type="number"
             inputMode="decimal"
             step="any"
-            autoFocus
             placeholder="Enter the purchase quantity"
             aria-invalid={Boolean(errors.amount)}
             className={controlClass}
@@ -128,7 +127,7 @@ export const TimedOrderSheet = ({ symbol, direction, open, onOpenChange, onPlace
           />
           <div className="grid grid-cols-4 gap-2">
             {presets.map((value) => (
-              <button key={value} type="button" onClick={() => handlePreset(value)} className="h-8 rounded-lg border border-white/10 bg-field text-xs text-neutral-300">
+              <button key={value} type="button" onClick={() => handlePreset(value)} className="h-11 rounded-lg border border-white/10 bg-field text-sm text-neutral-300 transition-colors active:bg-white/10 sm:h-9 sm:text-xs">
                 {value}
               </button>
             ))}

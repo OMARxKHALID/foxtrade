@@ -5,7 +5,7 @@ import { postEntries } from "@/lib/ledger";
 import { writePairs } from "@/lib/market/pair-store";
 import { defaultPairs } from "@/lib/market/pairs";
 import { defaultPlatformSettings, writePlatformSettings } from "@/lib/platform-settings";
-import { addMargin, cancelPendingOrder, closePosition, settleUser, placePerpetualOrder } from "./trading-engine";
+import { addMargin, cancelPendingOrder, closePosition, settleUser, placePerpetualOrder, placeTimedOrder } from "./trading-engine";
 
 vi.mock("@/lib/market/binance-rest", () => ({
   fetchLatestPrices: vi.fn(),
@@ -230,6 +230,31 @@ describe("Active position cap", () => {
     await collections.positions().updateOne({ userId, status: "pending" }, { $set: { status: "cancelled" } });
     await expect(placePerpetualOrder(userId, order)).resolves.toEqual(expect.any(String));
   });
+
+  it("never lets concurrent placements exceed the cap", async () => {
+    const userId = "u-position-cap-race";
+    await postEntries([{ userId, wallet: "perpetual", asset: "USDT", type: "faucet", amount: 100000 }], null);
+    await collections.positionCounters().insertOne({ _id: userId, count: 48 });
+    fetchLatestPrices.mockResolvedValue({ BTCUSDT: "65000" });
+    const order = { symbol: "BTCUSDT", side: "long", type: "market", amount: 10, leverage: 5 };
+    const results = await Promise.allSettled(Array.from({ length: 5 }, () => placePerpetualOrder(userId, order)));
+    const fulfilled = results.filter((result) => result.status === "fulfilled").length;
+    expect(fulfilled).toBe(2);
+    expect((await collections.positionCounters().findOne({ _id: userId })).count).toBe(50);
+  });
+
+  it("frees a slot when a position closes and reclaims it on the next order", async () => {
+    const userId = "u-position-cap-release";
+    await postEntries([{ userId, wallet: "perpetual", asset: "USDT", type: "faucet", amount: 1000 }], null);
+    fetchLatestPrices.mockResolvedValue({ BTCUSDT: "65000" });
+    const order = { symbol: "BTCUSDT", side: "long", type: "market", amount: 10, leverage: 5 };
+    const positionId = await placePerpetualOrder(userId, order);
+    expect((await collections.positionCounters().findOne({ _id: userId })).count).toBe(1);
+    fetchKlineRange.mockResolvedValue([]);
+    await closePosition(userId, positionId);
+    expect((await collections.positionCounters().findOne({ _id: userId })).count).toBe(0);
+    await expect(placePerpetualOrder(userId, order)).resolves.toEqual(expect.any(String));
+  });
 });
 
 describe("Settlement concurrency", () => {
@@ -333,5 +358,88 @@ describe("Off-by-one openTime validation (H1)", () => {
     expect(order.closePrice).toBe(65500);
     expect(logged).toHaveBeenCalledWith(expect.stringContaining("Timed settlement fallback"));
     logged.mockRestore();
+  });
+});
+
+describe("Force win", () => {
+  const hexUserId = (seed) => seed.repeat(12);
+  const insertUser = async (userId, forceWin) => {
+    await collections.users().insertOne({ _id: new ObjectId(userId), email: `${userId}@test.dev`, forceWin });
+  };
+
+  const insertExpiredForcedOrder = async (userId, direction) => {
+    const expiresAt = new Date(Math.floor((Date.now() - 5000) / SECOND) * SECOND);
+    await postEntries([{ userId, wallet: "timed", asset: "USDT", type: "faucet", amount: 10000 }], null);
+    await collections.orders().insertOne({
+      userId,
+      symbol: "BTCUSDT",
+      direction,
+      duration: 30,
+      amount: 100,
+      payoutRate: 0.8,
+      openPrice: 65000,
+      openedAt: new Date(expiresAt.getTime() - 30 * SECOND),
+      expiresAt,
+      forcedWin: true,
+      status: "open",
+    });
+    return expiresAt;
+  };
+
+  it("settles a forced order as a win even when the market moved against it", async () => {
+    const userId = "ab1cab1cab1cab1cab1cab1c";
+    await insertExpiredForcedOrder(userId, "put");
+    fetchKlineRange.mockResolvedValue([{ openTime: Date.now(), close: 66000 }]);
+    await settleUser(userId);
+    const order = await collections.orders().findOne({ userId, status: { $ne: "open" } });
+    expect(order.status).toBe("won");
+    expect(order.payout).toBe(180);
+    expect(order.closePrice).toBeLessThan(65000);
+    const wallet = await collections.wallets().findOne({ userId, wallet: "timed" });
+    expect(Number(wallet.balance)).toBe(10180);
+  });
+
+  it("stamps forcedWin on new trades only while the user flag is on", async () => {
+    const userId = "cd2dcd2dcd2dcd2dcd2dcd2d";
+    await insertUser(userId, true);
+    await postEntries([{ userId, wallet: "timed", asset: "USDT", type: "faucet", amount: 10000 }], null);
+    fetchLatestPrices.mockResolvedValue({ BTCUSDT: "65000" });
+    const orderId = await placeTimedOrder(userId, { symbol: "BTCUSDT", direction: "call", duration: 30, amount: 100 });
+    const order = await collections.orders().findOne({ _id: new ObjectId(orderId) });
+    expect(order.forcedWin).toBe(true);
+    await collections.users().updateOne({ _id: new ObjectId(userId) }, { $set: { forceWin: false } });
+    const secondId = await placeTimedOrder(userId, { symbol: "BTCUSDT", direction: "call", duration: 30, amount: 100 });
+    const second = await collections.orders().findOne({ _id: new ObjectId(secondId) });
+    expect(second.forcedWin).toBe(false);
+  });
+
+  it("never liquidates a forced perpetual position", async () => {
+    const userId = "ef3fef3fef3fef3fef3fef3f";
+    await insertUser(userId, true);
+    await postEntries([{ userId, wallet: "perpetual", asset: "USDT", type: "faucet", amount: 1000 }], null);
+    fetchLatestPrices.mockResolvedValue({ BTCUSDT: "65000" });
+    const positionId = await placePerpetualOrder(userId, { symbol: "BTCUSDT", side: "long", type: "market", amount: 100, leverage: 10, stopLoss: 64000 });
+    const position = await collections.positions().findOne({ _id: new ObjectId(positionId) });
+    expect(position.forcedWin).toBe(true);
+    expect(position.stopLoss).toBe(64000);
+    const checkedFrom = Math.floor((Date.now() - 3 * MINUTE) / MINUTE) * MINUTE;
+    await collections.positions().updateOne({ _id: new ObjectId(positionId) }, { $set: { lastCheckedAt: new Date(checkedFrom) } });
+    fetchKlineRange.mockImplementation(async ({ startTime }) => [{ openTime: startTime, open: 65000, high: 65100, low: position.liquidationPrice - 5000, close: position.liquidationPrice - 6000 }]);
+    await settleUser(userId);
+    const current = await collections.positions().findOne({ _id: new ObjectId(positionId) });
+    expect(current.status).toBe("open");
+  });
+
+  it("never closes a forced position below its margin", async () => {
+    const userId = "123412341234123412341234";
+    await insertUser(userId, true);
+    await postEntries([{ userId, wallet: "perpetual", asset: "USDT", type: "faucet", amount: 1000 }], null);
+    fetchLatestPrices.mockResolvedValue({ BTCUSDT: "65000" });
+    const positionId = await placePerpetualOrder(userId, { symbol: "BTCUSDT", side: "long", type: "market", amount: 100, leverage: 10 });
+    fetchKlineRange.mockResolvedValue([]);
+    await closePosition(userId, positionId);
+    const closed = await collections.positions().findOne({ _id: new ObjectId(positionId) });
+    expect(closed.status).toBe("closed");
+    expect(closed.payout).toBeGreaterThanOrEqual(100);
   });
 });

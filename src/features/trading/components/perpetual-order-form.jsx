@@ -77,7 +77,7 @@ export const PerpetualOrderForm = ({ symbol, enabled = true, maxLeverage, defaul
 
   return (
     <form className={cn("flex flex-col gap-5 p-4 sm:p-6", className)} noValidate onSubmit={handleSubmit(handlePlace)}>
-      <SegmentedTabs items={sides} value={side} onChange={handleSide} variant="pill" fill toggle className="h-11 p-1" label="Order side" />
+      <SegmentedTabs items={sides} value={side} onChange={handleSide} variant="pill" fill toggle className="h-11 p-1 sm:h-11" label="Order side" />
 
       <SegmentedTabs items={types} value={type} onChange={handleType} label="Order type" />
 

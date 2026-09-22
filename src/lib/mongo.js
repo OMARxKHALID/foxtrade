@@ -35,5 +35,6 @@ export const collections = {
   audit: () => getDb().collection("audit"),
   security: () => getDb().collection("security"),
   rateLimits: () => getDb().collection("rate_limits"),
+  positionCounters: () => getDb().collection("position_counters"),
   settings: () => getDb().collection("settings"),
 };

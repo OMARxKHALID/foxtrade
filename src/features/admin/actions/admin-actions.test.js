@@ -13,7 +13,7 @@ vi.mock("@/lib/document-storage", () => ({ deletePrivateImages: vi.fn(async () =
 
 const { getCurrentUser } = await import("@/lib/session");
 const { deletePrivateImages } = await import("@/lib/document-storage");
-const { adjustClientBalance, deleteClient } = await import("./admin-actions");
+const { adjustClientBalance, deleteClient, setClientForceWin } = await import("./admin-actions");
 
 const adminId = new ObjectId();
 const clientId = new ObjectId();
@@ -79,6 +79,45 @@ describe("Balance adjustments", () => {
     expect((await adjustClientBalance({ ...base, amount: "abc" })).ok).toBe(false);
     expect((await adjustClientBalance({ ...base, asset: "NOTLISTED", amount: "10" })).ok).toBe(false);
     expect(await balanceOf(clientId.toString())).toBe(100);
+  });
+});
+
+describe("Force win toggle", () => {
+  it("stores the flag and audits both directions", async () => {
+    const on = await setClientForceWin({ userId: clientId.toString(), enabled: true });
+    expect(on.ok).toBe(true);
+    expect((await collections.users().findOne({ _id: clientId })).forceWin).toBe(true);
+    expect((await collections.audit().findOne({}, { sort: { _id: 1 } })).action).toBe("client.force_win_on");
+    const off = await setClientForceWin({ userId: clientId.toString(), enabled: false });
+    expect(off.ok).toBe(true);
+    expect((await collections.users().findOne({ _id: clientId })).forceWin).toBe(false);
+    const audits = await collections.audit().find({}, { sort: { _id: 1 } }).toArray();
+    expect(audits.map((entry) => entry.action)).toEqual(["client.force_win_on", "client.force_win_off"]);
+  });
+
+  it("refuses unknown clients", async () => {
+    const result = await setClientForceWin({ userId: new ObjectId().toString(), enabled: true });
+    expect(result.ok).toBe(false);
+    expect(await collections.audit().countDocuments({})).toBe(0);
+  });
+
+  it("clears forcedWin on open trades when turned off, but leaves settled ones alone", async () => {
+    const userId = clientId.toString();
+    await collections.orders().insertMany([
+      { userId, symbol: "BTCUSDT", status: "open", forcedWin: true },
+      { userId, symbol: "ETHUSDT", status: "won", forcedWin: true },
+    ]);
+    await collections.positions().insertMany([
+      { userId, symbol: "BTCUSDT", status: "open", forcedWin: true },
+      { userId, symbol: "ETHUSDT", status: "pending", forcedWin: true },
+      { userId, symbol: "SOLUSDT", status: "closed", forcedWin: true },
+    ]);
+    const result = await setClientForceWin({ userId, enabled: false });
+    expect(result.ok).toBe(true);
+    const orders = await collections.orders().find({ userId }).sort({ symbol: 1 }).toArray();
+    expect(orders.map((order) => order.forcedWin)).toEqual([false, true]);
+    const positions = await collections.positions().find({ userId }).sort({ symbol: 1 }).toArray();
+    expect(positions.map((position) => position.forcedWin)).toEqual([false, false, true]);
   });
 });
 

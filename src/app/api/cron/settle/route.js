@@ -1,13 +1,15 @@
-import { timingSafeEqual } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { NextResponse, connection } from "next/server";
 import { getEnv } from "@/lib/env";
 import { settleAll } from "@/features/trading/dal/trading-engine";
 
+const digest = (value) => createHash("sha256").update(value).digest();
+
 const authorized = (request) => {
   const secret = getEnv().CRON_SECRET;
+  if (!secret) return false;
   const provided = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-  if (!secret || provided.length !== secret.length) return false;
-  return timingSafeEqual(Buffer.from(provided), Buffer.from(secret));
+  return timingSafeEqual(digest(provided), digest(secret));
 };
 
 export const GET = async (request) => {

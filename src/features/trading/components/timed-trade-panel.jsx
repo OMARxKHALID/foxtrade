@@ -23,19 +23,22 @@ export const TimedTradePanel = ({ symbol, enabled = true }) => {
   const { timedDurations } = usePlatform().settings;
   const [ticker] = useLiveTickers([symbol]);
   const { data: orders } = useQuery(ordersQuery("timed"));
-  const [direction, setDirection] = useState(null);
+  const [direction, setDirection] = useState("call");
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [placedId, setPlacedId] = useState(null);
+  const [overlayOpen, setOverlayOpen] = useState(false);
   const openCount = orders?.items?.filter((item) => item.status === "open").length ?? 0;
 
-  const handleOpen = (value) => setDirection(value);
-  const handleSheetChange = (value) => {
-    if (!value) setDirection(null);
+  const handleOpen = (value) => {
+    setDirection(value);
+    setSheetOpen(true);
   };
   const handlePlaced = (orderId) => {
-    setDirection(null);
+    setSheetOpen(false);
     setPlacedId(orderId);
+    setOverlayOpen(true);
   };
-  const handleOverlayClose = () => setPlacedId(null);
+  const handleOverlayClose = () => setOverlayOpen(false);
 
   return (
     <div className="flex h-full flex-col gap-5 p-4 sm:p-6">
@@ -86,8 +89,8 @@ export const TimedTradePanel = ({ symbol, enabled = true }) => {
 
       <p className="mt-auto text-2xs leading-4 text-neutral-500">Orders settle at the Binance market price when the timer ends. Equal prices refund your stake.</p>
 
-      <TimedOrderSheet symbol={symbol} direction={direction ?? "call"} open={Boolean(direction)} onOpenChange={handleSheetChange} onPlaced={handlePlaced} />
-      <TimedOrderOverlay orderId={placedId} onClose={handleOverlayClose} />
+      <TimedOrderSheet symbol={symbol} direction={direction} open={sheetOpen} onOpenChange={setSheetOpen} onPlaced={handlePlaced} />
+      <TimedOrderOverlay orderId={placedId} open={overlayOpen} onClose={handleOverlayClose} />
     </div>
   );
 };

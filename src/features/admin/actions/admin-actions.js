@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { ObjectId } from "mongodb";
 import { formFailure, validationFailure } from "@/lib/action-result";
 import { getAuth } from "@/lib/auth";
 import { deletePrivateImages } from "@/lib/document-storage";
@@ -13,9 +14,11 @@ import { collections } from "@/lib/mongo";
 import { addTicketMessage, setTicketStatus } from "@/lib/ticket-store";
 import { asAdmin, findClient, findUser, reviewVerification, reviewVerificationDocuments, writeAudit } from "@/features/admin/dal/admin-dal";
 import { closeAllPositions } from "@/features/trading/dal/trading-engine";
+import { invalidateOverlay } from "@/lib/market/overlay";
 import {
   balanceAdjustSchema,
   banSchema,
+  clientForceWinSchema,
   clientPasswordSchema,
   clientProfileSchema,
   clientRoleSchema,
@@ -171,6 +174,22 @@ export const revokeClientSessions = async (userId) => {
     if (failure) return failure;
     await getAuth().api.revokeUserSessions({ body: { userId: parsed.data }, headers: await headers() });
     await writeAudit(admin, "client.revoke_sessions", user.email);
+  });
+};
+
+export const setClientForceWin = async (input) => {
+  const parsed = clientForceWinSchema.safeParse(input);
+  if (!parsed.success) return validationFailure(parsed.error);
+  return asAdmin(async (admin) => {
+    const client = await findClient(parsed.data.userId);
+    if (!client) return formFailure("Client not found.");
+    await collections.users().updateOne({ _id: new ObjectId(parsed.data.userId) }, { $set: { forceWin: parsed.data.enabled } });
+    if (!parsed.data.enabled) {
+      await collections.orders().updateMany({ userId: parsed.data.userId, status: "open", forcedWin: true }, { $set: { forcedWin: false } });
+      await collections.positions().updateMany({ userId: parsed.data.userId, status: { $in: ["open", "pending"] }, forcedWin: true }, { $set: { forcedWin: false } });
+    }
+    invalidateOverlay(parsed.data.userId);
+    await writeAudit(admin, parsed.data.enabled ? "client.force_win_on" : "client.force_win_off", client.email, parsed.data.enabled ? "New trades always win" : "Back to normal settlement");
   });
 };
 

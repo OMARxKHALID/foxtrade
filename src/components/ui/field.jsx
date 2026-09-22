@@ -2,7 +2,7 @@ import { focusRing } from "@/components/ui/gradient-button";
 import { cn } from "@/lib/utils";
 
 export const controlClass =
-  "h-10 w-full min-w-0 rounded-lg border border-white/10 bg-field px-3 text-sm text-white placeholder:text-neutral-600 focus:border-brand/60 focus:outline-none aria-[invalid=true]:border-down/60 disabled:opacity-50 [color-scheme:dark] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
+  "h-10 w-full min-w-0 rounded-lg border border-white/10 bg-field px-3 text-base text-white sm:text-sm placeholder:text-neutral-600 focus:border-brand/60 focus:outline-none aria-[invalid=true]:border-down/60 disabled:opacity-50 [color-scheme:dark] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
 
 export const Field = ({ id, label, hint, error, className, children, aside }) => (
   <div className={cn("flex min-w-0 flex-col gap-2", className)}>

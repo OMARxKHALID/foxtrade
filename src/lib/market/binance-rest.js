@@ -1,7 +1,16 @@
 const REST_BASE = "https://data-api.binance.vision/api/v3";
+const GATEWAY_BASE = "/api/market";
 const REQUEST_TIMEOUT_MS = 8000;
 
-const marketFetchOptions = typeof window === "undefined" ? { next: { revalidate: 5 } } : { cache: "no-store" };
+const isBrowser = () => typeof window !== "undefined";
+
+const marketFetchOptions = isBrowser() ? { cache: "no-store" } : { next: { revalidate: 5 } };
+
+const gatewayJson = async (path, params) => {
+  const response = await fetch(`${GATEWAY_BASE}/${path}?${params}`, { cache: "no-store" });
+  if (!response.ok) throw new Error(`Market ${path} failed: ${response.status}`);
+  return response.json();
+};
 
 const fetchJson = async (path, options) => {
   const url = `${REST_BASE}${path}`;
@@ -47,12 +56,18 @@ const normalizeKline = ([openTime, open, high, low, close, volume]) => ({
 });
 
 export const fetchTickers = async (symbols) => {
+  if (isBrowser()) return gatewayJson("tickers", `symbols=${encodeURIComponent(JSON.stringify(symbols))}`);
   const params = new URLSearchParams({ symbols: JSON.stringify(symbols), type: "FULL" });
   const data = await fetchJson(`/ticker/24hr?${params}`, marketFetchOptions);
   return data.map(normalizeTicker);
 };
 
 export const fetchKlines = async ({ symbol, interval, limit = 500, endTime }) => {
+  if (isBrowser()) {
+    const params = new URLSearchParams({ symbol, interval, limit: String(limit) });
+    if (endTime) params.set("endTime", String(endTime));
+    return gatewayJson("klines", params);
+  }
   const params = new URLSearchParams({ symbol, interval, limit: String(limit) });
   if (endTime) params.set("endTime", String(endTime));
   const data = await fetchJson(`/klines?${params}`, marketFetchOptions);
@@ -75,6 +90,7 @@ export const fetchKlineRange = async ({ symbol, interval, startTime, endTime, li
 export const toAggTrade = ({ a, p, q, T, m }) => ({ id: a, price: Number(p), quantity: Number(q), time: T, sell: m });
 
 export const fetchRecentTrades = async (symbol, limit = 40) => {
+  if (isBrowser()) return gatewayJson("trades", new URLSearchParams({ symbol, limit: String(limit) }));
   const params = new URLSearchParams({ symbol, limit: String(limit) });
   const data = await fetchJson(`/aggTrades?${params}`, { cache: "no-store" });
   return data.map(toAggTrade).reverse();

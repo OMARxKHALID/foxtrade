@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { CardHeader } from "@/components/ui/glow-card";
-import { fetchRecentTrades, toAggTrade } from "@/lib/market/binance-rest";
+import { toAggTrade } from "@/lib/market/binance-rest";
+import { recentTradesQuery } from "@/lib/market/market-queries";
 import { subscribeStream } from "@/lib/market/binance-socket";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -14,6 +16,7 @@ const rowGrid = "grid grid-cols-3 gap-2 px-4";
 const timeFormat = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
 export const TradeFeed = ({ symbol, className }) => {
+  const queryClient = useQueryClient();
   const [trades, setTrades] = useState([]);
   const buffer = useRef([]);
   const frame = useRef(0);
@@ -27,7 +30,8 @@ export const TradeFeed = ({ symbol, className }) => {
       frame.current = requestAnimationFrame(() => setTrades(buffer.current));
     };
     const unsubscribe = subscribeStream(`${symbol.toLowerCase()}@aggTrade`, (data) => publish([toAggTrade(data)]));
-    fetchRecentTrades(symbol, LIMIT)
+    queryClient
+      .fetchQuery(recentTradesQuery(symbol, LIMIT))
       .then((recent) => active && publish(recent))
       .catch(() => {});
     return () => {
@@ -36,7 +40,7 @@ export const TradeFeed = ({ symbol, className }) => {
       cancelAnimationFrame(frame.current);
       unsubscribe();
     };
-  }, [symbol]);
+  }, [symbol, queryClient]);
 
   return (
     <section aria-label="Recent trades" className={cn("flex flex-col", className)}>

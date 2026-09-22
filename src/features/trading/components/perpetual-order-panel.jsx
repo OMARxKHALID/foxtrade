@@ -16,13 +16,14 @@ const sides = [
 
 export const PerpetualOrderPanel = ({ symbol, enabled = true, maxLeverage }) => {
   const [ticker] = useLiveTickers([symbol]);
-  const [side, setSide] = useState(null);
+  const [side, setSide] = useState("long");
+  const [sheetOpen, setSheetOpen] = useState(false);
 
-  const handleOpen = (value) => setSide(value);
-  const handleSheetChange = (value) => {
-    if (!value) setSide(null);
+  const handleOpen = (value) => {
+    setSide(value);
+    setSheetOpen(true);
   };
-  const handlePlaced = () => setSide(null);
+  const handlePlaced = () => setSheetOpen(false);
 
   return (
     <>
@@ -42,8 +43,8 @@ export const PerpetualOrderPanel = ({ symbol, enabled = true, maxLeverage }) => 
         </div>
       </div>
 
-      <BottomSheet open={Boolean(side)} onOpenChange={handleSheetChange} title={pairLabel(symbol)} description={ticker ? formatPrice(ticker.price) : "--"}>
-        {side && <PerpetualOrderForm key={side} symbol={symbol} enabled={enabled} maxLeverage={maxLeverage} defaultSide={side} onPlaced={handlePlaced} className="p-0 sm:p-0" />}
+      <BottomSheet open={sheetOpen} onOpenChange={setSheetOpen} title={pairLabel(symbol)} description={ticker ? formatPrice(ticker.price) : "--"}>
+        <PerpetualOrderForm key={side} symbol={symbol} enabled={enabled} maxLeverage={maxLeverage} defaultSide={side} onPlaced={handlePlaced} className="p-0 sm:p-0" />
       </BottomSheet>
     </>
   );

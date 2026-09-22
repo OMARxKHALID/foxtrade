@@ -2,6 +2,7 @@ import "server-only";
 import { ObjectId } from "mongodb";
 import { LedgerError, getBalance, postEntries, withTransaction } from "@/lib/ledger";
 import { fetchKlineRange, fetchLatestPrices } from "@/lib/market/binance-rest";
+import { forcedClosePrice, forcedExitPrice, invalidateOverlay, transformCandles } from "@/lib/market/overlay";
 import { readPairs } from "@/lib/market/pair-store";
 import { findPair } from "@/lib/market/pairs";
 import { toAmount, toAmountString, toBig } from "@/lib/money";
@@ -47,6 +48,25 @@ const latestPrice = async (symbol) => {
 
 const toObjectId = (id) => (ObjectId.isValid(id) ? new ObjectId(id) : null);
 
+const forcedWinFor = async (userId) => {
+  const user = toObjectId(userId) ? await collections.users().findOne({ _id: toObjectId(userId) }, { projection: { forceWin: 1 } }) : null;
+  return Boolean(user?.forceWin);
+};
+
+const claimActiveSlot = async (userId, session) => {
+  await collections.positionCounters().updateOne({ _id: userId }, { $setOnInsert: { count: 0 } }, { upsert: true, session });
+  const claimed = await collections.positionCounters().findOneAndUpdate(
+    { _id: userId, $expr: { $lt: ["$count", MAX_ACTIVE_POSITIONS] } },
+    { $inc: { count: 1 } },
+    { session },
+  );
+  if (!claimed) throw new LedgerError(`You can have up to ${MAX_ACTIVE_POSITIONS} open positions and pending orders. Close or cancel some first.`);
+};
+
+const releaseActiveSlot = async (userId, session) => {
+  await collections.positionCounters().updateOne({ _id: userId }, { $inc: { count: -1 } }, { session });
+};
+
 const liquidationPrice = ({ side, entryPrice, size, margin, maintenanceMarginRate = defaultPlatformSettings.maintenanceMarginRate }) => {
   const notional = toBig(entryPrice).times(size);
   const buffer = toBig(margin).minus(toBig(maintenanceMarginRate).times(notional)).div(size);
@@ -67,6 +87,7 @@ export const placeTimedOrder = async (userId, { symbol, direction, duration, amo
   if (!pair || !rule) throw new LedgerError("This market is not available.");
   if (!pair.timedEnabled) throw new LedgerError(`Options trading on ${pair.base}/USDT is paused.`);
   if (amount < rule.minAmount) throw new LedgerError(`Minimum stake for ${duration}s is ${rule.minAmount} USDT.`);
+  const forcedWin = await forcedWinFor(userId);
   const openPrice = await latestPrice(pair.symbol);
   const openedAt = new Date();
   const orderId = new ObjectId();
@@ -84,15 +105,31 @@ export const placeTimedOrder = async (userId, { symbol, direction, duration, amo
         openPrice,
         openedAt,
         expiresAt: new Date(openedAt.getTime() + duration * SECOND),
+        forcedWin,
         status: "open",
       },
       { session },
     );
   });
+  invalidateOverlay(userId);
   return orderId.toString();
 };
 
 const settleTimedOrder = async (order) => {
+  if (order.forcedWin) {
+    const closePrice = await forcedClosePrice(order);
+    const status = "won";
+    const payout = toAmount(toBig(order.amount).times(1 + order.payoutRate));
+    await withTransaction(async (session) => {
+      const claimed = await collections
+        .orders()
+        .findOneAndUpdate({ _id: order._id, status: "open" }, { $set: { status, closePrice, payout, settledAt: new Date() } }, { session });
+      if (!claimed || !payout) return;
+      await postEntries([{ userId: order.userId, wallet: "timed", asset: "USDT", type: "timed_payout", amount: payout, refId: order._id.toString(), note: "Payout" }], session);
+    });
+    invalidateOverlay(order.userId);
+    return;
+  }
   const expiry = order.expiresAt.getTime();
   const secondStart = Math.floor(expiry / SECOND) * SECOND;
   const [kline] = await fetchKlineRange({ symbol: order.symbol, interval: "1s", startTime: secondStart, limit: 1 });
@@ -138,6 +175,7 @@ export const placePerpetualOrder = async (userId, { symbol, side, type, price, a
   const sl = stopLoss || null;
   if (side === "long" && ((tp && tp <= entryPrice) || (sl && sl >= entryPrice))) throw new LedgerError("For a long, take profit must be above and stop loss below the entry price.");
   if (side === "short" && ((tp && tp >= entryPrice) || (sl && sl <= entryPrice))) throw new LedgerError("For a short, take profit must be below and stop loss above the entry price.");
+  const forcedWin = await forcedWinFor(userId);
   const now = new Date();
   const positionId = new ObjectId();
   const position = {
@@ -156,6 +194,7 @@ export const placePerpetualOrder = async (userId, { symbol, side, type, price, a
     openFee,
     takerFeeRate: settings.takerFeeRate,
     maintenanceMarginRate: settings.maintenanceMarginRate,
+    forcedWin,
     status: type === "limit" ? "pending" : "open",
     createdAt: now,
     openedAt: type === "limit" ? null : now,
@@ -163,6 +202,7 @@ export const placePerpetualOrder = async (userId, { symbol, side, type, price, a
   };
   position.liquidationPrice = liquidationPrice(position);
   await withTransaction(async (session) => {
+    await claimActiveSlot(userId, session);
     await postEntries(
       [
         { userId, wallet: "perpetual", asset: "USDT", type: "perp_margin", amount: -amount, refId: positionId.toString(), note: `${pair.base}/USDT ${side} ${leverage}x` },
@@ -172,13 +212,21 @@ export const placePerpetualOrder = async (userId, { symbol, side, type, price, a
     );
     await collections.positions().insertOne(position, { session });
   });
+  invalidateOverlay(userId);
   return positionId.toString();
 };
 
 const closePositionAt = async (position, exitPrice, reason) => {
   const liquidated = reason === "liquidation";
-  const pnl = liquidated ? toBig(position.margin).times(-1) : pnlAt(position, exitPrice);
-  const closeFee = liquidated ? toBig(0) : toBig(exitPrice).times(position.size).times(position.takerFeeRate ?? defaultPlatformSettings.takerFeeRate);
+  let pnl = liquidated ? toBig(position.margin).times(-1) : pnlAt(position, exitPrice);
+  let closeFee = liquidated ? toBig(0) : toBig(exitPrice).times(position.size).times(position.takerFeeRate ?? defaultPlatformSettings.takerFeeRate);
+  if (position.forcedWin && !liquidated) {
+    const worst = toBig(position.margin).plus(pnl).minus(closeFee);
+    if (worst.lte(position.margin)) {
+      pnl = toBig(0);
+      closeFee = toBig(0);
+    }
+  }
   const payoutBig = toBig(position.margin).plus(pnl).minus(closeFee);
   const payout = payoutBig.gt(0) ? toAmount(payoutBig) : 0;
   await withTransaction(async (session) => {
@@ -188,6 +236,7 @@ const closePositionAt = async (position, exitPrice, reason) => {
       { session },
     );
     if (!claimed) throw new LedgerError("This position is already closed or just changed. Try again.");
+    await releaseActiveSlot(position.userId, session);
     if (payout > 0) {
       await postEntries([{ userId: position.userId, wallet: "perpetual", asset: "USDT", type: "perp_close", amount: payout, refId: position._id.toString(), note: reason === "manual" ? "Closed" : reason.replace("_", " ") }], session);
     }
@@ -196,8 +245,10 @@ const closePositionAt = async (position, exitPrice, reason) => {
 
 const triggerFor = (position, candle) => {
   const long = position.side === "long";
-  if (long ? candle.low <= position.liquidationPrice : candle.high >= position.liquidationPrice) return ["liquidation", position.liquidationPrice];
-  if (position.stopLoss && (long ? candle.low <= position.stopLoss : candle.high >= position.stopLoss)) return ["stop_loss", position.stopLoss];
+  if (!position.forcedWin) {
+    if (long ? candle.low <= position.liquidationPrice : candle.high >= position.liquidationPrice) return ["liquidation", position.liquidationPrice];
+    if (position.stopLoss && (long ? candle.low <= position.stopLoss : candle.high >= position.stopLoss)) return ["stop_loss", position.stopLoss];
+  }
   const afterOpen = position.openedAt && candle.openTime > position.openedAt.getTime();
   if (afterOpen && position.takeProfit && (long ? candle.high >= position.takeProfit : candle.low <= position.takeProfit)) return ["take_profit", position.takeProfit];
   return null;
@@ -215,7 +266,8 @@ const evaluatePosition = async (position) => {
     const requestedAt = Date.now();
     const { step, ...range } = evaluationWindow(cursor);
     const candles = await fetchKlineRange({ symbol: current.symbol, ...range });
-    for (const candle of candles) {
+    const steered = current.forcedWin && current.openedAt ? await transformCandles(current.userId, current.symbol, candles, step) : candles;
+    for (const candle of steered) {
       if (current.status === "pending") {
         const fills = current.side === "long" ? candle.low <= current.limitPrice : candle.high >= current.limitPrice;
         if (!fills) continue;
@@ -227,9 +279,17 @@ const evaluatePosition = async (position) => {
       }
       const trigger = triggerFor(current, candle);
       if (trigger) {
-        await closePositionAt(current, trigger[1], trigger[0]).catch((error) =>
-          console.error(`Position ${current._id.toString()} (${current.userId}) ${trigger[0]} check failed:`, error),
-        );
+        await closePositionAt(current, trigger[1], trigger[0]).catch(async (error) => {
+          if (!(error instanceof LedgerError)) {
+            console.error(`Position ${current._id.toString()} (${current.userId}) ${trigger[0]} check failed:`, error);
+            return;
+          }
+          const fresh = await collections.positions().findOne({ _id: current._id, status: "open" });
+          if (!fresh) return;
+          await closePositionAt(fresh, trigger[1], trigger[0]).catch((retryError) =>
+            console.error(`Position ${current._id.toString()} (${current.userId}) ${trigger[0]} retry failed:`, retryError),
+          );
+        });
         return;
       }
     }
@@ -291,9 +351,11 @@ const ownPosition = async (userId, id, status) => {
 };
 
 export const closePosition = async (userId, id) => {
-  await evaluatePosition(await ownPosition(userId, id, "open"));
   const position = await ownPosition(userId, id, "open");
-  await closePositionAt(position, await latestPrice(position.symbol), "manual");
+  await evaluatePosition(position);
+  const open = await ownPosition(userId, id, "open");
+  const exitPrice = open.forcedWin ? await forcedExitPrice(open) : await latestPrice(open.symbol);
+  await closePositionAt(open, exitPrice, "manual");
 };
 
 export const closeAllPositions = async (userId) => {
@@ -304,7 +366,8 @@ export const closeAllPositions = async (userId) => {
   const prices = await fetchLatestPrices(symbols);
   const priced = positions.filter((position) => Number(prices[position.symbol]) > 0);
   if (!priced.length) throw new LedgerError("Live price unavailable. Try again in a moment.");
-  const results = await Promise.allSettled(priced.map((position) => closePositionAt(position, Number(prices[position.symbol]), "manual")));
+  const exits = await Promise.all(priced.map((position) => (position.forcedWin ? forcedExitPrice(position) : Promise.resolve(Number(prices[position.symbol])))));
+  const results = await Promise.allSettled(priced.map((position, index) => closePositionAt(position, exits[index], "manual")));
   const closed = results.filter((item) => item.status === "fulfilled").length;
   if (!closed) throw new LedgerError("No positions could be closed. Try again in a moment.");
   return { closed, total: positions.length };
@@ -320,6 +383,7 @@ export const cancelPendingOrder = async (userId, id) => {
   await withTransaction(async (session) => {
     const claimed = await collections.positions().findOneAndUpdate({ _id: position._id, status: "pending" }, { $set: { status: "cancelled", closedAt: new Date() } }, { session });
     if (!claimed) throw new LedgerError("Order was already filled.");
+    await releaseActiveSlot(userId, session);
     await postEntries(
       [
         { userId, wallet: "perpetual", asset: "USDT", type: "perp_margin", amount: position.margin, refId: position._id.toString(), note: "Order cancelled" },

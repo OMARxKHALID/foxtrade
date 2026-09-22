@@ -24,7 +24,7 @@ const sizes = {
 
 const buttonClass = ({ variant = "orange", size = "md", className } = {}) =>
   cn(
-    "inline-flex shrink-0 items-center justify-center rounded-lg font-semibold whitespace-nowrap transition active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50",
+    "inline-flex shrink-0 items-center justify-center rounded-lg font-semibold whitespace-nowrap transition active:scale-[0.98] active:opacity-75 disabled:pointer-events-none disabled:opacity-50",
     focusRing,
     variants[variant],
     sizes[size],

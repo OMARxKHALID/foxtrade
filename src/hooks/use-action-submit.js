@@ -23,7 +23,8 @@ export const useActionSubmit = ({ action, setError, successMessage, onSuccess })
         if (!result.ok) return;
         onSuccess?.(result);
         router.refresh();
-      } catch {
+      } catch (error) {
+        if (typeof error?.digest === "string" && error.digest.startsWith("NEXT_REDIRECT")) throw error;
         toast.error("Something went wrong. Please try again.");
       } finally {
         locked.current = false;

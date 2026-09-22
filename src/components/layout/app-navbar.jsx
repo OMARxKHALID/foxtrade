@@ -16,14 +16,14 @@ export const AppNavbar = ({ user, signOutAction }) => {
   const { siteName } = usePlatform().settings;
 
   return (
-    <header className="sticky top-0 z-40 pt-3 lg:pt-5">
+    <header className="sticky top-0 z-40 pt-[max(0.75rem,env(safe-area-inset-top))] lg:pt-5">
       <Container>
         <nav
           aria-label="Main"
           className="flex h-12 items-center justify-between rounded-xl border border-white/10 bg-panel/85 pr-3 pl-4 backdrop-blur-md md:pr-4 md:pl-5"
         >
           <div className="flex items-center gap-10">
-            <Link href="/" className={cn("flex items-center gap-2.5 rounded-lg", focusRing)} aria-label={`${siteName} home`}>
+            <Link href="/" className={cn(hitArea, "flex items-center gap-2.5 rounded-lg after:-inset-y-2.5", focusRing)} aria-label={`${siteName} home`}>
               <LogoMark />
               <span className="font-heading text-sm font-semibold text-white">{siteName}</span>
             </Link>

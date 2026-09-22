@@ -46,7 +46,7 @@ const toVolume = (kline, palette) => ({
   color: kline.close >= kline.open ? palette.upVolume : palette.downVolume,
 });
 
-const fromStream = ({ k }) => ({ time: Math.floor(k.t / 1000), open: +k.o, high: +k.h, low: +k.l, close: +k.c, volume: +k.v });
+const fromStream = ({ E, k }) => ({ time: Math.floor(k.t / 1000), open: +k.o, high: +k.h, low: +k.l, close: +k.c, volume: +k.v, at: E });
 
 const chartOptions = {
   autoSize: true,
@@ -61,7 +61,7 @@ const chartOptions = {
     horzLines: { color: "rgba(255,255,255,0.04)" },
   },
   rightPriceScale: { borderColor: "rgba(255,255,255,0.08)" },
-  timeScale: { borderColor: "rgba(255,255,255,0.08)", timeVisible: true, secondsVisible: false },
+  timeScale: { borderColor: "rgba(255,255,255,0.08)", timeVisible: true, secondsVisible: false, rightOffset: 6 },
 };
 
 export const PriceChart = ({ symbol, className }) => {
@@ -90,7 +90,7 @@ export const PriceChart = ({ symbol, className }) => {
       wickUpColor: palette.up,
       wickDownColor: palette.down,
     });
-    const volume = chart.addSeries(HistogramSeries, { priceFormat: { type: "volume" }, priceScaleId: "" });
+    const volume = chart.addSeries(HistogramSeries, { priceFormat: { type: "volume" }, priceScaleId: "", lastValueVisible: false, priceLineVisible: false });
     volume.priceScale().applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
     candles.priceScale().applyOptions({ scaleMargins: { top: 0.08, bottom: 0.22 } });
 
@@ -98,14 +98,27 @@ export const PriceChart = ({ symbol, className }) => {
     let active = true;
     let loading = true;
     let lastTime = 0;
+    let lastCandle = null;
     let buffered = [];
     let retryTimer;
+    let tradeFrame = 0;
 
-    const applyKline = (kline) => {
-      if (kline.time < lastTime) return;
+    const applyKline = (incoming) => {
+      if (incoming.time < lastTime) return;
+      const newer = lastCandle?.time === incoming.time && lastCandle.at > incoming.at;
+      const kline = newer ? { ...incoming, close: lastCandle.close, high: Math.max(incoming.high, lastCandle.high), low: Math.min(incoming.low, lastCandle.low), at: lastCandle.at } : incoming;
       candles.update(toCandle(kline));
       volume.update(toVolume(kline, palette));
       lastTime = kline.time;
+      lastCandle = kline;
+    };
+
+    const applyTrade = ({ p, T }) => {
+      if (loading || !lastCandle || Math.floor(T / 1000) >= lastCandle.time + step) return;
+      const price = +p;
+      lastCandle = { ...lastCandle, close: price, high: Math.max(lastCandle.high, price), low: Math.min(lastCandle.low, price), at: T };
+      cancelAnimationFrame(tradeFrame);
+      tradeFrame = requestAnimationFrame(() => active && candles.update(toCandle(lastCandle)));
     };
 
     const loadHistory = () => {
@@ -123,6 +136,7 @@ export const PriceChart = ({ symbol, className }) => {
           candles.setData(klines.map(toCandle));
           volume.setData(klines.map((kline) => toVolume(kline, palette)));
           lastTime = last?.time ?? 0;
+          lastCandle = last ?? null;
           loading = false;
           buffered.forEach(applyKline);
           buffered = [];
@@ -148,6 +162,7 @@ export const PriceChart = ({ symbol, className }) => {
       }
       applyKline(kline);
     });
+    const unsubscribeTrades = subscribeStream(`${symbol.toLowerCase()}@aggTrade`, (message) => active && applyTrade(message));
 
     setStatus("loading");
     loadHistory().then(() => active && chart.timeScale().scrollToRealTime());
@@ -155,7 +170,9 @@ export const PriceChart = ({ symbol, className }) => {
     return () => {
       active = false;
       clearTimeout(retryTimer);
+      cancelAnimationFrame(tradeFrame);
       unsubscribe();
+      unsubscribeTrades();
       chart.remove();
     };
   }, [symbol, interval, queryClient, attempt, hydrated]);
