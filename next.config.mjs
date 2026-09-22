@@ -28,6 +28,9 @@ const nextConfig = {
   experimental: {
     serverActions: { bodySizeLimit: "5mb" },
   },
+  turbopack: {
+    root: import.meta.dirname,
+  },
   poweredByHeader: false,
   logging: { serverFunctions: false },
   headers: async () => [{ source: "/(.*)", headers: securityHeaders }],
