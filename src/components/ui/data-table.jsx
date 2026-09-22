@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { GlowCard } from "@/components/ui/glow-card";
+import { hitArea } from "@/components/ui/gradient-button";
 import { Pagination } from "@/components/ui/pagination";
 import { SearchInput } from "@/components/ui/search-input";
 import { cn } from "@/lib/utils";
@@ -40,6 +41,7 @@ export const DataTable = ({
   titleId,
   tabs,
   filters,
+  toolbar,
   searchPlaceholder = "Search",
   searchable = true,
   columns,
@@ -98,6 +100,7 @@ export const DataTable = ({
           )}
         </div>
       )}
+      {toolbar && <div className="border-b border-white/10 px-4 py-2.5 sm:px-6">{toolbar}</div>}
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-sm">
           <thead>
@@ -121,7 +124,7 @@ export const DataTable = ({
                       <button
                         type="button"
                         onClick={() => handleSort(column.key)}
-                        className={cn("inline-flex items-center gap-1", column.align === "right" && "flex-row-reverse")}
+                        className={cn(hitArea, "inline-flex items-center gap-1", column.align === "right" && "flex-row-reverse")}
                       >
                         {column.header}
                         <SortIcon direction={direction} />

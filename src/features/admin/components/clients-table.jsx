@@ -204,25 +204,27 @@ export const ClientsTable = ({ clients }) => {
         title={`Clients (${clients.length})`}
         titleId="clients-title"
         tabs={<SegmentedTabs items={tabs} value={tab} onChange={handleTab} variant="pill" label="Client status" />}
-        filters={
+        toolbar={
           chosen.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs text-neutral-400">{chosen.length} selected</span>
-              <GradientButton
-                variant="dark"
-                size="xs"
-                onClick={() => setDialog({ type: "bulkForceWin", enabled: true, userIds: chosen.map((client) => client.id) })}
-              >
-                <Trophy className="size-3.5" />
-                Enable Force Win
-              </GradientButton>
-              <GradientButton
-                variant="dark"
-                size="xs"
-                onClick={() => setDialog({ type: "bulkForceWin", enabled: false, userIds: chosen.map((client) => client.id) })}
-              >
-                Disable
-              </GradientButton>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <span className="text-xs whitespace-nowrap text-neutral-400">{chosen.length} selected</span>
+              <div className="flex flex-wrap gap-2 sm:ml-auto">
+                <GradientButton
+                  variant="dark"
+                  size="xs"
+                  onClick={() => setDialog({ type: "bulkForceWin", enabled: true, userIds: chosen.map((client) => client.id) })}
+                >
+                  <Trophy className="size-3.5" />
+                  Enable Force Win
+                </GradientButton>
+                <GradientButton
+                  variant="dark"
+                  size="xs"
+                  onClick={() => setDialog({ type: "bulkForceWin", enabled: false, userIds: chosen.map((client) => client.id) })}
+                >
+                  Disable Force Win
+                </GradientButton>
+              </div>
             </div>
           )
         }
