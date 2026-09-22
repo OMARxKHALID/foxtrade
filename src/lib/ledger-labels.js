@@ -7,7 +7,7 @@ export const walletLabels = {
 };
 
 export const ledgerTypeLabels = {
-  faucet: "Demo deposit",
+  faucet: "Practice deposit",
   convert: "Convert",
   transfer: "Transfer",
   timed_stake: "Timed trade",

@@ -1,6 +1,6 @@
 # Foxtrade
 
-A demo crypto trading platform. Users trade timed options and leveraged perpetual futures with **virtual USDT** against **live Binance market data**. Nothing is deposited and nothing can be withdrawn.
+A practice crypto trading platform. Users trade timed options and leveraged perpetual futures with **virtual USDT** against **live Binance market data**. Nothing is deposited and nothing can be withdrawn.
 
 It also includes an admin back office for clients, identity verification (KYC), trading pairs, platform settings, site content and an audit log.
 
@@ -10,7 +10,7 @@ It also includes an admin back office for clients, identity verification (KYC), 
 - **Markets:** live prices, candle charts, order book and recent trades, streamed through the app's market data gateway (originating from Binance public data).
 - **Timed options:** predict up or down over 30 seconds to 15 minutes. Payout rates are set per duration.
 - **Perpetual futures:** market and limit orders, up to 100x leverage, take profit and stop loss, add margin, and automatic liquidation.
-- **Assets:** spot, timed and perpetual wallets, plus convert, transfer, transaction records and a demo top-up faucet.
+- **Assets:** spot, timed and perpetual wallets, plus convert, transfer, transaction records and a practice top-up faucet.
 - **Account:** withdrawal PIN, password change, and basic and document-based identity verification.
 - **Also:** support tickets, notices, help center, trading rules, a copy-trading leaderboard, and an installable app (PWA).
 
@@ -18,7 +18,7 @@ It also includes an admin back office for clients, identity verification (KYC), 
 - Dashboard stats; client management (ban, role, password, balance adjustments, force win toggle, delete).
 - KYC review with private document viewing.
 - Trading pairs (enable or disable, leverage limits).
-- Platform settings: site name, demo amount, fees, maintenance margin, timed durations.
+- Platform settings: site name, practice amount, fees, maintenance margin, timed durations.
 - Content editor for legal pages, help, trading rules and About; banners and notices.
 - Support ticket inbox and an audit log of every admin action.
 
@@ -157,7 +157,7 @@ Every balance change goes through `postEntries` in `src/lib/ledger.js`, inside a
 - **Every movement** writes a ledger row with the resulting balance.
 - **Amounts** are big.js values rounded down to 8 decimals.
 
-New accounts automatically receive the configured demo amount.
+New accounts automatically receive the configured practice amount.
 
 ### Settlement
 There is no always-running worker. Open orders and positions are settled by replaying Binance candles since they were last checked. That happens:
@@ -220,7 +220,7 @@ Without it, a trade only settles when its owner comes back to the app, and the l
 2. Add every production environment variable. Set `BETTER_AUTH_URL` to the production domain.
 3. Deploy, then run the seed script once against the **empty** production database from your machine, with `MONGODB_URI` pointing to it.
 4. Configure the cron job (see above).
-5. Log in as admin. In **Admin → Settings**, set the site name, support email and demo amount. In **Admin → Content**, replace the legal pages.
+5. Log in as admin. In **Admin → Settings**, set the site name, support email and practice amount. In **Admin → Content**, replace the legal pages.
 
 Security headers (CSP, HSTS, frame denial) are set in `next.config.mjs`. If you add a third-party script, image host or API, update the Content Security Policy there.
 

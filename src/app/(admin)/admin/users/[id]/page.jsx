@@ -7,7 +7,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { walletLabels } from "@/lib/demo";
+import { walletLabels } from "@/lib/ledger-labels";
 import { formatQuantity } from "@/lib/format";
 import { documentStatus, kycStatus, ticketStatus } from "@/lib/status";
 import { toRecordRow } from "@/features/assets/components/record-rows";

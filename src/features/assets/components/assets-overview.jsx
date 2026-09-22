@@ -111,7 +111,7 @@ export const AssetsOverview = ({ overview }) => {
         columns={columns}
         rows={rows}
         initialSort={overview ? { key: "value", direction: "desc" } : undefined}
-        footer={overview ? null : <SignInPrompt title="Log in to see your balances" text="Every new account receives demo USDT to start trading." className="border-t border-white/10" />}
+        footer={overview ? null : <SignInPrompt title="Log in to see your balances" text="Every new account receives practice USDT to start trading." className="border-t border-white/10" />}
       />
     </div>
   );

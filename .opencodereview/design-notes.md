@@ -1,7 +1,7 @@
 # foxtrade: design notes for reviewers
 
 ## What it is
-foxtrade is a **demo** crypto trading platform. Users trade with fake balances against live Binance prices. Nothing can be withdrawn: `checkWithdrawal` validates the PIN and balance, then always refuses. Even so, ledger integrity is treated as if the money were real. A bug that lets a user mint balance, avoid a loss, or corrupt another user's data is **High**.
+foxtrade is a **practice** crypto trading platform. Users trade with fake balances against live Binance prices. Nothing can be withdrawn: `checkWithdrawal` validates the PIN and balance, then always refuses. Even so, ledger integrity is treated as if the money were real. A bug that lets a user mint balance, avoid a loss, or corrupt another user's data is **High**.
 
 ## Stack
 Next.js 16 (App Router, `src/proxy.js` instead of middleware), React 19, JavaScript only (no TypeScript), Tailwind v4, MongoDB driver (no ORM), better-auth, zod 4, react-hook-form, TanStack Query, zustand, big.js, Cloudinary (private KYC files), Resend (email), vitest with mongodb-memory-server. Package manager and runtime: Bun.

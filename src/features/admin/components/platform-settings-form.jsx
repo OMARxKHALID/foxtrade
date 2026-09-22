@@ -65,7 +65,7 @@ export const PlatformSettingsForm = ({ settings }) => {
         <GlowCard as="section" aria-labelledby="funds-title">
           <CardHeader id="funds-title" title="Funds and fees" description="Rates are percentages. Open positions keep the fee they were opened with." />
           <CardBody className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <TextField id="demoAmount" label="Demo amount (USDT)" hint="Sign-up bonus and faucet cap" type="number" error={errors.demoAmount?.message} register={register} />
+            <TextField id="demoAmount" label="Practice amount (USDT)" hint="Sign-up bonus and faucet cap" type="number" error={errors.demoAmount?.message} register={register} />
             <TextField id="convertSpreadPercent" label="Convert spread (%)" type="number" error={errors.convertSpreadPercent?.message} register={register} />
             <TextField id="takerFeePercent" label="Futures taker fee (%)" type="number" error={errors.takerFeePercent?.message} register={register} />
             <TextField id="maintenanceMarginPercent" label="Maintenance margin (%)" type="number" error={errors.maintenanceMarginPercent?.message} register={register} />

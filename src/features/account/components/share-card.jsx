@@ -29,7 +29,7 @@ export const ShareCard = ({ inviteUrl, inviteCode, invited }) => {
           </div>
           <div className="min-w-0 flex-1">
             <h2 className="font-heading text-2xl font-bold tracking-tight text-white sm:text-3xl">Invite friends to {siteName}</h2>
-            <p className="mt-2 text-sm text-neutral-400">Share your link. Friends get their own demo account to practice with.</p>
+            <p className="mt-2 text-sm text-neutral-400">Share your link. Friends get their own practice account to trade with.</p>
             <div className="mt-5 flex items-center gap-2 rounded-lg border border-white/10 bg-field p-1 pl-3">
               <span className="min-w-0 flex-1 truncate text-sm text-neutral-300">{inviteUrl}</span>
               <GradientButton variant="light" size="xs" onClick={handleCopy(inviteUrl, "link")}>

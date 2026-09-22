@@ -4,9 +4,9 @@ export const notices = [
     title: "Welcome to Foxtrade",
     category: "Announcement",
     date: "2026-09-10",
-    summary: "Demo trading with live Binance market data is now open to everyone.",
+    summary: "Practice trading with live Binance market data is now open to everyone.",
     body: [
-      "Foxtrade gives you a full trading experience with real-time prices streamed from Binance. Every account starts with demo funds so you can learn futures and options without risking real money.",
+      "Foxtrade gives you a full trading experience with real-time prices streamed from Binance. Every account starts with practice funds so you can learn futures and options without risking real money.",
       "Orders settle at the real market price, so the results you see reflect what would have happened in the live market.",
     ],
   },

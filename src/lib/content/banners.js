@@ -7,11 +7,11 @@ export const banners = [
     cta: { label: "Explore Markets", href: "/markets" },
   },
   {
-    id: "demo-balance",
-    eyebrow: "Demo Account",
+    id: "practice-balance",
+    eyebrow: "Practice Account",
     title: "Practice With 100,000 USDT",
     text: "Sharpen your strategy risk-free before you commit real capital.",
-    cta: { label: "Get Demo Assets", href: "/assets/deposit" },
+    cta: { label: "Get Practice Assets", href: "/assets/deposit" },
   },
   {
     id: "timed-trades",

@@ -3,7 +3,7 @@ import { readSetting, writeSetting } from "@/lib/settings-store";
 export const defaultPlatformSettings = {
   siteName: "Foxtrade",
   tagline: "Conquering Your Trading Goals",
-  description: "Practice crypto trading with live Binance prices and demo balances.",
+  description: "Trade crypto with live Binance prices and practice balances.",
   supportEmail: "support@foxtrade.app",
   demoAmount: 100000,
   convertSpread: 0.001,

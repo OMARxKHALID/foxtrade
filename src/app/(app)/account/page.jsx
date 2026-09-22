@@ -69,7 +69,7 @@ const AccountPage = async () => {
           </div>
           {user ? (
             <>
-              <p className="mt-5 text-sm leading-6 text-neutral-400">Member since {joined}. Demo balances and trades are private to your account.</p>
+              <p className="mt-5 text-sm leading-6 text-neutral-400">Member since {joined}. Practice balances and trades are private to your account.</p>
               <div className="mt-6 flex flex-wrap gap-3">
                 {isAdmin(user) && (
                   <GradientButton href="/admin" size="sm">
@@ -81,7 +81,7 @@ const AccountPage = async () => {
             </>
           ) : (
             <>
-              <p className="mt-5 text-sm leading-6 text-neutral-400">Sign up to get demo funds, place trades and track your performance.</p>
+              <p className="mt-5 text-sm leading-6 text-neutral-400">Sign up to get practice funds, place trades and track your performance.</p>
               <div className="mt-6 grid grid-cols-2 gap-3">
                 <GradientButton href="/login" variant="dark" size="sm">
                   Log In

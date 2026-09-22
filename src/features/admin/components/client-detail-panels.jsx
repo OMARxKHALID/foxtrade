@@ -116,7 +116,7 @@ const dialogs = {
   sessions: { title: "Sign out everywhere", confirmLabel: "Sign Out", tone: "orange" },
   positions: { title: "Close open positions", confirmLabel: "Close All", tone: "down" },
   ban: { title: "Ban account", confirmLabel: "Ban", tone: "down", reasonLabel: "Reason (shown to the client)" },
-  reset: { title: "Reset demo balance", confirmLabel: "Reset Balance", tone: "orange" },
+  reset: { title: "Reset practice balance", confirmLabel: "Reset Balance", tone: "orange" },
   delete: { title: "Delete account", confirmLabel: "Delete", tone: "down" },
   forceWin: { title: "Force win", tone: "orange" },
 };
@@ -151,7 +151,7 @@ export const ClientAccessPanel = ({ user, isSelf, isConfiguredAdmin, openCount, 
     sessions: `All ${sessionCount} session(s) of ${user.email} will be signed out.`,
     positions: `${openCount} open position(s) will be closed at the live market price.`,
     ban: `${user.email} will be signed out and blocked from logging in.`,
-    reset: `Open trades of ${user.email} will be cancelled, and all wallets cleared and refilled with the starting demo USDT.`,
+    reset: `Open trades of ${user.email} will be cancelled, and all wallets cleared and refilled with the starting practice USDT.`,
     delete: `${user.email} and all their wallets, trades, tickets and KYC data will be permanently deleted.`,
     forceWin: user.forceWin
       ? `${user.email} goes back to normal settlement, including trades already open. Trades that already settled keep their outcome.`
@@ -195,7 +195,7 @@ export const ClientAccessPanel = ({ user, isSelf, isConfiguredAdmin, openCount, 
       )}
       {!isAdmin && (
         <GradientButton variant="dark" size="sm" onClick={() => setDialog("reset")}>
-          Reset Demo Balance
+          Reset Practice Balance
         </GradientButton>
       )}
       {!isAdmin &&

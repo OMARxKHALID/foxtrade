@@ -113,11 +113,11 @@ export const ClientsTable = ({ clients }) => {
       <ConfirmDialog
         open={Boolean(dialog)}
         onOpenChange={(value) => !value && handleClose()}
-        title={dialog?.type === "ban" ? "Ban client" : "Reset demo balance"}
+        title={dialog?.type === "ban" ? "Ban client" : "Reset practice balance"}
         description={
           dialog?.type === "ban"
             ? `${dialog?.client.email} will be signed out and blocked from signing in.`
-            : `Open trades of ${dialog?.client.email} will be cancelled, and all wallets cleared and refilled with the starting demo USDT.`
+            : `Open trades of ${dialog?.client.email} will be cancelled, and all wallets cleared and refilled with the starting practice USDT.`
         }
         reasonLabel={dialog?.type === "ban" ? "Reason (shown to the client)" : undefined}
         confirmLabel={dialog?.type === "ban" ? "Ban Client" : "Reset Balance"}

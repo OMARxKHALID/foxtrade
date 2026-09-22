@@ -15,7 +15,7 @@ const SettingsPage = async () => {
 
   return (
     <>
-      <PageHeader title="Platform Settings" description="Site identity, demo funds, fees and timed trade payouts. Changes apply to new trades immediately." />
+      <PageHeader title="Platform Settings" description="Site identity, practice funds, fees and timed trade payouts. Changes apply to new trades immediately." />
       <PlatformSettingsForm settings={settings} />
     </>
   );

@@ -36,7 +36,7 @@ export const transferAssets = async (input) => {
   return withUser("Log in to transfer between wallets.", (user) => transfer(user.id, parsed.data));
 };
 
-export const claimDemoAssets = async () => withUser("Log in to claim demo assets.", (user) => claimFaucet(user.id));
+export const claimPracticeAssets = async () => withUser("Log in to claim practice assets.", (user) => claimFaucet(user.id));
 
 export const saveWithdrawalAddress = async (input) => {
   const parsed = addressSchema.safeParse(input);

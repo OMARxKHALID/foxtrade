@@ -96,7 +96,7 @@ describe("Withdrawal checks", () => {
     const userId = "u-withdraw-ok";
     await setPin(userId, "123456");
     await postEntries([{ userId, wallet: "spot", asset: "USDT", type: "faucet", amount: 100 }], null);
-    await expect(checkWithdrawal(userId, withdrawSchema.parse(withdrawal))).rejects.toThrow(/Demo balances cannot be sent/i);
+    await expect(checkWithdrawal(userId, withdrawSchema.parse(withdrawal))).rejects.toThrow(/Practice balances cannot be sent/i);
     const wallet = await collections.wallets().findOne({ userId, wallet: "spot", asset: "USDT" });
     expect(Number(wallet.balance)).toBe(100);
     expect(await collections.ledger().countDocuments({ userId, type: "withdraw" })).toBe(0);
@@ -124,13 +124,13 @@ describe("Faucet cap invariant", () => {
   it("rejects a claim when USDT was moved out of spot into a trading wallet", async () => {
     const userId = "u-faucet-moved";
     await postEntries([{ userId, wallet: "perpetual", asset: "USDT", type: "faucet", amount: 100000 }], null);
-    await expect(claimFaucet(userId)).rejects.toThrow(/full demo/i);
+    await expect(claimFaucet(userId)).rejects.toThrow(/full practice/i);
   });
 
   it("does not burn the cooldown when spot is already at the cap", async () => {
     const userId = "u-faucet-full";
     await postEntries([{ userId, wallet: "spot", asset: "USDT", type: "faucet", amount: 100000 }], null);
-    await expect(claimFaucet(userId)).rejects.toThrow(/full demo/i);
+    await expect(claimFaucet(userId)).rejects.toThrow(/full practice/i);
     const security = await collections.security().findOne({ userId });
     expect(security?.faucetClaimedAt).toBeUndefined();
   });

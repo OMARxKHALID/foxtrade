@@ -12,7 +12,7 @@ export const legalPages = {
         text: "You must be at least 18 years old and able to form a binding contract. You may not use {siteName} where doing so is prohibited by the laws that apply to you.",
       },
       {
-        heading: "A demo service with no real money",
+        heading: "A practice service with no real money",
         text: "{siteName} is a trading simulator. All balances, deposits, profits, losses and payouts are virtual and have no monetary value. They cannot be withdrawn, sold, transferred or exchanged for money, cryptocurrency or anything else of value. Nothing on the service is an offer to trade real financial instruments.",
       },
       {
@@ -21,11 +21,11 @@ export const legalPages = {
       },
       {
         heading: "Acceptable use",
-        text: "You must not:\n- use bots, scripts or scrapers against the service;\n- create multiple accounts, for example to collect extra demo funds;\n- exploit bugs or pricing errors (report them to us instead);\n- submit false identity documents or someone else's documents;\n- interfere with the security or availability of the service;\n- use the service for any unlawful purpose.",
+        text: "You must not:\n- use bots, scripts or scrapers against the service;\n- create multiple accounts, for example to collect extra practice funds;\n- exploit bugs or pricing errors (report them to us instead);\n- submit false identity documents or someone else's documents;\n- interfere with the security or availability of the service;\n- use the service for any unlawful purpose.",
       },
       {
         heading: "Virtual balances and results",
-        text: "We may reset, correct or adjust virtual balances, orders and positions at any time, for example to fix errors, reverse the effect of misuse or change demo settings. Trades settle using third-party market data recorded at the relevant time. If data is missing, delayed or wrong, results may be recalculated.",
+        text: "We may reset, correct or adjust virtual balances, orders and positions at any time, for example to fix errors, reverse the effect of misuse or change practice settings. Trades settle using third-party market data recorded at the relevant time. If data is missing, delayed or wrong, results may be recalculated.",
       },
       {
         heading: "Market data",
@@ -37,7 +37,7 @@ export const legalPages = {
       },
       {
         heading: "Leaderboard",
-        text: "If you are identity-verified and meet the activity threshold, your settled demo results may be ranked publicly. On the leaderboard you appear only by a masked version of your email address.",
+        text: "If you are identity-verified and meet the activity threshold, your settled practice results may be ranked publicly. On the leaderboard you appear only by a masked version of your email address.",
       },
       {
         heading: "Suspension and termination",
@@ -79,11 +79,11 @@ export const legalPages = {
       },
       {
         heading: "Data we collect",
-        text: "- Account data: email address, name, and a securely hashed password and withdrawal PIN.\n- Verification data: full legal name, country, city, ID number, and images or PDFs of your identity document.\n- Activity data: demo balances, orders, positions, transaction records, and support ticket messages.\n- Technical data: IP address, browser and device information for signed-in sessions, and security and rate-limit records.\n- Preferences saved in your browser's local storage, such as display settings.",
+        text: "- Account data: email address, name, and a securely hashed password and withdrawal PIN.\n- Verification data: full legal name, country, city, ID number, and images or PDFs of your identity document.\n- Activity data: practice balances, orders, positions, transaction records, and support ticket messages.\n- Technical data: IP address, browser and device information for signed-in sessions, and security and rate-limit records.\n- Preferences saved in your browser's local storage, such as display settings.",
       },
       {
         heading: "How we use it",
-        text: "- To create and run your account and settle demo trades.\n- To verify identity, prevent fraud and multiple accounts, and keep the service secure.\n- To send service emails such as verification and password reset codes.\n- To answer support requests.\n- To show masked leaderboard rankings.\n- To comply with legal obligations.\nWe do not sell personal data or use it for advertising.",
+        text: "- To create and run your account and settle practice trades.\n- To verify identity, prevent fraud and multiple accounts, and keep the service secure.\n- To send service emails such as verification and password reset codes.\n- To answer support requests.\n- To show masked leaderboard rankings.\n- To comply with legal obligations.\nWe do not sell personal data or use it for advertising.",
       },
       {
         heading: "Legal bases",
@@ -145,7 +145,7 @@ export const legalPages = {
       },
       {
         heading: "Rankings are not recommendations",
-        text: "Leaderboard results show past demo performance only. They are not a recommendation to follow any trader or strategy, and past performance does not guarantee future results.",
+        text: "Leaderboard results show past practice performance only. They are not a recommendation to follow any trader or strategy, and past performance does not guarantee future results.",
       },
       {
         heading: "No advice",

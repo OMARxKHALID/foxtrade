@@ -60,7 +60,7 @@ export const RecordsView = ({ records, limit }) => {
       footer={records?.length >= limit ? <p className="border-t border-white/10 px-4 py-3 text-xs text-neutral-500 sm:px-6">Showing your latest {limit} records.</p> : null}
       emptyState={
         records ? (
-          <EmptyState icon={ReceiptText} title={tab === "withdraw" ? "No withdrawals" : "No records found"} text={tab === "withdraw" ? "Demo balances cannot be withdrawn to external wallets." : "Try another type or date range."} />
+          <EmptyState icon={ReceiptText} title={tab === "withdraw" ? "No withdrawals" : "No records found"} text={tab === "withdraw" ? "Practice balances cannot be withdrawn to external wallets." : "Try another type or date range."} />
         ) : (
           <SignInPrompt title="Log in to see your records" text="Every balance change is recorded in your ledger." />
         )

@@ -5,11 +5,11 @@ export const helpTopics = [
     questions: [
       {
         question: "What is {siteName}?",
-        answer: "{siteName} is a demo trading platform with live Binance market data. You can practice timed trades and leveraged perpetual positions using demo funds.",
+        answer: "{siteName} is a practice trading platform with live Binance market data. You can practice timed trades and leveraged perpetual positions using practice funds.",
       },
       {
         question: "Do I need to deposit real money?",
-        answer: "No. Accounts receive demo USDT. Real deposits and withdrawals are not supported.",
+        answer: "No. Accounts receive practice USDT. Real deposits and withdrawals are not supported.",
       },
       {
         question: "Where do prices come from?",

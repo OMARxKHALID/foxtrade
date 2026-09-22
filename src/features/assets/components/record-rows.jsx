@@ -1,5 +1,5 @@
 import { StatusBadge } from "@/components/ui/status-badge";
-import { ledgerTypeLabels, walletLabels } from "@/lib/demo";
+import { ledgerTypeLabels, walletLabels } from "@/lib/ledger-labels";
 import { formatAmount } from "@/lib/format";
 import { cn } from "@/lib/utils";
 

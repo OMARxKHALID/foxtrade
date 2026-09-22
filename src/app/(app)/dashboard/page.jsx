@@ -5,7 +5,7 @@ import { CardBody, CardHeader, GlowCard } from "@/components/ui/glow-card";
 import { focusRing } from "@/components/ui/gradient-button";
 import { IconTile } from "@/components/ui/icon-tile";
 import { PageHeader } from "@/components/ui/page-header";
-import { walletLabels } from "@/lib/demo";
+import { walletLabels } from "@/lib/ledger-labels";
 import { formatUsdt } from "@/lib/format";
 import { collections } from "@/lib/mongo";
 import { hasPin } from "@/lib/pin";

@@ -1,7 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { ObjectId } from "mongodb";
-import { FAUCET_COOLDOWN_MS } from "@/lib/demo";
+import { FAUCET_COOLDOWN_MS } from "@/lib/ledger-labels";
 import { LedgerError, getBalance, getBalances, postEntries, withTransaction } from "@/lib/ledger";
 import { fetchLatestPrices, fetchTickers } from "@/lib/market/binance-rest";
 import { readPairs } from "@/lib/market/pair-store";
@@ -97,7 +97,7 @@ export const getFaucetStatus = async (userId) => {
 
 export const claimFaucet = async (userId) => {
   const { demoAmount } = await readPlatformSettings();
-  if ((await totalUsdt(userId)).gte(demoAmount)) throw new LedgerError("Your wallets already hold the full demo amount of USDT.");
+  if ((await totalUsdt(userId)).gte(demoAmount)) throw new LedgerError("Your wallets already hold the full practice amount of USDT.");
   await ensureSecurityIndex();
   const now = new Date();
   const cutoff = new Date(now.getTime() - FAUCET_COOLDOWN_MS);
@@ -112,12 +112,12 @@ export const claimFaucet = async (userId) => {
   if (!lock) {
     const current = await collections.security().findOne({ userId });
     const hours = Math.max(1, Math.ceil((current.faucetClaimedAt.getTime() + FAUCET_COOLDOWN_MS - now.getTime()) / 3600000));
-    throw new LedgerError(`You can claim demo assets again in about ${hours}h.`);
+    throw new LedgerError(`You can claim practice assets again in about ${hours}h.`);
   }
   await withTransaction(async (session) => {
     const topUp = toBig(demoAmount).minus(await totalUsdt(userId, session));
     if (topUp.lte(0)) return;
-    await postEntries([{ userId, wallet: "spot", asset: "USDT", type: "faucet", amount: topUp, note: "Demo top-up" }], session);
+    await postEntries([{ userId, wallet: "spot", asset: "USDT", type: "faucet", amount: topUp, note: "Practice top-up" }], session);
   });
 };
 
@@ -157,7 +157,7 @@ export const checkWithdrawal = async (userId, { asset, amount, pin }) => {
   if (!(await verifyPin(userId, pin))) throw new LedgerError("Withdrawal PIN is incorrect or not set. Set it in Security first.");
   const spot = await getBalance(userId, "spot", asset);
   if (spot.lt(amount)) throw new LedgerError(`Insufficient ${asset} in your Spot Wallet.`);
-  throw new LedgerError("Demo balances cannot be sent to external wallets. Your details were checked successfully.");
+  throw new LedgerError("Practice balances cannot be sent to external wallets. Your details were checked successfully.");
 };
 
 export const listAddresses = async (userId) => {

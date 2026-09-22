@@ -1,4 +1,4 @@
-foxtrade is a demo crypto trading platform: fake balances, live Binance prices, no real withdrawals. Ledger integrity is still treated as critical.
+foxtrade is a practice crypto trading platform: fake balances, live Binance prices, no real withdrawals. Ledger integrity is still treated as critical.
 
 Stack: Next.js 16 (src/proxy.js replaces middleware), React 19, JavaScript, Tailwind v4, MongoDB driver, better-auth, zod 4, big.js, Cloudinary private KYC files, Bun.
 

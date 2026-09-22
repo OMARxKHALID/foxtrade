@@ -85,7 +85,7 @@ export const RegisterForm = ({ inviteCode }) => {
           <Controller name="terms" control={control} render={({ field }) => <Checkbox checked={field.value} onChange={field.onChange} onBlur={field.onBlur} invalid={Boolean(errors.terms)} className="mt-0.5" />} />
           <span>
             I agree to the <Link href="/legal/terms" className="text-brand">Terms of Service</Link> and{" "}
-            <Link href="/legal/privacy" className="text-brand">Privacy Policy</Link>, and understand this is a demo trading platform.
+            <Link href="/legal/privacy" className="text-brand">Privacy Policy</Link>, and understand this is a practice trading platform.
           </span>
         </label>
         {errors.terms && <p className="mt-2 text-xs text-down">{errors.terms.message}</p>}

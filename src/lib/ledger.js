@@ -1,7 +1,7 @@
 import "server-only";
 import { collections, getMongoClient } from "@/lib/mongo";
 import { toBig, toDecimal } from "@/lib/money";
-import { walletLabels } from "@/lib/demo";
+import { walletLabels } from "@/lib/ledger-labels";
 
 export class LedgerError extends Error {
   name = "LedgerError";

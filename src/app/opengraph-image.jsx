@@ -24,7 +24,7 @@ const OpengraphImage = async () => {
           <div tw="mt-6 max-w-4xl text-3xl text-neutral-400">{description}</div>
         </div>
         <div tw="flex items-center text-2xl text-neutral-500">
-          <div tw="flex rounded-full bg-[#ff6a2a] px-5 py-2 text-white">Demo trading</div>
+          <div tw="flex rounded-full bg-[#ff6a2a] px-5 py-2 text-white">Practice trading</div>
           <div tw="ml-5">Live Binance market data · No real money</div>
         </div>
       </div>

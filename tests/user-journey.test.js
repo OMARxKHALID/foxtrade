@@ -52,7 +52,7 @@ describe("A new trader's first session", () => {
     expect(invited[0].email).toBe("ne••••••@example.com");
   });
 
-  it("claims the demo balance and sees it in the spot wallet", async () => {
+  it("claims the practice balance and sees it in the spot wallet", async () => {
     await claimFaucet(trader.id);
     const overview = await getAssetsOverview(trader.id);
     expect(overview.totalUsdt).toBe(defaultPlatformSettings.demoAmount);

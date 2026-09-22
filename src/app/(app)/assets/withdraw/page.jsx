@@ -16,7 +16,7 @@ export const metadata = {
 export const instant = false;
 
 const notes = [
-  "Demo balances have no monetary value and are never sent to external wallets.",
+  "Practice balances have no monetary value and are never sent to external wallets.",
   "The withdrawal flow mirrors a live exchange so you can practice address and network checks.",
   "Always double-check the network. Sending to the wrong network loses funds on real exchanges.",
 ];

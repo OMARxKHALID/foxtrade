@@ -10,12 +10,12 @@ export const metadata = {
 const steps = [
   { title: "Share your link", text: "Copy your invite link or show the QR code to a friend." },
   { title: "Friend signs up", text: "Your friend creates an account through the link." },
-  { title: "Practice together", text: "Your friend gets the same demo funds as every new account." },
+  { title: "Practice together", text: "Your friend gets the same practice funds as every new account." },
 ];
 
 const rulesFor = (siteName) => [
   "Invites are for sharing the platform only. There are no commissions, rebates or team levels.",
-  "An invited friend receives the same demo assets as any new account.",
+  "An invited friend receives the same practice assets as any new account.",
   "Invite links cannot be used to follow, copy or push trades to another account.",
   "Accounts created in bulk or with fake details are removed.",
   `${siteName} may update these rules. Changes are announced in Notices.`,

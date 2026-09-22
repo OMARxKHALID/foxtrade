@@ -5,10 +5,10 @@ import { tradingGuides } from "@/lib/content/trading-guide";
 const aboutDefaults = {
   title: "Practice trading without risking money",
   summary:
-    "{siteName} is a simulated trading platform. It pairs live crypto market data with demo wallets so you can learn how timed trades, leverage, margin and liquidation work before trading real assets anywhere else.",
+    "{siteName} is a simulated trading platform. It pairs live crypto market data with practice wallets so you can learn how timed trades, leverage, margin and liquidation work before trading real assets anywhere else.",
   sections: [
     { heading: "Real market data", body: "Prices, candles, order books and trades stream live from Binance public market data." },
-    { heading: "Demo balances only", body: "Every account trades with demo USDT. Nothing is deposited, nothing leaves the platform." },
+    { heading: "Practice balances only", body: "Every account trades with practice USDT. Nothing is deposited, nothing leaves the platform." },
     { heading: "Honest settlement", body: "Trades settle at the recorded market price. The platform never sets prices or results." },
     { heading: "Two ways to trade", body: "Timed options for short predictions and perpetual futures with leverage and TP/SL." },
   ],
