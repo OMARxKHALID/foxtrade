@@ -17,7 +17,7 @@ const ContentPage = async () => {
 
   return (
     <>
-      <PageHeader title="Content" description="Edit legal pages, the Help Center, trading rules and the About page. Placeholders: {siteName}, {takerFee} and {demoAmount} are filled from Settings." />
+      <PageHeader title="Content" description="Edit legal pages, the Help Center, trading rules and the About page. Placeholders: {siteName}, {takerFee} and {practiceAmount} are filled from Settings." />
       <ContentManager documents={documents} />
     </>
   );

@@ -82,9 +82,9 @@ const createAuth = () => {
       user: {
         create: {
           after: async (user) => {
-            const { demoAmount } = await readPlatformSettings();
+            const { practiceAmount } = await readPlatformSettings();
             await withTransaction((session) =>
-              postEntries([{ userId: user.id, wallet: "spot", asset: "USDT", type: "faucet", amount: demoAmount, note: "Welcome practice funds" }], session),
+              postEntries([{ userId: user.id, wallet: "spot", asset: "USDT", type: "faucet", amount: practiceAmount, note: "Welcome practice funds" }], session),
             );
           },
         },

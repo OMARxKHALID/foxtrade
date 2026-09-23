@@ -55,7 +55,7 @@ describe("A new trader's first session", () => {
   it("claims the practice balance and sees it in the spot wallet", async () => {
     await claimFaucet(trader.id);
     const overview = await getAssetsOverview(trader.id);
-    expect(overview.totalUsdt).toBe(defaultPlatformSettings.demoAmount);
+    expect(overview.totalUsdt).toBe(defaultPlatformSettings.practiceAmount);
     expect(await wallet("spot")).toBe(100000);
   });
 

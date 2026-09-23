@@ -96,8 +96,8 @@ export const getFaucetStatus = async (userId) => {
 };
 
 export const claimFaucet = async (userId) => {
-  const { demoAmount } = await readPlatformSettings();
-  if ((await totalUsdt(userId)).gte(demoAmount)) throw new LedgerError("Your wallets already hold the full practice amount of USDT.");
+  const { practiceAmount } = await readPlatformSettings();
+  if ((await totalUsdt(userId)).gte(practiceAmount)) throw new LedgerError("Your wallets already hold the full practice amount of USDT.");
   await ensureSecurityIndex();
   const now = new Date();
   const cutoff = new Date(now.getTime() - FAUCET_COOLDOWN_MS);
@@ -115,7 +115,7 @@ export const claimFaucet = async (userId) => {
     throw new LedgerError(`You can claim practice assets again in about ${hours}h.`);
   }
   await withTransaction(async (session) => {
-    const topUp = toBig(demoAmount).minus(await totalUsdt(userId, session));
+    const topUp = toBig(practiceAmount).minus(await totalUsdt(userId, session));
     if (topUp.lte(0)) return;
     await postEntries([{ userId, wallet: "spot", asset: "USDT", type: "faucet", amount: topUp, note: "Practice top-up" }], session);
   });

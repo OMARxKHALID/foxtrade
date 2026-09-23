@@ -232,7 +232,7 @@ Text can use these placeholders:
 - `{siteName}`
 - `{supportEmail}`
 - `{takerFee}`
-- `{demoAmount}`
+- `{practiceAmount}`
 
 > The default legal texts are **drafts**. Have a qualified lawyer review and complete them (company name, address, governing law, data protection details) before going live.
 

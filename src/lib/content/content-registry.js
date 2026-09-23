@@ -48,11 +48,14 @@ export const contentByKey = Object.fromEntries(contentDocuments.map((doc) => [do
 
 export const documentsInGroup = (group) => contentDocuments.filter((doc) => doc.group === group);
 
-export const fillPlaceholders = (text, { siteName, supportEmail, takerFeeRate, demoAmount }) =>
-  String(text ?? "")
+export const fillPlaceholders = (text, { siteName, supportEmail, takerFeeRate, practiceAmount }) => {
+  const amount = `${Number(practiceAmount).toLocaleString("en-US")} USDT`;
+  return String(text ?? "")
     .replaceAll("{siteName}", siteName)
     .replaceAll("{supportEmail}", supportEmail)
     .replaceAll("{takerFee}", `${+(takerFeeRate * 100).toFixed(4)}%`)
-    .replaceAll("{demoAmount}", `${Number(demoAmount).toLocaleString("en-US")} USDT`);
+    .replaceAll("{practiceAmount}", amount)
+    .replaceAll("{demoAmount}", amount);
+};
 
 export const bodyLines = (body) => String(body).split("\n").map((line) => line.trim()).filter(Boolean);

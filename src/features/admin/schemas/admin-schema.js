@@ -83,7 +83,7 @@ export const platformSettingsSchema = z
       .default(""),
     maintenanceMode: z.boolean(),
     maintenanceMessage: z.string().trim().min(10, "Write at least 10 characters").max(200),
-    demoAmount: z.coerce.number({ error: "Enter an amount" }).min(0).max(1e9),
+    practiceAmount: z.coerce.number({ error: "Enter an amount" }).min(0).max(1e9),
     convertSpreadPercent: percent(20),
     takerFeePercent: percent(10),
     maintenanceMarginPercent: percent(50),

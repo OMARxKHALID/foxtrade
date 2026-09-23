@@ -72,7 +72,7 @@ export const savePlatformSettings = async (input) => {
       timedDurations: timedDurations.map(({ seconds, payoutPercent, minAmount }) => ({ seconds, payoutRate: payoutPercent / 100, minAmount })),
     });
     updateTag(settingsTags.platform);
-    await writeAudit(admin, "settings.update", saved.siteName, `Practice ${saved.demoAmount} USDT, fee ${saved.takerFeeRate * 100}%, max ${saved.maxLeverage}x`);
+    await writeAudit(admin, "settings.update", saved.siteName, `Practice ${saved.practiceAmount} USDT, fee ${saved.takerFeeRate * 100}%, max ${saved.maxLeverage}x`);
   });
 };
 

@@ -58,7 +58,7 @@ export const resetClientBalance = async (userId) => {
   return asAdmin(async (admin) => {
     const client = await findClient(parsed.data);
     if (!client) return formFailure("Client not found.");
-    const { demoAmount } = await readPlatformSettings();
+    const { practiceAmount } = await readPlatformSettings();
     await withTransaction(async (session) => {
       const now = new Date();
       await collections.positions().updateMany({ userId: parsed.data, status: { $in: ["open", "pending"] } }, { $set: { status: "cancelled", closeReason: "admin_reset", closedAt: now } }, { session });
@@ -67,9 +67,9 @@ export const resetClientBalance = async (userId) => {
       const clearing = balances
         .filter((item) => !item.balance.eq(0))
         .map((item) => ({ userId: parsed.data, wallet: item.wallet, asset: item.asset, type: "admin_reset", amount: item.balance.times(-1), note: "Reset by admin" }));
-      await postEntries([...clearing, { userId: parsed.data, wallet: "spot", asset: "USDT", type: "admin_reset", amount: demoAmount, note: "Reset by admin" }], session);
+      await postEntries([...clearing, { userId: parsed.data, wallet: "spot", asset: "USDT", type: "admin_reset", amount: practiceAmount, note: "Reset by admin" }], session);
     });
-    await writeAudit(admin, "client.reset_balance", client.email, `Reset to ${demoAmount} USDT`);
+    await writeAudit(admin, "client.reset_balance", client.email, `Reset to ${practiceAmount} USDT`);
   });
 };
 

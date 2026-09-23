@@ -18,11 +18,11 @@ const rules = [
 const dateFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
 export const PracticeFaucet = ({ status }) => {
-  const { demoAmount } = usePlatform().settings;
+  const { practiceAmount } = usePlatform().settings;
   const { pending, submit } = useActionSubmit({ action: claimPracticeAssets, successMessage: "Practice assets added to your Spot Wallet." });
 
   const handleClaim = () => submit();
-  const full = Boolean(status) && status.usdtTotal >= demoAmount;
+  const full = Boolean(status) && status.usdtTotal >= practiceAmount;
   const coolingDown = Boolean(status?.nextClaimAt);
   const blockedReason = full ? "Your USDT (including funds in open trades) already reaches the practice amount." : coolingDown ? `Next claim available ${dateFormat.format(new Date(status.nextClaimAt))}.` : null;
 
@@ -31,7 +31,7 @@ export const PracticeFaucet = ({ status }) => {
       <GlowCard variant="warm">
         <CardBody>
           <IconTile icon={Gift} size="lg" />
-          <h2 className="mt-6 font-heading text-2xl font-bold tracking-tight text-white sm:text-3xl">Top up to {formatUsdt(demoAmount)} USDT</h2>
+          <h2 className="mt-6 font-heading text-2xl font-bold tracking-tight text-white sm:text-3xl">Top up to {formatUsdt(practiceAmount)} USDT</h2>
           <p className="mt-3 max-w-md text-sm leading-6 text-neutral-400">
             Refill your practice Spot Wallet and keep practicing timed trades and leveraged positions with live market prices.
           </p>
