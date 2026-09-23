@@ -8,6 +8,7 @@ import { getAuth } from "@/lib/auth";
 import { hasPin } from "@/lib/pin";
 import { getSession } from "@/lib/session";
 import { ChangePasswordForm, SignOutOtherDevicesButton, WithdrawalPinForm } from "@/features/account/components/security-forms";
+import { fullDateTime as dateFormat } from "@/lib/format";
 
 export const metadata = {
   title: "Security",
@@ -15,7 +16,6 @@ export const metadata = {
 
 export const instant = false;
 
-const dateFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
 const describeAgent = (agent = "") => {
   const mobile = /Mobile|Android|iPhone|iPad/i.test(agent);

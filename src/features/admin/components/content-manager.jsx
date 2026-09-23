@@ -15,8 +15,8 @@ import { useActionSubmit } from "@/hooks/use-action-submit";
 import { cn } from "@/lib/utils";
 import { restoreDefaultContent, saveContent } from "@/features/admin/actions/platform-actions";
 import { contentSchema } from "@/features/admin/schemas/admin-schema";
+import { shortDate as dateFormat } from "@/lib/format";
 
-const dateFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" });
 
 const ContentForm = ({ entry, onDone }) => {
   const {

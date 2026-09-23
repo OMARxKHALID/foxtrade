@@ -7,8 +7,8 @@ import { CardBody, CardHeader, GlowCard } from "@/components/ui/glow-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { usePlatform } from "@/hooks/use-platform";
+import { shortDate as dateFormat } from "@/lib/format";
 
-const dateFormat = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" });
 
 export const ShareCard = ({ inviteUrl, inviteCode, invited }) => {
   const { siteName } = usePlatform().settings;

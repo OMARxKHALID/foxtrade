@@ -18,8 +18,8 @@ import { useActionSubmit } from "@/hooks/use-action-submit";
 import { cn } from "@/lib/utils";
 import { removeNotice, upsertNotice } from "@/features/admin/actions/content-actions";
 import { noticeCategories, noticeSchema } from "@/features/admin/schemas/admin-schema";
+import { shortDate as dateFormat } from "@/lib/format";
 
-const dateFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" });
 
 const categoryOptions = noticeCategories.map((category) => ({ value: category, label: category }));
 

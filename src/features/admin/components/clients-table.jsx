@@ -14,12 +14,11 @@ import { SegmentedTabs } from "@/components/ui/segmented-tabs";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { IconButton } from "@/components/ui/icon-button";
 import { useActionSubmit } from "@/hooks/use-action-submit";
-import { formatUsdt } from "@/lib/format";
+import { formatUsdt, shortDate as dateFormat } from "@/lib/format";
 import { kycStatus } from "@/lib/status";
 import { cn } from "@/lib/utils";
 import { banClient, resetClientBalance, setClientForceWin, setClientsForceWin, unbanClient } from "@/features/admin/actions/admin-actions";
 
-const dateFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" });
 
 const tabs = [
   { value: "all", label: "All" },

@@ -8,8 +8,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { SegmentedTabs } from "@/components/ui/segmented-tabs";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ticketStatus } from "@/lib/status";
+import { shortDateTime as dateFormat } from "@/lib/format";
 
-const dateFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
 const tabs = [
   { value: "open", label: "Needs reply" },

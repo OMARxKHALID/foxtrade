@@ -3,8 +3,8 @@ import { ChevronRight, LifeBuoy } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ticketStatus } from "@/lib/status";
+import { dayMonth as dateFormat } from "@/lib/format";
 
-const dateFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric" });
 
 export const TicketList = ({ tickets }) => {
   if (!tickets.length) return <EmptyState icon={LifeBuoy} title="No tickets yet" text="Tickets you open appear here with our replies." />;

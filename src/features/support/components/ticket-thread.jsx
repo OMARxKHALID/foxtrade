@@ -10,8 +10,8 @@ import { useActionSubmit } from "@/hooks/use-action-submit";
 import { usePlatform } from "@/hooks/use-platform";
 import { ticketStatus } from "@/lib/status";
 import { cn } from "@/lib/utils";
+import { shortDateTime as dateFormat } from "@/lib/format";
 
-const dateFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
 export const TicketThread = ({ ticket, viewer, replyAction, statusAction, statusLabel, statusValue }) => {
   const { siteName } = usePlatform().settings;

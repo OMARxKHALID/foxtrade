@@ -17,8 +17,8 @@ import { combinedSide, documentSides } from "@/lib/document-rules";
 import { documentStatus, kycStatus } from "@/lib/status";
 import { cn } from "@/lib/utils";
 import { reviewClientDocuments, reviewClientVerification } from "@/features/admin/actions/admin-actions";
+import { shortDateTime as dateFormat } from "@/lib/format";
 
-const dateFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
 const tabs = [
   { value: "pending", label: kycStatus.pending.label },

@@ -11,7 +11,7 @@ import { UserMenu } from "@/components/layout/user-menu";
 import { usePlatform } from "@/hooks/use-platform";
 import { cn } from "@/lib/utils";
 
-export const AppNavbar = ({ user, signOutAction }) => {
+export const AppNavbar = ({ user, signOutAction, pending = false }) => {
   const pathname = usePathname();
   const { siteName } = usePlatform().settings;
 
@@ -55,7 +55,9 @@ export const AppNavbar = ({ user, signOutAction }) => {
                 Admin
               </GradientButton>
             )}
-            {user ? (
+            {pending ? (
+              <span className="size-8 animate-pulse rounded-full border border-white/10 bg-white/5" aria-hidden />
+            ) : user ? (
               <UserMenu user={user} signOutAction={signOutAction} />
             ) : (
               <>

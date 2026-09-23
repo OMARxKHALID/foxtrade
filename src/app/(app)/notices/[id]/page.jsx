@@ -4,6 +4,7 @@ import { GlowCard } from "@/components/ui/glow-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getNoticeBySlug, getPublishedNotices } from "@/lib/content-store";
+import { longDate as dateFormat } from "@/lib/format";
 
 export const generateStaticParams = async () => (await getPublishedNotices()).map((notice) => ({ id: notice.slug }));
 
@@ -12,7 +13,6 @@ export const generateMetadata = async ({ params }) => {
   return { title: (await getNoticeBySlug(id))?.title ?? "Notice" };
 };
 
-const dateFormat = new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric" });
 
 const NoticePage = async ({ params }) => {
   const { id } = await params;

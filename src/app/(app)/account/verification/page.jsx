@@ -7,6 +7,7 @@ import { documentStatus, kycStatus } from "@/lib/status";
 import { getCurrentUser } from "@/lib/session";
 import { isDocumentStorageConfigured } from "@/lib/document-storage";
 import { BasicVerificationForm, DocumentUploadForm } from "@/features/account/components/verification-forms";
+import { shortDate } from "@/lib/format";
 
 export const metadata = {
   title: "Identity Verification",
@@ -24,7 +25,6 @@ const VerificationPage = async () => {
   const documentsState = documents?.status ?? "none";
   const storageReady = isDocumentStorageConfigured();
   const documentsBadge = status !== "approved" ? { tone: "neutral", label: "Locked" } : !storageReady ? { tone: "neutral", label: "Unavailable" } : documentStatus[documentsState];
-  const documentDate = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" });
 
   return (
     <Container className="flex flex-col gap-4 lg:gap-6">
@@ -66,7 +66,7 @@ const VerificationPage = async () => {
             {status !== "approved" && <p className="text-sm leading-6 text-neutral-400">Available once your basic verification is approved.</p>}
             {status === "approved" && !storageReady && <p className="text-sm leading-6 text-neutral-400">Document upload is not available yet. Please check back later.</p>}
             {status === "approved" && storageReady && documentsState === "pending" && (
-              <p className="text-sm leading-6 text-neutral-400">Your documents were submitted on {documentDate.format(documents.submittedAt)} and are under review.</p>
+              <p className="text-sm leading-6 text-neutral-400">Your documents were submitted on {shortDate.format(documents.submittedAt)} and are under review.</p>
             )}
             {status === "approved" && storageReady && documentsState === "approved" && <p className="text-sm leading-6 text-neutral-400">Your identity documents are verified.</p>}
             {status === "approved" && storageReady && documentsState === "rejected" && documents?.reason && (

@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 export { pairLabel };
 
-export const dateTime = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+export { dateTimeSeconds as dateTime } from "@/lib/format";
 
 export const timedStatus = {
   open: { tone: "brand", label: "Open" },

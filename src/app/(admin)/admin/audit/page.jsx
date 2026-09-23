@@ -3,6 +3,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { listAudit } from "@/features/admin/dal/admin-dal";
+import { shortDateTime as dateFormat } from "@/lib/format";
 
 export const metadata = {
   title: "Audit Log",
@@ -10,7 +11,6 @@ export const metadata = {
 
 export const instant = false;
 
-const dateFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
 const columns = [
   { key: "time", header: "Time", sortable: true },

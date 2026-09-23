@@ -7,12 +7,12 @@ import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getPlatformSettings } from "@/lib/cached-settings";
 import { getPublishedNotices } from "@/lib/content-store";
+import { shortDate as dateFormat } from "@/lib/format";
 
 export const metadata = {
   title: "Notices",
 };
 
-const dateFormat = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" });
 
 const NoticesPage = async () => {
   const [notices, { siteName }] = await Promise.all([getPublishedNotices(), getPlatformSettings()]);

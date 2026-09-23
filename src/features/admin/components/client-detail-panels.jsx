@@ -77,7 +77,7 @@ export const ClientPasswordForm = ({ userId }) => {
 
 export const ClientBalanceForm = ({ userId }) => {
   const assetOptions = toAssetOptions(usePlatform().assets);
-  const defaultValues = { userId, wallet: "spot", asset: "USDT", amount: "", note: "" };
+  const defaultValues = { userId, mode: "practice", wallet: "spot", asset: "USDT", amount: "", note: "" };
   const {
     register,
     control,
@@ -86,11 +86,21 @@ export const ClientBalanceForm = ({ userId }) => {
     reset,
     formState: { errors },
   } = useForm({ resolver: zodResolver(balanceAdjustSchema), defaultValues });
-  const { pending, submit } = useActionSubmit({ action: adjustClientBalance, setError, successMessage: "Balance updated.", onSuccess: () => reset(defaultValues) });
+  const { pending, submit } = useActionSubmit({
+    action: adjustClientBalance,
+    setError,
+    onSuccess: ({ data }) => {
+      toast.success(data?.pending ? "Sent for a second admin to approve." : "Balance updated.");
+      reset(defaultValues);
+    },
+  });
 
   return (
     <form onSubmit={handleSubmit(submit)} noValidate className="flex flex-col gap-5">
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <Field id="adjust-mode" label="Account" hint="Live changes need a second admin" error={errors.mode?.message}>
+          <Controller name="mode" control={control} render={({ field }) => <SelectMenu id="adjust-mode" options={modeOptions} value={field.value} onChange={field.onChange} onBlur={field.onBlur} />} />
+        </Field>
         <Field id="adjust-wallet" label="Wallet" error={errors.wallet?.message}>
           <Controller name="wallet" control={control} render={({ field }) => <SelectMenu id="adjust-wallet" options={walletOptions} value={field.value} onChange={field.onChange} onBlur={field.onBlur} />} />
         </Field>
@@ -110,6 +120,11 @@ export const ClientBalanceForm = ({ userId }) => {
     </form>
   );
 };
+
+const modeOptions = [
+  { value: "practice", label: "Practice" },
+  { value: "live", label: "Live" },
+];
 
 const dialogs = {
   role: { title: "Change role", confirmLabel: "Change Role", tone: "orange" },

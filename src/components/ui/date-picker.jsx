@@ -8,8 +8,8 @@ import { controlClass } from "@/components/ui/field";
 import { hitArea } from "@/components/ui/gradient-button";
 import { menuSideOffset, menuSurfaceClass } from "@/components/ui/menu-styles";
 import { cn } from "@/lib/utils";
+import { shortDate as dateFormat } from "@/lib/format";
 
-const dateFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" });
 
 const navButton = "flex size-8 cursor-pointer items-center justify-center rounded-lg text-neutral-400 disabled:cursor-default disabled:opacity-30";
 

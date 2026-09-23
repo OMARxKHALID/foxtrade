@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, Bell, Coins, FileText, History, IdCard, Image, LayoutDashboard, LifeBuoy, Settings, Users } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Bell, Bug, Coins, FileText, History, IdCard, Image, LayoutDashboard, LifeBuoy, Settings, Users } from "lucide-react";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { focusRing } from "@/components/ui/gradient-button";
 import { cn } from "@/lib/utils";
@@ -11,12 +11,14 @@ const links = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
   { href: "/admin/users", label: "Clients", icon: Users },
   { href: "/admin/kyc", label: "KYC Review", icon: IdCard },
+  { href: "/admin/approvals", label: "Approvals", icon: BadgeCheck },
   { href: "/admin/tickets", label: "Tickets", icon: LifeBuoy },
   { href: "/admin/pairs", label: "Pairs", icon: Coins },
   { href: "/admin/banners", label: "Banners", icon: Image },
   { href: "/admin/notices", label: "Notices", icon: Bell },
   { href: "/admin/content", label: "Content", icon: FileText },
   { href: "/admin/audit", label: "Audit Log", icon: History },
+  { href: "/admin/errors", label: "Errors", icon: Bug },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 

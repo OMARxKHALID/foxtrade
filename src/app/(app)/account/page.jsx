@@ -9,6 +9,7 @@ import { collections } from "@/lib/mongo";
 import { kycStatus } from "@/lib/status";
 import { getCurrentUser, isAdmin } from "@/lib/session";
 import { SignOutButton } from "@/features/auth/components/sign-out-button";
+import { monthYear } from "@/lib/format";
 
 export const metadata = {
   title: "Account",
@@ -51,7 +52,7 @@ const buildGroups = (verification) => [
 const AccountPage = async () => {
   const user = await getCurrentUser();
   const verification = user ? (await collections.verifications().findOne({ userId: user.id }))?.status ?? "none" : "none";
-  const joined = user ? new Intl.DateTimeFormat("en", { month: "short", year: "numeric" }).format(new Date(user.createdAt)) : null;
+  const joined = user ? monthYear.format(new Date(user.createdAt)) : null;
 
   return (
     <Container className="flex flex-col gap-4 lg:gap-6">

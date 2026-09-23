@@ -5,6 +5,7 @@ import { IconTile } from "@/components/ui/icon-tile";
 import { MenuRow } from "@/components/ui/menu-row";
 import { PageHeader } from "@/components/ui/page-header";
 import { getDashboardStats } from "@/features/admin/dal/admin-dal";
+import { shortDateTime as dateFormat } from "@/lib/format";
 
 export const metadata = {
   title: "Overview",
@@ -12,7 +13,6 @@ export const metadata = {
 
 export const instant = false;
 
-const dateFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
 const AdminOverviewPage = async () => {
   const stats = await getDashboardStats();

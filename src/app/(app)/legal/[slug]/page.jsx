@@ -6,10 +6,10 @@ import { PageHeader } from "@/components/ui/page-header";
 import { getContent, getPlatformSettings } from "@/lib/cached-settings";
 import { documentsInGroup, fillPlaceholders } from "@/lib/content/content-registry";
 import { cn } from "@/lib/utils";
+import { longDate as dateFormat } from "@/lib/format";
 
 const legalDocuments = documentsInGroup("Legal");
 
-const dateFormat = new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric" });
 
 export const generateStaticParams = () => legalDocuments.map((doc) => ({ slug: doc.slug }));
 

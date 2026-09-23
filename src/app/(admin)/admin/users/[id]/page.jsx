@@ -7,7 +7,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { walletLabels } from "@/lib/ledger-labels";
+import { walletLabelFor } from "@/lib/ledger-labels";
 import { formatQuantity } from "@/lib/format";
 import { documentStatus, kycStatus, ticketStatus } from "@/lib/status";
 import { toRecordRow } from "@/features/assets/components/record-rows";
@@ -96,7 +96,7 @@ const ClientPage = async ({ params }) => {
             <ul className="divide-y divide-white/5">
               {balances.map((item) => (
                 <Row key={`${item.wallet}-${item.asset}`}>
-                  <span className="text-neutral-300">{walletLabels[item.wallet] ?? item.wallet}</span>
+                  <span className="text-neutral-300">{walletLabelFor(item.wallet)}</span>
                   <span className="text-white tabular-nums">
                     {formatQuantity(item.balance)} {item.asset}
                   </span>

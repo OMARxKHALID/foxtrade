@@ -43,3 +43,22 @@ export const maskEmail = (email = "") => {
   const [name, domain] = email.split("@");
   return `${name.slice(0, 2)}${"•".repeat(Math.max(2, Math.min(6, name.length - 2)))}@${domain ?? ""}`;
 };
+
+// One set of date formats for the whole app. Locale differences were drifting
+// between pages, so "en" is the default and en-GB is kept only where a 24 hour
+// clock is deliberate.
+export const dayMonth = new Intl.DateTimeFormat("en", { month: "short", day: "numeric" });
+
+export const shortDate = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" });
+
+export const longDate = new Intl.DateTimeFormat("en", { month: "long", day: "numeric", year: "numeric" });
+
+export const shortDateTime = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+
+export const fullDateTime = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+
+export const clockTime = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+
+export const monthYear = new Intl.DateTimeFormat("en", { month: "short", year: "numeric" });
+
+export const dateTimeSeconds = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" });

@@ -6,14 +6,13 @@ import { CardHeader } from "@/components/ui/glow-card";
 import { toAggTrade } from "@/lib/market/binance-rest";
 import { recentTradesQuery } from "@/lib/market/market-queries";
 import { subscribeStream } from "@/lib/market/binance-socket";
-import { formatPrice } from "@/lib/format";
+import { clockTime as timeFormat, formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const LIMIT = 40;
 
 const rowGrid = "grid grid-cols-3 gap-2 px-4";
 
-const timeFormat = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
 export const TradeFeed = ({ symbol, className }) => {
   const queryClient = useQueryClient();
