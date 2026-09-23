@@ -6,6 +6,7 @@ import { Container } from "@/components/ui/container";
 import { PageLoader } from "@/components/ui/page-loader";
 import { PageHeader } from "@/components/ui/page-header";
 import { AssetDetail } from "@/features/assets/components/asset-detail";
+import { ModeBadge } from "@/features/assets/components/mode-badge";
 import { loadAssetsPage } from "@/features/assets/dal/assets-dal";
 import { getPairs } from "@/lib/cached-settings";
 import { tickersQuery } from "@/lib/market/market-queries";
@@ -29,11 +30,11 @@ const AssetPage = async ({ params }) => {
   const pairSymbol = findPair(await getPairs(), `${asset.symbol}${QUOTE}`)?.symbol;
   const queryClient = getQueryClient();
   if (pairSymbol) void queryClient.prefetchQuery(tickersQuery([pairSymbol]));
-  const { overview, records } = await loadAssetsPage({ records: true, asset: asset.symbol });
+  const { overview, records, mode, signedIn } = await loadAssetsPage({ records: true, asset: asset.symbol });
 
   return (
     <Container className="flex flex-col gap-4 lg:gap-6">
-      <PageHeader title={`${asset.symbol} · ${asset.name}`} description="Balance, live price and history for this asset." backHref="/assets" />
+      <PageHeader title={`${asset.symbol} · ${asset.name}`} description="Balance, live price and history for this asset." backHref="/assets" actions={signedIn ? <ModeBadge mode={mode} /> : null} />
       <HydrationBoundary state={dehydrate(queryClient)}>
         <Suspense fallback={<PageLoader className="min-h-[40vh]" />}>
           <AssetDetail asset={asset} pairSymbol={pairSymbol} holding={overview ? overview.holdings[asset.symbol] ?? { total: 0, byWallet: {} } : null} records={records} />

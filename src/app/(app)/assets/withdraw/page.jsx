@@ -4,6 +4,7 @@ import { Container } from "@/components/ui/container";
 import { CardBody, CardHeader, GlowCard } from "@/components/ui/glow-card";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { PageHeader } from "@/components/ui/page-header";
+import { ModeBadge } from "@/features/assets/components/mode-badge";
 import { WithdrawForm } from "@/features/assets/components/withdraw-form";
 import { hasPin } from "@/lib/pin";
 import { getCurrentUser } from "@/lib/session";
@@ -15,24 +16,33 @@ export const metadata = {
 
 export const instant = false;
 
-const notes = [
+const practiceNotes = [
   "Practice balances have no monetary value and are never sent to external wallets.",
   "The withdrawal flow mirrors a live exchange so you can practice address and network checks.",
   "Always double-check the network. Sending to the wrong network loses funds on real exchanges.",
 ];
 
+const liveNotes = [
+  "The amount leaves your spot wallet straight away and is held until the payout is reviewed.",
+  "A rejected withdrawal is returned to your spot wallet in full.",
+  "Always double-check the network. Funds sent to the wrong network cannot be recovered.",
+];
+
 const WithdrawPage = async () => {
-  const [{ overview, addresses }, user] = await Promise.all([loadAssetsPage({ addresses: true }), getCurrentUser()]);
+  const [{ overview, addresses, mode, signedIn }, user] = await Promise.all([loadAssetsPage({ addresses: true }), getCurrentUser().catch(() => null)]);
+  const live = mode === "live";
+  const notes = live ? liveNotes : practiceNotes;
   const pinMissing = user ? !(await hasPin(user.id)) : false;
 
   return (
     <Container className="flex flex-col gap-4 lg:gap-6">
       <PageHeader
         title="Withdraw"
-        description="Send assets to an external wallet address."
+        description={live ? "Send real assets to an external wallet address." : "Send assets to an external wallet address."}
         backHref="/assets"
         actions={
           <>
+            {signedIn && <ModeBadge mode={mode} />}
             <GradientButton href="/assets/records" variant="dark" size="sm">
               <ReceiptText className="size-4" />
               Records

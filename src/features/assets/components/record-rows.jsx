@@ -1,12 +1,12 @@
 import { StatusBadge } from "@/components/ui/status-badge";
-import { ledgerTypeLabels, walletLabels } from "@/lib/ledger-labels";
-import { formatAmount } from "@/lib/format";
+import { ledgerTypeLabels, walletLabelFor } from "@/lib/ledger-labels";
+import { formatAmount, shortDateTime as timeFormat } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-const timeFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
 export const recordTypeGroups = {
-  faucet: ["faucet", "admin_reset", "admin_adjust"],
+  faucet: ["faucet", "deposit", "admin_reset", "admin_adjust"],
+  withdraw: ["withdraw_hold", "withdraw_sent", "withdraw_refund"],
   convert: ["convert"],
   transfer: ["transfer"],
   trade: ["timed_stake", "timed_payout", "perp_margin", "perp_close", "perp_fee"],
@@ -24,7 +24,7 @@ export const toRecordRow = (record) => ({
         {record.note && <span className="block text-xs text-neutral-500">{record.note}</span>}
       </span>
     ),
-    wallet: walletLabels[record.wallet] ?? record.wallet,
+    wallet: walletLabelFor(record.wallet),
     asset: record.asset,
     amount: (
       <span className={cn("tabular-nums", record.amount >= 0 ? "text-up" : "text-down")}>
