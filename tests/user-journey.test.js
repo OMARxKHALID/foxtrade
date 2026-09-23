@@ -17,7 +17,6 @@ import {
   settleUser,
 } from "@/features/trading/dal/trading-engine";
 
-vi.mock("next/cache", () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {} }));
 vi.mock("@/lib/market/binance-rest", () => ({
   fetchLatestPrices: vi.fn(),
   fetchKlineRange: vi.fn(),

@@ -11,6 +11,7 @@ export default defineConfig({
   test: {
     environment: "node",
     globalSetup: "./tests/global-setup.mjs",
+    setupFiles: "./tests/setup.js",
     hookTimeout: 120_000,
     testTimeout: 30_000,
     pool: "forks",

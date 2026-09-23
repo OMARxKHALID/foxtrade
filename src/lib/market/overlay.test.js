@@ -17,12 +17,17 @@ beforeEach(async () => {
 
 const hexId = (seed) => seed.repeat(12);
 
+// The steering curve is seeded from the order id, so a random id makes these
+// assertions a coin flip. A fixed id keeps the generated path reproducible.
+const SEEDED_ORDER_ID = "6ab2439823e12519cdc2d3fc";
+
 const insertForcedOrder = async ({ direction = "call", openPrice = 65000, openedAtOffset = -20 * SECOND, duration = 30 } = {}) => {
   const openedAt = new Date(Math.floor(Date.now() / SECOND) * SECOND + openedAtOffset);
-  const orderId = new ObjectId();
+  const orderId = new ObjectId(SEEDED_ORDER_ID);
   await collections.orders().insertOne({
     _id: orderId,
     userId: "overlay-user",
+    mode: "practice",
     symbol: "BTCUSDT",
     direction,
     duration,
