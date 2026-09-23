@@ -210,9 +210,9 @@ export const reviewVerification = async (id, decision, reason) => {
 };
 
 export const listPendingApprovals = async () => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const [withdrawals, adjustments, deposits] = await Promise.all([
-    collections.withdrawals().find({ status: "requested" }).sort({ createdAt: 1 }).limit(200).toArray(),
+    collections.withdrawals().find({ status: { $in: ["requested", "approved"] } }).sort({ createdAt: 1 }).limit(200).toArray(),
     collections.adjustments().find({ status: "pending" }).sort({ createdAt: 1 }).limit(200).toArray(),
     collections.deposits().find({ status: "pending" }).sort({ createdAt: 1 }).limit(200).toArray(),
   ]);
@@ -237,6 +237,8 @@ export const listPendingApprovals = async () => {
       amount: doc.amount,
       address: doc.address,
       network: doc.network ?? "",
+      status: doc.status,
+      approvedByYou: doc.status === "approved" && doc.reviewedBy === admin.id,
       createdAt: doc.createdAt.toISOString(),
     })),
     adjustments: adjustments.map((doc) => ({

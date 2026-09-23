@@ -14,8 +14,9 @@ import {
 
 const userId = "funding-user";
 const adminId = "admin-user";
+const secondAdminId = "second-admin";
 
-const verify = (status) => collections.verifications().insertOne({ userId, email: "f@test.dev", status });
+const verify = (status) => collections.verifications().insertOne({ userId, email: "f@test.dev", status, documents: { status } });
 const fundLive = (amount) => postEntries([{ userId, mode: LIVE, wallet: "spot", asset: "USDT", type: "deposit", amount }], null);
 const liveSpot = async () => Number(await getBalance(userId, "spot", "USDT", null, LIVE));
 const held = async () => Number(await getBalance(userId, HOLD_WALLET, "USDT", null, LIVE));
@@ -125,23 +126,42 @@ describe("Withdrawals", () => {
     await approveWithdrawal(id, { adminId });
     expect(await held()).toBe(400);
 
-    await markWithdrawalSent(id, { providerRef: "payout-1" });
+    await markWithdrawalSent(id, { providerRef: "payout-1", adminId: secondAdminId });
     expect(await held()).toBe(0);
     expect(await liveSpot()).toBe(100);
+  });
+
+  it("needs a second admin to confirm the payout", async () => {
+    const id = await requestWithdrawal(userId, { asset: "USDT", amount: 400, address: "0xabc", network: "ETH" });
+    await approveWithdrawal(id, { adminId });
+
+    await expect(markWithdrawalSent(id, { providerRef: "payout-1", adminId })).rejects.toThrow(/second admin/);
+    expect(await held()).toBe(400);
+  });
+
+  it("refunds an approved payout that never went out", async () => {
+    const id = await requestWithdrawal(userId, { asset: "USDT", amount: 400, address: "0xabc", network: "ETH" });
+    await approveWithdrawal(id, { adminId });
+
+    await rejectWithdrawal(id, { adminId: secondAdminId, reason: "Payout failed" });
+    expect(await liveSpot()).toBe(500);
+    expect(await held()).toBe(0);
   });
 
   it("cannot be reviewed twice", async () => {
     const id = await requestWithdrawal(userId, { asset: "USDT", amount: 400, address: "0xabc", network: "ETH" });
     await approveWithdrawal(id, { adminId });
+    await markWithdrawalSent(id, { providerRef: "payout-1", adminId: secondAdminId });
 
     await expect(rejectWithdrawal(id, { adminId, reason: "changed my mind" })).rejects.toThrow(/already reviewed/);
+    await expect(approveWithdrawal(id, { adminId })).rejects.toThrow(/already reviewed/);
     expect(await liveSpot()).toBe(100);
   });
 
   it("refuses a payout that was never approved", async () => {
     const id = await requestWithdrawal(userId, { asset: "USDT", amount: 400, address: "0xabc", network: "ETH" });
 
-    expect((await markWithdrawalSent(id, { providerRef: "payout-1" })).sent).toBe(false);
+    expect((await markWithdrawalSent(id, { providerRef: "payout-1", adminId: secondAdminId })).sent).toBe(false);
     expect(await held()).toBe(400);
   });
 });

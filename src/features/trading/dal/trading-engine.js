@@ -172,8 +172,6 @@ export const placePerpetualOrder = async (userId, { symbol, side, type, price, a
   const maxLeverage = Math.min(pair.maxLeverage, settings.maxLeverage);
   if (leverage > maxLeverage) throw new LedgerError(`Maximum leverage for ${pair.base}/USDT is ${maxLeverage}x.`);
   if (leverage * settings.maintenanceMarginRate >= 1) throw new LedgerError(`Leverage must be below ${Math.ceil(1 / settings.maintenanceMarginRate)}x at the current maintenance margin.`);
-  const active = await collections.positions().countDocuments({ userId, mode, status: { $in: ["open", "pending"] } });
-  if (active >= MAX_ACTIVE_POSITIONS) throw new LedgerError(`You can have up to ${MAX_ACTIVE_POSITIONS} open positions and pending orders. Close or cancel some first.`);
   const market = await latestPrice(pair.symbol);
   if (type === "limit" && (side === "long" ? price >= market : price <= market)) {
     throw new LedgerError(`A ${side} limit price must be ${side === "long" ? "below" : "above"} the market price. Use a market order to fill now.`);
@@ -485,13 +483,14 @@ export const getOrderDetail = async (userId, market, id) => {
   return market === "timed" ? timedDTO(doc) : positionDTO(doc);
 };
 
-export const getTradingSummary = async (userId) => {
+export const getTradingSummary = async (userId, mode) => {
   await settleIfDue(userId);
+  const owned = mode ? { userId, mode } : { userId };
   const [openTimed, openPositions, recentTimed, recentPositions] = await Promise.all([
-    collections.orders().find({ userId, status: "open" }).sort({ expiresAt: 1 }).toArray(),
-    collections.positions().find({ userId, status: { $in: ["open", "pending"] } }).sort({ createdAt: -1 }).toArray(),
-    collections.orders().find({ userId, status: { $ne: "open" } }).sort({ settledAt: -1 }).limit(50).toArray(),
-    collections.positions().find({ userId, status: { $in: ["closed", "liquidated"] } }).sort({ closedAt: -1 }).limit(50).toArray(),
+    collections.orders().find({ ...owned, status: "open" }).sort({ expiresAt: 1 }).toArray(),
+    collections.positions().find({ ...owned, status: { $in: ["open", "pending"] } }).sort({ createdAt: -1 }).toArray(),
+    collections.orders().find({ ...owned, status: { $ne: "open" } }).sort({ settledAt: -1 }).limit(50).toArray(),
+    collections.positions().find({ ...owned, status: { $in: ["closed", "liquidated"] } }).sort({ closedAt: -1 }).limit(50).toArray(),
   ]);
   return {
     openTimed: openTimed.map(timedDTO),

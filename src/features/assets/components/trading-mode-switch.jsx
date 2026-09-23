@@ -14,7 +14,7 @@ const items = [
 
 const notes = {
   disabled: "Live accounts are not open yet. Everything here is practice money.",
-  unverified: "Verify your identity to unlock a live account.",
+  unverified: "Get your identity details and documents approved to unlock a live account.",
 };
 
 export const TradingModeSwitch = ({ mode, liveAvailable, reason }) => {

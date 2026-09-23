@@ -16,7 +16,7 @@ const user = { id: userId };
 const setup = async ({ live, tradingMode, kyc, banned = false }) => {
   await writePlatformSettings({ ...defaultPlatformSettings, liveTradingEnabled: live });
   await collections.users().insertOne({ _id: new ObjectId(userId), email: "t@test.dev", tradingMode, banned });
-  if (kyc) await collections.verifications().insertOne({ userId, email: "t@test.dev", status: kyc });
+  if (kyc) await collections.verifications().insertOne({ userId, email: "t@test.dev", status: kyc, documents: { status: kyc } });
 };
 
 beforeEach(async () => {
@@ -42,6 +42,13 @@ describe("Mode resolution fails closed", () => {
   it("falls back to practice when KYC is not approved", async () => {
     await setup({ live: true, tradingMode: LIVE, kyc: "pending" });
     expect(await resolveMode(user)).toBe(PRACTICE);
+  });
+
+  it("falls back to practice when basic details are approved but documents are not", async () => {
+    await setup({ live: true, tradingMode: LIVE, kyc: null });
+    await collections.verifications().insertOne({ userId, email: "t@test.dev", status: "approved", documents: { status: "pending" } });
+    expect(await resolveMode(user)).toBe(PRACTICE);
+    expect((await liveAvailableFor(user)).reason).toBe("unverified");
   });
 
   it("falls back to practice when there is no KYC record at all", async () => {

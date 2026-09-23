@@ -12,7 +12,7 @@ vi.mock("@/lib/document-storage", () => ({ deletePrivateImages: vi.fn(async () =
 
 const { getCurrentUser } = await import("@/lib/session");
 const { deletePrivateImages } = await import("@/lib/document-storage");
-const { adjustClientBalance, deleteClient, setClientForceWin } = await import("./admin-actions");
+const { adjustClientBalance, deleteClient, resetClientBalance, setClientForceWin } = await import("./admin-actions");
 
 const adminId = new ObjectId();
 const clientId = new ObjectId();
@@ -145,10 +145,27 @@ describe("Deleting a client", () => {
     expect(await collections.errors().countDocuments({ "lastContext.job": "deleteKycFiles" })).toBe(1);
   });
 
+  it("refuses to delete a client with live funding records", async () => {
+    await postEntries([{ userId: clientId.toString(), mode: "live", wallet: "spot", asset: "USDT", type: "deposit", amount: 50 }], null);
+    const result = await deleteClient(clientId.toString());
+    expect(result.ok).toBe(false);
+    expect(await collections.ledger().countDocuments({ userId: clientId.toString(), mode: "live" })).toBe(1);
+  });
+
   it("refuses to delete an admin account", async () => {
     await collections.users().updateOne({ _id: clientId }, { $set: { role: "admin" } });
     const result = await deleteClient(clientId.toString());
     expect(result.ok).toBe(false);
     expect(await collections.wallets().countDocuments({ userId: clientId.toString() })).toBe(1);
+  });
+});
+
+describe("Resetting a practice balance", () => {
+  it("frees the open position slots it cancels", async () => {
+    await collections.positionCounters().insertOne({ _id: `${clientId}:practice`, count: 50 });
+    await collections.positions().insertOne({ userId: clientId.toString(), mode: "practice", status: "open", symbol: "BTCUSDT" });
+    const result = await resetClientBalance(clientId.toString());
+    expect(result.ok).toBe(true);
+    expect((await collections.positionCounters().findOne({ _id: `${clientId}:practice` })).count).toBe(0);
   });
 });

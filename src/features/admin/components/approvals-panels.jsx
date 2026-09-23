@@ -9,7 +9,7 @@ import { CardBody, CardHeader, GlowCard } from "@/components/ui/glow-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useActionSubmit } from "@/hooks/use-action-submit";
 import { formatQuantity, shortDateTime as dateFormat } from "@/lib/format";
-import { approveAdjustment, approveClientWithdrawal, confirmClientDeposit, rejectAdjustment, rejectClientDeposit, rejectClientWithdrawal } from "@/features/admin/actions/admin-actions";
+import { approveAdjustment, approveClientWithdrawal, confirmClientDeposit, confirmWithdrawalSent, rejectAdjustment, rejectClientDeposit, rejectClientWithdrawal } from "@/features/admin/actions/admin-actions";
 
 
 const Row = ({ children }) => <li className="flex flex-col gap-3 px-4 py-4 sm:px-6">{children}</li>;
@@ -20,16 +20,18 @@ export const ApprovalsPanels = ({ deposits, withdrawals, adjustments }) => {
 
   const approveWithdrawal = useActionSubmit({ action: approveClientWithdrawal, successMessage: "Withdrawal approved.", onSuccess: handleClose });
   const declineWithdrawal = useActionSubmit({ action: rejectClientWithdrawal, successMessage: "Withdrawal rejected and refunded.", onSuccess: handleClose });
+  const sentWithdrawal = useActionSubmit({ action: confirmWithdrawalSent, successMessage: "Payout recorded.", onSuccess: handleClose });
   const approveChange = useActionSubmit({ action: approveAdjustment, successMessage: "Balance change approved.", onSuccess: handleClose });
   const declineChange = useActionSubmit({ action: rejectAdjustment, successMessage: "Balance change rejected.", onSuccess: handleClose });
   const confirmDeposit = useActionSubmit({ action: confirmClientDeposit, successMessage: "Deposit credited.", onSuccess: handleClose });
   const declineDeposit = useActionSubmit({ action: rejectClientDeposit, successMessage: "Deposit rejected.", onSuccess: handleClose });
 
-  const pending = approveWithdrawal.pending || declineWithdrawal.pending || approveChange.pending || declineChange.pending || confirmDeposit.pending || declineDeposit.pending;
+  const pending = approveWithdrawal.pending || declineWithdrawal.pending || sentWithdrawal.pending || approveChange.pending || declineChange.pending || confirmDeposit.pending || declineDeposit.pending;
 
   const handleConfirm = (reason) => {
     if (dialog.type === "approveWithdrawal") approveWithdrawal.submit(dialog.id);
     if (dialog.type === "rejectWithdrawal") declineWithdrawal.submit({ id: dialog.id, reason });
+    if (dialog.type === "sentWithdrawal") sentWithdrawal.submit({ id: dialog.id, reference: reason });
     if (dialog.type === "approveAdjustment") approveChange.submit(dialog.id);
     if (dialog.type === "rejectAdjustment") declineChange.submit(dialog.id);
     if (dialog.type === "confirmDeposit") confirmDeposit.submit({ id: dialog.id, amount: reason });
@@ -57,6 +59,13 @@ export const ApprovalsPanels = ({ deposits, withdrawals, adjustments }) => {
       title: "Approve withdrawal",
       description: `${dialog.label} will be cleared for payout. The funds stay on hold until the payout is confirmed sent.`,
       confirmLabel: "Approve",
+      tone: "orange",
+    },
+    sentWithdrawal: {
+      title: "Confirm payout sent",
+      description: `Record that ${dialog.label} left the platform wallet. This releases the hold and cannot be undone.`,
+      reasonLabel: "Payout transaction hash",
+      confirmLabel: "Confirm Sent",
       tone: "orange",
     },
     rejectWithdrawal: {
@@ -127,7 +136,7 @@ export const ApprovalsPanels = ({ deposits, withdrawals, adjustments }) => {
         </GlowCard>
 
         <GlowCard as="section" aria-labelledby="withdrawals-title" className="overflow-hidden">
-          <CardHeader id="withdrawals-title" title={`Withdrawals (${withdrawals.length})`} description="Funds are already held. Approving clears the payout; rejecting returns them." />
+          <CardHeader id="withdrawals-title" title={`Withdrawals (${withdrawals.length})`} description="Funds are already held. One admin approves, a second confirms the payout was sent. Rejecting returns them." />
           {withdrawals.length ? (
             <ul className="divide-y divide-white/5">
               {withdrawals.map((item) => (
@@ -137,7 +146,8 @@ export const ApprovalsPanels = ({ deposits, withdrawals, adjustments }) => {
                       <span className="block truncate text-sm text-white">{item.email}</span>
                       <span className="block text-xs text-neutral-500">{dateFormat.format(new Date(item.createdAt))}</span>
                     </span>
-                    <StatusBadge tone="warning">
+                    <StatusBadge tone={item.status === "approved" ? "success" : "warning"}>
+                      {item.status === "approved" ? "approved · " : ""}
                       {formatQuantity(item.amount)} {item.asset}
                     </StatusBadge>
                   </span>
@@ -146,13 +156,25 @@ export const ApprovalsPanels = ({ deposits, withdrawals, adjustments }) => {
                     {item.address}
                   </span>
                   <span className="flex flex-wrap gap-2">
-                    <GradientButton
-                      size="xs"
-                      onClick={() => setDialog({ type: "approveWithdrawal", id: item.id, label: `${formatQuantity(item.amount)} ${item.asset} for ${item.email}` })}
-                    >
-                      <BadgeCheck className="size-3.5" />
-                      Approve
-                    </GradientButton>
+                    {item.status === "approved" ? (
+                      <GradientButton
+                        size="xs"
+                        disabled={item.approvedByYou}
+                        title={item.approvedByYou ? "A second admin has to confirm the payout" : undefined}
+                        onClick={() => setDialog({ type: "sentWithdrawal", id: item.id, label: `${formatQuantity(item.amount)} ${item.asset} for ${item.email}` })}
+                      >
+                        <BadgeCheck className="size-3.5" />
+                        {item.approvedByYou ? "Awaiting second admin" : "Mark Sent"}
+                      </GradientButton>
+                    ) : (
+                      <GradientButton
+                        size="xs"
+                        onClick={() => setDialog({ type: "approveWithdrawal", id: item.id, label: `${formatQuantity(item.amount)} ${item.asset} for ${item.email}` })}
+                      >
+                        <BadgeCheck className="size-3.5" />
+                        Approve
+                      </GradientButton>
+                    )}
                     <GradientButton
                       variant="dark"
                       size="xs"

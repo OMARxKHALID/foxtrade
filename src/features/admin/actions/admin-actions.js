@@ -16,7 +16,7 @@ import { collections } from "@/lib/mongo";
 import { addTicketMessage, setTicketStatus } from "@/lib/ticket-store";
 import { asAdmin, findClient, findUser, reviewVerification, reviewVerificationDocuments, writeAudit } from "@/features/admin/dal/admin-dal";
 import { closeAllPositions } from "@/features/trading/dal/trading-engine";
-import { approveWithdrawal, creditDeposit, rejectDeposit, rejectWithdrawal } from "@/features/assets/dal/funding-dal";
+import { approveWithdrawal, creditDeposit, markWithdrawalSent, rejectDeposit, rejectWithdrawal } from "@/features/assets/dal/funding-dal";
 import { invalidateOverlay } from "@/lib/market/overlay";
 import {
   balanceAdjustSchema,
@@ -34,6 +34,7 @@ import {
   depositConfirmSchema,
   depositRejectSchema,
   withdrawalRejectSchema,
+  withdrawalSentSchema,
 } from "@/features/admin/schemas/admin-schema";
 
 export const banClient = async (input) => {
@@ -69,6 +70,7 @@ export const resetClientBalance = async (userId) => {
       const now = new Date();
       await collections.positions().updateMany({ userId: parsed.data, mode: "practice", status: { $in: ["open", "pending"] } }, { $set: { status: "cancelled", closeReason: "admin_reset", closedAt: now } }, { session });
       await collections.orders().updateMany({ userId: parsed.data, mode: "practice", status: "open" }, { $set: { status: "cancelled", payout: 0, settledAt: now } }, { session });
+      await collections.positionCounters().updateOne({ _id: `${parsed.data}:practice` }, { $set: { count: 0 } }, { session });
       // Practice only on purpose: a reset must never touch a client's real funds.
       const balances = await getBalances(parsed.data, session, "practice");
       const clearing = balances
@@ -344,6 +346,18 @@ export const approveClientWithdrawal = async (id) =>
     await writeAudit(admin, "withdrawal.approve", withdrawal.userId, `${withdrawal.amount} ${withdrawal.asset} to ${withdrawal.address}`);
   });
 
+export const confirmWithdrawalSent = async (input) => {
+  const parsed = withdrawalSentSchema.safeParse(input);
+  if (!parsed.success) return validationFailure(parsed.error);
+  return asAdmin(async (admin) => {
+    const withdrawal = await collections.withdrawals().findOne({ _id: new ObjectId(parsed.data.id) });
+    if (!withdrawal) return formFailure("Unknown withdrawal.");
+    const { sent } = await markWithdrawalSent(parsed.data.id, { providerRef: parsed.data.reference, adminId: admin.id });
+    if (!sent) return formFailure("This withdrawal is not waiting for payout.");
+    await writeAudit(admin, "withdrawal.sent", withdrawal.userId, `${withdrawal.amount} ${withdrawal.asset} to ${withdrawal.address} (${parsed.data.reference})`);
+  });
+};
+
 export const rejectClientWithdrawal = async (input) => {
   const parsed = withdrawalRejectSchema.safeParse(input);
   if (!parsed.success) return validationFailure(parsed.error);
@@ -363,6 +377,12 @@ export const deleteClient = async (userId) => {
     if (failure) return failure;
     if (user.role === "admin") return formFailure("Remove the admin role before deleting this account.");
     const owned = { userId: parsed.data };
+    const [liveEntry, deposit, withdrawal] = await Promise.all([
+      collections.ledger().findOne({ ...owned, mode: "live" }, { projection: { _id: 1 } }),
+      collections.deposits().findOne(owned, { projection: { _id: 1 } }),
+      collections.withdrawals().findOne(owned, { projection: { _id: 1 } }),
+    ]);
+    if (liveEntry || deposit || withdrawal) return formFailure("This client has live funding records, which must be kept. Ban the account instead.");
     const verification = await collections.verifications().findOne(owned);
     const documents = [verification?.documents?.front?.publicId, verification?.documents?.back?.publicId].filter(Boolean);
     await withTransaction(async (session) => {
@@ -370,6 +390,7 @@ export const deleteClient = async (userId) => {
         await collection.deleteMany(owned, { session });
       }
       await collections.invites().updateMany({ referrerId: parsed.data }, { $set: { referrerId: null } }, { session });
+      await collections.positionCounters().deleteMany({ _id: { $in: [`${parsed.data}:practice`, `${parsed.data}:live`] } }, { session });
     });
     await getAuth().api.removeUser({ body: { userId: parsed.data }, headers: await headers() });
     await deletePrivateImages(documents).catch((error) => reportError(error, { job: "deleteKycFiles", userId: parsed.data }));

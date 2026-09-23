@@ -215,12 +215,14 @@ describe("Active position cap", () => {
     await collections.positions().insertMany(
       Array.from({ length: 50 }, (_, index) => ({ userId, mode: "practice", symbol: "BTCUSDT", status: index % 2 ? "open" : "pending", createdAt: now, lastCheckedAt: now })),
     );
+    await collections.positionCounters().insertOne({ _id: `${userId}:practice`, count: 50 });
     fetchLatestPrices.mockResolvedValue({ BTCUSDT: "65000" });
     const order = { symbol: "BTCUSDT", side: "long", type: "market", amount: 10, leverage: 5 };
     await expect(placePerpetualOrder(userId, order)).rejects.toThrow("up to 50 open positions");
     const wallet = await collections.wallets().findOne({ userId, wallet: "perpetual" });
     expect(Number(wallet.balance)).toBe(1000);
-    await collections.positions().updateOne({ userId, status: "pending" }, { $set: { status: "cancelled" } });
+    const pending = await collections.positions().findOne({ userId, status: "pending" });
+    await cancelPendingOrder(userId, pending._id.toString());
     await expect(placePerpetualOrder(userId, order)).resolves.toEqual(expect.any(String));
   });
 

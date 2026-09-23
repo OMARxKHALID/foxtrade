@@ -10,6 +10,7 @@ import { formatUsdt } from "@/lib/format";
 import { collections } from "@/lib/mongo";
 import { hasPin } from "@/lib/pin";
 import { requireUser } from "@/lib/session";
+import { resolveMode } from "@/lib/trading-mode";
 import { cn } from "@/lib/utils";
 import { toRecordRow } from "@/features/assets/components/record-rows";
 import { getAssetsOverview, listRecords } from "@/features/assets/dal/assets-dal";
@@ -40,10 +41,11 @@ const Stat = ({ label, value, hint, tone }) => (
 
 const DashboardPage = async () => {
   const user = await requireUser("/dashboard");
+  const mode = await resolveMode(user);
   const [overview, summary, records, verification, pinSet] = await Promise.all([
-    getAssetsOverview(user.id),
-    getTradingSummary(user.id),
-    listRecords(user.id, { limit: 6 }),
+    getAssetsOverview(user.id, mode),
+    getTradingSummary(user.id, mode),
+    listRecords(user.id, { limit: 6, mode }),
     collections.verifications().findOne({ userId: user.id }, { projection: { status: 1 } }),
     hasPin(user.id),
   ]);

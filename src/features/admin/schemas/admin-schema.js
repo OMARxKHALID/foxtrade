@@ -190,6 +190,16 @@ export const withdrawalRejectSchema = z.object({
   reason: z.string().trim().min(3, "Add a short reason").max(200),
 });
 
+export const withdrawalSentSchema = z.object({
+  id: objectIdSchema,
+  reference: z
+    .string()
+    .trim()
+    .min(10, "Paste the payout transaction hash")
+    .max(120, "That does not look like a transaction hash")
+    .regex(/^[a-zA-Z0-9:_-]+$/, "A transaction hash has no spaces or symbols"),
+});
+
 export const contentSchema = z.object({
   key: z.string().regex(/^[a-z0-9-]{2,60}$/, "Unknown document"),
   title: z.string().trim().min(2, "Add a title").max(120),

@@ -11,7 +11,7 @@ const modeSchema = z.object({ mode: z.enum([PRACTICE, LIVE]) });
 
 const reasons = {
   disabled: "Live trading is not open yet.",
-  unverified: "Verify your identity before switching to a live account.",
+  unverified: "Get your identity details and documents approved before switching to a live account.",
   "signed-out": "Log in to switch accounts.",
 };
 

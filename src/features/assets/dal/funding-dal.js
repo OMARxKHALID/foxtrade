@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb";
 import { LIVE, LedgerError, getBalance, postEntries, withTransaction } from "@/lib/ledger";
 import { toAmount, toBig } from "@/lib/money";
 import { collections } from "@/lib/mongo";
+import { isLiveVerified } from "@/lib/trading-mode";
 
 // Funds leaving spot sit here between the user asking and the payout actually
 // leaving, so the same balance cannot be requested twice.
@@ -34,8 +35,8 @@ const requireLive = (mode) => {
 };
 
 export const isVerified = async (userId) => {
-  const verification = await collections.verifications().findOne({ userId }, { projection: { status: 1 } });
-  return verification?.status === "approved";
+  const verification = await collections.verifications().findOne({ userId }, { projection: { status: 1, "documents.status": 1 } });
+  return isLiveVerified(verification);
 };
 
 export const requireVerified = async (userId) => {
@@ -159,20 +160,20 @@ export const requestWithdrawal = async (userId, { asset, amount, address, networ
   });
 };
 
-const claimForReview = async (withdrawalId, session) => {
+const claimForReview = async (withdrawalId, session, statuses = ["requested"]) => {
   const _id = ObjectId.isValid(withdrawalId) ? new ObjectId(withdrawalId) : null;
   if (!_id) throw new LedgerError("Unknown withdrawal.");
-  const claimed = await collections.withdrawals().findOne({ _id, status: "requested" }, { session });
+  const claimed = await collections.withdrawals().findOne({ _id, status: { $in: statuses } }, { session });
   if (!claimed) throw new LedgerError("This withdrawal was already reviewed.");
   return claimed;
 };
 
 export const rejectWithdrawal = async (withdrawalId, { adminId, reason }) =>
   withTransaction(async (session) => {
-    const withdrawal = await claimForReview(withdrawalId, session);
+    const withdrawal = await claimForReview(withdrawalId, session, ["requested", "approved"]);
     await collections
       .withdrawals()
-      .updateOne({ _id: withdrawal._id, status: "requested" }, { $set: { status: "rejected", reason, reviewedBy: adminId, reviewedAt: new Date() } }, { session });
+      .updateOne({ _id: withdrawal._id, status: withdrawal.status }, { $set: { status: "rejected", reason, reviewedBy: adminId, reviewedAt: new Date() } }, { session });
     await postEntries(
       [
         { userId: withdrawal.userId, mode: withdrawal.mode, wallet: HOLD_WALLET, asset: withdrawal.asset, type: "withdraw_refund", amount: toBig(withdrawal.amount).times(-1), refId: withdrawal._id.toString(), note: "Withdrawal rejected" },
@@ -184,7 +185,8 @@ export const rejectWithdrawal = async (withdrawalId, { adminId, reason }) =>
   });
 
 // Approval only clears it for payout. The money leaves in markWithdrawalSent,
-// once the provider confirms, so a failed payout can still be refunded.
+// once a second admin confirms it was sent, so a failed payout can still be
+// refunded with rejectWithdrawal.
 export const approveWithdrawal = async (withdrawalId, { adminId }) =>
   withTransaction(async (session) => {
     const withdrawal = await claimForReview(withdrawalId, session);
@@ -194,12 +196,15 @@ export const approveWithdrawal = async (withdrawalId, { adminId }) =>
     return { approved: true };
   });
 
-export const markWithdrawalSent = async (withdrawalId, { providerRef }) =>
+export const markWithdrawalSent = async (withdrawalId, { providerRef, adminId }) =>
   withTransaction(async (session) => {
     const _id = ObjectId.isValid(withdrawalId) ? new ObjectId(withdrawalId) : null;
+    const approved = await collections.withdrawals().findOne({ _id, status: "approved" }, { session });
+    if (!approved) return { sent: false };
+    if (!adminId || approved.reviewedBy === adminId) throw new LedgerError("A second admin has to confirm the payout was sent.");
     const claimed = await collections
       .withdrawals()
-      .findOneAndUpdate({ _id, status: "approved" }, { $set: { status: "sent", providerRef, sentAt: new Date() } }, { returnDocument: "after", session });
+      .findOneAndUpdate({ _id, status: "approved" }, { $set: { status: "sent", providerRef, sentBy: adminId, sentAt: new Date() } }, { returnDocument: "after", session });
     if (!claimed) return { sent: false };
     await postEntries(
       [

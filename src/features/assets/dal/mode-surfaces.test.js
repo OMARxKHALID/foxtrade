@@ -20,7 +20,7 @@ const spot = async (mode, asset = "USDT") => Number(await getBalance(userId, "sp
 beforeEach(async () => {
   for (const collection of Object.values(collections)) await collection().deleteMany({});
   await writePairs(defaultPairs);
-  await collections.verifications().insertOne({ userId, email: "t@test.dev", status: "approved" });
+  await collections.verifications().insertOne({ userId, email: "t@test.dev", status: "approved", documents: { status: "approved" } });
 });
 
 describe("Balance surfaces show the account you are in", () => {

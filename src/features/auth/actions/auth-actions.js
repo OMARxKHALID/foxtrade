@@ -16,11 +16,13 @@ export const signIn = async (input) => {
   const { email, password, remember, next } = parsed.data;
   try {
     const ip = await clientIp();
-    const [byEmail, byIp] = await Promise.all([
-      rateLimit(`login:email:${email.toLowerCase()}`, { limit: 8, windowSeconds: 900 }),
+    const [byEmailAndIp, byEmail, byIp] = await Promise.all([
+      rateLimit(`login:email-ip:${email.toLowerCase()}:${ip}`, { limit: 8, windowSeconds: 900 }),
+      rateLimit(`login:email:${email.toLowerCase()}`, { limit: 100, windowSeconds: 900 }),
       rateLimit(`login:ip:${ip}`, { limit: 30, windowSeconds: 900 }),
     ]);
-    if (!byEmail.allowed || !byIp.allowed) return tooManyAttempts(Math.max(byEmail.retryAfter, byIp.retryAfter));
+    const blocked = [byEmailAndIp, byEmail, byIp].filter((limit) => !limit.allowed);
+    if (blocked.length) return tooManyAttempts(Math.max(...blocked.map((limit) => limit.retryAfter)));
     await getAuth().api.signInEmail({ body: { email, password, rememberMe: remember ?? true }, headers: await headers() });
   } catch (error) {
     return serverFailure(error);
