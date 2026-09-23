@@ -1,5 +1,6 @@
 "use server";
 
+import Big from "big.js";
 import { headers } from "next/headers";
 import { ObjectId } from "mongodb";
 import { formFailure, validationFailure } from "@/lib/action-result";
@@ -10,10 +11,12 @@ import { readPlatformSettings } from "@/lib/platform-settings";
 import { getBalances, postEntries, withTransaction } from "@/lib/ledger";
 import { readPairs } from "@/lib/market/pair-store";
 import { assetsOf } from "@/lib/market/pairs";
+import { reportError } from "@/lib/error-log";
 import { collections } from "@/lib/mongo";
 import { addTicketMessage, setTicketStatus } from "@/lib/ticket-store";
 import { asAdmin, findClient, findUser, reviewVerification, reviewVerificationDocuments, writeAudit } from "@/features/admin/dal/admin-dal";
 import { closeAllPositions } from "@/features/trading/dal/trading-engine";
+import { approveWithdrawal, creditDeposit, rejectDeposit, rejectWithdrawal } from "@/features/assets/dal/funding-dal";
 import { invalidateOverlay } from "@/lib/market/overlay";
 import {
   balanceAdjustSchema,
@@ -28,6 +31,9 @@ import {
   reviewSchema,
   ticketReplySchema,
   ticketStatusSchema,
+  depositConfirmSchema,
+  depositRejectSchema,
+  withdrawalRejectSchema,
 } from "@/features/admin/schemas/admin-schema";
 
 export const banClient = async (input) => {
@@ -61,13 +67,14 @@ export const resetClientBalance = async (userId) => {
     const { practiceAmount } = await readPlatformSettings();
     await withTransaction(async (session) => {
       const now = new Date();
-      await collections.positions().updateMany({ userId: parsed.data, status: { $in: ["open", "pending"] } }, { $set: { status: "cancelled", closeReason: "admin_reset", closedAt: now } }, { session });
-      await collections.orders().updateMany({ userId: parsed.data, status: "open" }, { $set: { status: "cancelled", payout: 0, settledAt: now } }, { session });
-      const balances = await getBalances(parsed.data, session);
+      await collections.positions().updateMany({ userId: parsed.data, mode: "practice", status: { $in: ["open", "pending"] } }, { $set: { status: "cancelled", closeReason: "admin_reset", closedAt: now } }, { session });
+      await collections.orders().updateMany({ userId: parsed.data, mode: "practice", status: "open" }, { $set: { status: "cancelled", payout: 0, settledAt: now } }, { session });
+      // Practice only on purpose: a reset must never touch a client's real funds.
+      const balances = await getBalances(parsed.data, session, "practice");
       const clearing = balances
         .filter((item) => !item.balance.eq(0))
-        .map((item) => ({ userId: parsed.data, wallet: item.wallet, asset: item.asset, type: "admin_reset", amount: item.balance.times(-1), note: "Reset by admin" }));
-      await postEntries([...clearing, { userId: parsed.data, wallet: "spot", asset: "USDT", type: "admin_reset", amount: practiceAmount, note: "Reset by admin" }], session);
+        .map((item) => ({ userId: parsed.data, mode: "practice", wallet: item.wallet, asset: item.asset, type: "admin_reset", amount: item.balance.times(-1), note: "Reset by admin" }));
+      await postEntries([...clearing, { userId: parsed.data, mode: "practice", wallet: "spot", asset: "USDT", type: "admin_reset", amount: practiceAmount, note: "Reset by admin" }], session);
     });
     await writeAudit(admin, "client.reset_balance", client.email, `Reset to ${practiceAmount} USDT`);
   });
@@ -91,7 +98,7 @@ export const reviewClientDocuments = async (input) => {
     if (!previous) return formFailure(`These documents are already ${parsed.data.decision} or were not submitted.`);
     if (parsed.data.decision === "rejected") {
       await collections.verifications().updateOne({ _id: previous._id }, { $unset: { "documents.front": "", "documents.back": "" } });
-      await deletePrivateImages([previous.documents.front.publicId, previous.documents.back.publicId]).catch((error) => console.error(`Could not delete rejected KYC files for ${previous.email}:`, error));
+      await deletePrivateImages([previous.documents.front.publicId, previous.documents.back.publicId]).catch((error) => reportError(error, { job: "deleteRejectedKycFiles", email: previous.email }));
     }
     await writeAudit(admin, `kyc.documents_${parsed.data.decision}`, previous.email, parsed.data.reason ?? null);
   });
@@ -219,13 +226,71 @@ export const adjustClientBalance = async (input) => {
   return asAdmin(async (admin) => {
     const { user, failure } = await targetUser(admin, parsed.data.userId, { allowSelf: true });
     if (failure) return failure;
-    const { userId, wallet, asset, amount, note } = parsed.data;
+    const { userId, mode, wallet, asset, amount, note } = parsed.data;
     if (!assetsOf(await readPairs()).some((item) => item.symbol === asset)) return formFailure(`${asset} is not a listed asset.`);
-    await withTransaction((session) => postEntries([{ userId, wallet, asset, type: "admin_adjust", amount, note }], session));
     const credit = !amount.startsWith("-");
+
+    // Practice balances are not money, so one admin is enough. Real funds need a
+    // second pair of eyes, and the requester is never allowed to be both.
+    if (mode === "live") {
+      await collections.adjustments().insertOne({
+        userId,
+        mode,
+        wallet,
+        asset,
+        amount,
+        note,
+        status: "pending",
+        requestedBy: admin.id,
+        requestedByEmail: admin.email,
+        targetEmail: user.email,
+        reviewedBy: null,
+        createdAt: new Date(),
+        reviewedAt: null,
+      });
+      await writeAudit(admin, "client.adjust_requested", user.email, `${credit ? "+" : ""}${amount} ${asset} (${wallet}, live): ${note}`);
+      return { ok: true, data: { pending: true } };
+    }
+
+    await withTransaction((session) => postEntries([{ userId, mode, wallet, asset, type: "admin_adjust", amount, note }], session));
     await writeAudit(admin, credit ? "client.credit" : "client.debit", user.email, `${credit ? "+" : ""}${amount} ${asset} (${wallet}): ${note}`);
+    return { ok: true, data: { pending: false } };
   });
 };
+
+const claimAdjustment = async (id, admin) => {
+  if (!ObjectId.isValid(id)) return { failure: formFailure("Unknown request.") };
+  const adjustment = await collections.adjustments().findOne({ _id: new ObjectId(id), status: "pending" });
+  if (!adjustment) return { failure: formFailure("This request was already reviewed.") };
+  if (adjustment.requestedBy === admin.id) return { failure: formFailure("A second admin has to approve a live balance change.") };
+  return { adjustment };
+};
+
+export const approveAdjustment = async (id) =>
+  asAdmin(async (admin) => {
+    const { adjustment, failure } = await claimAdjustment(id, admin);
+    if (failure) return failure;
+    const { userId, mode, wallet, asset, amount, note } = adjustment;
+    await withTransaction(async (session) => {
+      const claimed = await collections
+        .adjustments()
+        .findOneAndUpdate({ _id: adjustment._id, status: "pending" }, { $set: { status: "approved", reviewedBy: admin.id, reviewedAt: new Date() } }, { session });
+      if (!claimed) throw new Error("Adjustment already reviewed.");
+      await postEntries([{ userId, mode, wallet, asset, type: "admin_adjust", amount, note }], session);
+    });
+    const credit = !amount.startsWith("-");
+    await writeAudit(admin, credit ? "client.credit" : "client.debit", adjustment.targetEmail, `${credit ? "+" : ""}${amount} ${asset} (${wallet}, live) approved, requested by ${adjustment.requestedByEmail}`);
+  });
+
+export const rejectAdjustment = async (id) =>
+  asAdmin(async (admin) => {
+    const { adjustment, failure } = await claimAdjustment(id, admin);
+    if (failure) return failure;
+    await collections
+      .adjustments()
+      .updateOne({ _id: adjustment._id, status: "pending" }, { $set: { status: "rejected", reviewedBy: admin.id, reviewedAt: new Date() } });
+    await writeAudit(admin, "client.adjust_rejected", adjustment.targetEmail, `${adjustment.amount} ${adjustment.asset} requested by ${adjustment.requestedByEmail}`);
+  });
 
 export const closeClientPositions = async (userId) => {
   const parsed = objectIdSchema.safeParse(userId);
@@ -236,6 +301,57 @@ export const closeClientPositions = async (userId) => {
     const { closed, total } = await closeAllPositions(parsed.data);
     await writeAudit(admin, "client.close_positions", user.email, `${closed} of ${total} closed at market`);
     return { ok: true, data: { closed, total } };
+  });
+};
+
+// The client only claims what they sent. The amount credited is the one the
+// admin verified on-chain, and the transaction hash is what stops the same
+// payment being credited twice.
+//
+// Crediting is single admin, unlike a live balance adjustment, which needs two.
+// The claimed amount is the ceiling so that one admin still cannot mint live
+// funds on their own: someone has to have reported that transfer first.
+export const confirmClientDeposit = async (input) => {
+  const parsed = depositConfirmSchema.safeParse(input);
+  if (!parsed.success) return validationFailure(parsed.error);
+  return asAdmin(async (admin) => {
+    const deposit = ObjectId.isValid(parsed.data.id) ? await collections.deposits().findOne({ _id: new ObjectId(parsed.data.id) }) : null;
+    if (!deposit) return formFailure("Unknown deposit.");
+    if (!deposit.reference) return formFailure("This deposit has no transaction reference.");
+    if (new Big(parsed.data.amount).gt(deposit.amount)) {
+      return formFailure(`The client reported ${deposit.amount} ${deposit.asset}. Credit that or less, or reject it and ask them to report the real amount.`);
+    }
+    const { credited } = await creditDeposit({ provider: deposit.provider, providerRef: deposit.reference, depositId: parsed.data.id, amount: parsed.data.amount });
+    if (!credited) return formFailure("This deposit was already credited.");
+    await writeAudit(admin, "deposit.confirm", deposit.userId, `${parsed.data.amount} ${deposit.asset} via ${deposit.network || deposit.provider} (${deposit.reference})`);
+  });
+};
+
+export const rejectClientDeposit = async (input) => {
+  const parsed = depositRejectSchema.safeParse(input);
+  if (!parsed.success) return validationFailure(parsed.error);
+  return asAdmin(async (admin) => {
+    const deposit = await rejectDeposit(parsed.data.id, { adminId: admin.id, reason: parsed.data.reason });
+    await writeAudit(admin, "deposit.reject", deposit.userId, `${deposit.amount} ${deposit.asset} claimed: ${parsed.data.reason}`);
+  });
+};
+
+export const approveClientWithdrawal = async (id) =>
+  asAdmin(async (admin) => {
+    const withdrawal = ObjectId.isValid(id) ? await collections.withdrawals().findOne({ _id: new ObjectId(id) }) : null;
+    if (!withdrawal) return formFailure("Unknown withdrawal.");
+    await approveWithdrawal(id, { adminId: admin.id });
+    await writeAudit(admin, "withdrawal.approve", withdrawal.userId, `${withdrawal.amount} ${withdrawal.asset} to ${withdrawal.address}`);
+  });
+
+export const rejectClientWithdrawal = async (input) => {
+  const parsed = withdrawalRejectSchema.safeParse(input);
+  if (!parsed.success) return validationFailure(parsed.error);
+  return asAdmin(async (admin) => {
+    const withdrawal = ObjectId.isValid(parsed.data.id) ? await collections.withdrawals().findOne({ _id: new ObjectId(parsed.data.id) }) : null;
+    if (!withdrawal) return formFailure("Unknown withdrawal.");
+    const { refunded } = await rejectWithdrawal(parsed.data.id, { adminId: admin.id, reason: parsed.data.reason });
+    await writeAudit(admin, "withdrawal.reject", withdrawal.userId, `${refunded} ${withdrawal.asset} returned: ${parsed.data.reason}`);
   });
 };
 
@@ -256,7 +372,7 @@ export const deleteClient = async (userId) => {
       await collections.invites().updateMany({ referrerId: parsed.data }, { $set: { referrerId: null } }, { session });
     });
     await getAuth().api.removeUser({ body: { userId: parsed.data }, headers: await headers() });
-    await deletePrivateImages(documents).catch((error) => console.error(`Could not delete KYC files for ${parsed.data}:`, error));
+    await deletePrivateImages(documents).catch((error) => reportError(error, { job: "deleteKycFiles", userId: parsed.data }));
     await writeAudit(admin, "client.delete", user.email);
   });
 };

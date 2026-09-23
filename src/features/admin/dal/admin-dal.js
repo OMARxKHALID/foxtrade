@@ -1,7 +1,8 @@
 import "server-only";
 import { headers } from "next/headers";
 import { ObjectId } from "mongodb";
-import { formFailure, serverFailure, signInRequired } from "@/lib/action-result";
+import { formFailure, signInRequired } from "@/lib/action-result";
+import { serverFailure } from "@/lib/server-result";
 import { getAuth } from "@/lib/auth";
 import { getBalances } from "@/lib/ledger";
 import { toAmountString } from "@/lib/money";
@@ -109,7 +110,7 @@ export const getClientDetail = async (userId) => {
   if (!user) return null;
   const id = user._id.toString();
   const [balances, trading, records, tickets, verification, sessions] = await Promise.all([
-    getBalances(id),
+    Promise.all([getBalances(id, null, "practice"), getBalances(id, null, "live")]).then(([practice, live]) => [...practice, ...live]),
     getTradingSummary(id),
     listRecords(id, { limit: 100 }),
     listUserTickets(id),
@@ -131,7 +132,7 @@ export const getClientDetail = async (userId) => {
       emailVerified: Boolean(user.emailVerified),
       createdAt: user.createdAt.toISOString(),
     },
-    balances: balances.filter((item) => !item.balance.eq(0)).map((item) => ({ wallet: item.wallet, asset: item.asset, balance: toAmountString(item.balance) })),
+    balances: balances.filter((item) => !item.balance.eq(0)).map((item) => ({ wallet: item.wallet, asset: item.asset, mode: item.mode, balance: toAmountString(item.balance) })),
     trading,
     records,
     tickets,
@@ -206,6 +207,49 @@ export const reviewVerification = async (id, decision, reason) => {
     { $set: { status: decision, reason: decision === "rejected" ? reason : null, reviewedAt: new Date() } },
     { returnDocument: "after" },
   );
+};
+
+export const listPendingApprovals = async () => {
+  await requireAdmin();
+  const [withdrawals, adjustments, deposits] = await Promise.all([
+    collections.withdrawals().find({ status: "requested" }).sort({ createdAt: 1 }).limit(200).toArray(),
+    collections.adjustments().find({ status: "pending" }).sort({ createdAt: 1 }).limit(200).toArray(),
+    collections.deposits().find({ status: "pending" }).sort({ createdAt: 1 }).limit(200).toArray(),
+  ]);
+  const userIds = [...withdrawals, ...deposits].map((item) => (ObjectId.isValid(item.userId) ? new ObjectId(item.userId) : null)).filter(Boolean);
+  const emails = await collections.users().find({ _id: { $in: userIds } }, { projection: { email: 1 } }).toArray();
+  const emailById = Object.fromEntries(emails.map((user) => [user._id.toString(), user.email]));
+
+  return {
+    deposits: deposits.map((doc) => ({
+      id: doc._id.toString(),
+      email: emailById[doc.userId] ?? doc.userId,
+      asset: doc.asset,
+      amount: doc.amount,
+      network: doc.network ?? "",
+      reference: doc.reference ?? "",
+      createdAt: doc.createdAt.toISOString(),
+    })),
+    withdrawals: withdrawals.map((doc) => ({
+      id: doc._id.toString(),
+      email: emailById[doc.userId] ?? doc.userId,
+      asset: doc.asset,
+      amount: doc.amount,
+      address: doc.address,
+      network: doc.network ?? "",
+      createdAt: doc.createdAt.toISOString(),
+    })),
+    adjustments: adjustments.map((doc) => ({
+      id: doc._id.toString(),
+      email: doc.targetEmail,
+      requestedBy: doc.requestedByEmail,
+      wallet: doc.wallet,
+      asset: doc.asset,
+      amount: doc.amount,
+      note: doc.note,
+      createdAt: doc.createdAt.toISOString(),
+    })),
+  };
 };
 
 export const listAudit = async () => {

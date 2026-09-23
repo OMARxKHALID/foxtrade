@@ -6,7 +6,6 @@ import { writePairs } from "@/lib/market/pair-store";
 import { defaultPairs } from "@/lib/market/pairs";
 
 vi.mock("next/headers", () => ({ headers: vi.fn(async () => new Headers()) }));
-vi.mock("next/cache", () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: () => {} }));
 vi.mock("@/lib/session", () => ({ getCurrentUser: vi.fn(), isAdmin: (user) => user?.role === "admin", requireAdmin: vi.fn() }));
 vi.mock("@/lib/auth", () => ({ getAuth: () => ({ api: { removeUser: vi.fn(async () => ({})) } }) }));
 vi.mock("@/lib/document-storage", () => ({ deletePrivateImages: vi.fn(async () => {}) }));
@@ -139,12 +138,11 @@ describe("Deleting a client", () => {
   it("still deletes the client when document storage is down", async () => {
     await collections.verifications().insertOne({ userId: clientId.toString(), documents: { front: { publicId: "kyc/c/front" } } });
     deletePrivateImages.mockRejectedValueOnce(new Error("Cloudinary 503"));
-    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
     const result = await deleteClient(clientId.toString());
     expect(result.ok).toBe(true);
     expect(await collections.verifications().countDocuments({ userId: clientId.toString() })).toBe(0);
-    expect(logged).toHaveBeenCalledWith(expect.stringContaining("Could not delete KYC files"), expect.any(Error));
-    logged.mockRestore();
+    expect(await collections.errors().countDocuments({ "lastContext.job": "deleteKycFiles" })).toBe(1);
   });
 
   it("refuses to delete an admin account", async () => {

@@ -81,6 +81,18 @@ export const platformSettingsSchema = z
       .refine((value) => !value || (value.length >= 8 && value.length <= 15), "Enter the full number with country code, digits only")
       .optional()
       .default(""),
+    liveTradingEnabled: z.boolean(),
+    minDeposit: z.coerce.number({ error: "Enter an amount" }).min(1, "At least 1").max(1e9),
+    depositAddresses: z
+      .array(
+        z.object({
+          network: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{2,20}$/, "Enter a network, e.g. TRC20"),
+          address: z.string().trim().min(26, "Enter a valid wallet address").max(120, "Enter a valid wallet address"),
+          memo: z.string().trim().max(60).optional().default(""),
+        }),
+      )
+      .max(6, "At most 6 networks")
+      .default([]),
     maintenanceMode: z.boolean(),
     maintenanceMessage: z.string().trim().min(10, "Write at least 10 characters").max(200),
     practiceAmount: z.coerce.number({ error: "Enter an amount" }).min(0).max(1e9),
@@ -102,6 +114,14 @@ export const platformSettingsSchema = z
   .refine((value) => new Set(value.timedDurations.map((item) => item.seconds)).size === value.timedDurations.length, {
     path: ["timedDurations"],
     message: "Each duration must be unique",
+  })
+  .refine((value) => new Set(value.depositAddresses.map((item) => item.network)).size === value.depositAddresses.length, {
+    path: ["depositAddresses"],
+    message: "Each network can only have one address",
+  })
+  .refine((value) => !value.liveTradingEnabled || value.depositAddresses.length > 0, {
+    path: ["depositAddresses"],
+    message: "Add at least one deposit address before opening live trading",
   });
 
 export const documentsReviewSchema = z
@@ -140,6 +160,7 @@ export const clientsForceWinSchema = z.object({
 
 export const balanceAdjustSchema = z.object({
   userId: objectIdSchema,
+  mode: z.enum(["practice", "live"]).default("practice"),
   wallet: z.enum(["spot", "timed", "perpetual"], { error: "Choose a wallet" }),
   asset: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{2,20}$/, "Choose an asset"),
   amount: z
@@ -148,6 +169,25 @@ export const balanceAdjustSchema = z.object({
     .refine((value) => /^-?\d+(\.\d+)?$/.test(value) && !new Big(value).eq(0), "Enter an amount other than 0")
     .refine((value) => !/^-?\d+(\.\d+)?$/.test(value) || new Big(value).abs().lte(1e9), "Amount is too large"),
   note: z.string().trim().min(3, "Add a short reason").max(120),
+});
+
+export const depositConfirmSchema = z.object({
+  id: objectIdSchema,
+  amount: z
+    .union([z.string(), z.number()], { error: "Enter the amount that actually arrived" })
+    .transform((value) => String(value).trim())
+    .refine((value) => /^\d+(\.\d{1,8})?$/.test(value) && new Big(value).gt(0), "Enter the amount that actually arrived")
+    .refine((value) => !/^\d+(\.\d{1,8})?$/.test(value) || new Big(value).lte(1e9), "Amount is too large"),
+});
+
+export const depositRejectSchema = z.object({
+  id: objectIdSchema,
+  reason: z.string().trim().min(3, "Add a short reason").max(200),
+});
+
+export const withdrawalRejectSchema = z.object({
+  id: objectIdSchema,
+  reason: z.string().trim().min(3, "Add a short reason").max(200),
 });
 
 export const contentSchema = z.object({

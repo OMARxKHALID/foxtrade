@@ -6,6 +6,9 @@ export const defaultPlatformSettings = {
   description: "Trade crypto with live Binance prices and practice balances.",
   supportEmail: "support@foxtrade.app",
   supportWhatsapp: "",
+  liveTradingEnabled: false,
+  depositAddresses: [],
+  minDeposit: 20,
   maintenanceMode: false,
   maintenanceMessage: "We are carrying out scheduled maintenance. Trading will be back shortly.",
   practiceAmount: 100000,
@@ -29,6 +32,18 @@ const number = (value, min, max, fallback) => {
 
 const text = (value, fallback, max) => (typeof value === "string" && value.trim() ? value.trim().slice(0, max) : fallback);
 
+const normalizeAddresses = (addresses) => {
+  if (!Array.isArray(addresses)) return [];
+  const unique = new Map();
+  addresses.forEach((item) => {
+    const network = text(item?.network, "", 20).toUpperCase();
+    const address = text(item?.address, "", 120);
+    if (!network || !address) return;
+    unique.set(network, { network, address, memo: text(item?.memo, "", 60) });
+  });
+  return [...unique.values()].slice(0, 6);
+};
+
 const normalizeDurations = (durations) => {
   if (!Array.isArray(durations) || !durations.length) return defaultPlatformSettings.timedDurations;
   const unique = new Map();
@@ -48,6 +63,9 @@ export const normalizePlatformSettings = (value = {}) => {
     description: text(value.description, base.description, 300),
     supportEmail: text(value.supportEmail, base.supportEmail, 120),
     supportWhatsapp: typeof value.supportWhatsapp === "string" ? value.supportWhatsapp.replace(/[^\d]/g, "").slice(0, 15) : base.supportWhatsapp,
+    liveTradingEnabled: Boolean(value.liveTradingEnabled),
+    depositAddresses: normalizeAddresses(value.depositAddresses),
+    minDeposit: number(value.minDeposit, 1, 1e9, base.minDeposit),
     maintenanceMode: Boolean(value.maintenanceMode),
     maintenanceMessage: text(value.maintenanceMessage, base.maintenanceMessage, 200),
     practiceAmount: number(value.practiceAmount ?? value.demoAmount, 0, 1e9, base.practiceAmount),

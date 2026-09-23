@@ -44,3 +44,14 @@ export const addressSchema = z.object({
   network: z.enum(networks, { error: "Choose a network" }),
   address: z.string().trim().min(26, "Enter a valid wallet address").max(64, "Enter a valid wallet address"),
 });
+
+export const depositSchema = z.object({
+  network: z.enum(networks, { error: "Choose a network" }),
+  amount: positiveAmount,
+  reference: z
+    .string()
+    .trim()
+    .min(10, "Paste the transaction hash from your wallet")
+    .max(120, "That does not look like a transaction hash")
+    .regex(/^[a-zA-Z0-9:_-]+$/, "A transaction hash has no spaces or symbols"),
+});
