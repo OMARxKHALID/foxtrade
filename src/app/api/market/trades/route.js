@@ -2,6 +2,7 @@ import { connection } from "next/server";
 import { getCurrentUser } from "@/lib/session";
 import { fetchRecentTrades } from "@/lib/market/binance-rest";
 import { transformRecentTrades } from "@/lib/market/overlay";
+import { reportError } from "@/lib/error-log";
 import { clientIp, rateLimit, rateLimitedResponse } from "@/lib/rate-limit";
 
 
@@ -23,7 +24,7 @@ export const GET = async (request) => {
     }
     return Response.json(trades);
   } catch (error) {
-    console.error(`Trades proxy failed for ${symbol}:`, error);
+    await reportError(error, { route: "market/trades", symbol });
     return Response.json({ error: "Market data unavailable" }, { status: 502 });
   }
 };

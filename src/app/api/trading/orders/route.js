@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { reportError } from "@/lib/error-log";
 import { clientIp, rateLimit, rateLimitedResponse } from "@/lib/rate-limit";
 import { getCurrentUser } from "@/lib/session";
+import { resolveMode } from "@/lib/trading-mode";
 import { getTradingSnapshot } from "@/features/trading/dal/trading-engine";
 
 export const GET = async (request) => {
@@ -10,10 +12,10 @@ export const GET = async (request) => {
   if (!limit.allowed) return rateLimitedResponse(limit.retryAfter);
   if (!user) return NextResponse.json({ signedIn: false, available: 0, items: [] }, { headers: { "Cache-Control": "no-store" } });
   try {
-    const snapshot = await getTradingSnapshot(user.id, market);
+    const snapshot = await getTradingSnapshot(user.id, market, await resolveMode(user));
     return NextResponse.json({ signedIn: true, ...snapshot }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
-    console.error(error);
+    await reportError(error, { route: "trading/orders", market, userId: user.id });
     return NextResponse.json({ error: "Could not load orders" }, { status: 500 });
   }
 };

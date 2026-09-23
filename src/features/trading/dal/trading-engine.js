@@ -1,11 +1,12 @@
 import "server-only";
 import { ObjectId } from "mongodb";
-import { LedgerError, getBalance, postEntries, withTransaction } from "@/lib/ledger";
+import { LedgerError, PRACTICE, getBalance, postEntries, withTransaction } from "@/lib/ledger";
 import { fetchKlineRange, fetchLatestPrices } from "@/lib/market/binance-rest";
 import { forcedClosePrice, forcedExitPrice, invalidateOverlay, positionWindow, transformCandlesForWindow } from "@/lib/market/overlay";
 import { readPairs } from "@/lib/market/pair-store";
 import { findPair } from "@/lib/market/pairs";
 import { toAmount, toAmountString, toBig } from "@/lib/money";
+import { reportError } from "@/lib/error-log";
 import { collections } from "@/lib/mongo";
 import { defaultPlatformSettings, readPlatformSettings } from "@/lib/platform-settings";
 
@@ -48,23 +49,31 @@ const latestPrice = async (symbol) => {
 
 const toObjectId = (id) => (ObjectId.isValid(id) ? new ObjectId(id) : null);
 
-const forcedWinFor = async (userId) => {
+// Force win is a practice-only device. Live trades have no path to the flag, so
+// real money can never be settled by anything but the real market price.
+const forcedWinFor = async (userId, mode) => {
+  if (mode !== PRACTICE) return false;
   const user = toObjectId(userId) ? await collections.users().findOne({ _id: toObjectId(userId) }, { projection: { forceWin: 1 } }) : null;
   return Boolean(user?.forceWin);
 };
 
-const claimActiveSlot = async (userId, session) => {
-  await collections.positionCounters().updateOne({ _id: userId }, { $setOnInsert: { count: 0 } }, { upsert: true, session });
+const assertPracticeIfForced = (doc) => {
+  if (doc.forcedWin && doc.mode !== PRACTICE) throw new LedgerError("A live trade cannot be force settled.");
+};
+
+const claimActiveSlot = async (userId, session, mode = PRACTICE) => {
+  const _id = `${userId}:${mode}`;
+  await collections.positionCounters().updateOne({ _id }, { $setOnInsert: { count: 0 } }, { upsert: true, session });
   const claimed = await collections.positionCounters().findOneAndUpdate(
-    { _id: userId, $expr: { $lt: ["$count", MAX_ACTIVE_POSITIONS] } },
+    { _id, $expr: { $lt: ["$count", MAX_ACTIVE_POSITIONS] } },
     { $inc: { count: 1 } },
     { session },
   );
   if (!claimed) throw new LedgerError(`You can have up to ${MAX_ACTIVE_POSITIONS} open positions and pending orders. Close or cancel some first.`);
 };
 
-const releaseActiveSlot = async (userId, session) => {
-  await collections.positionCounters().updateOne({ _id: userId }, { $inc: { count: -1 } }, { session });
+const releaseActiveSlot = async (userId, session, mode = PRACTICE) => {
+  await collections.positionCounters().updateOne({ _id: `${userId}:${mode}` }, { $inc: { count: -1 } }, { session });
 };
 
 const liquidationPrice = ({ side, entryPrice, size, margin, maintenanceMarginRate = defaultPlatformSettings.maintenanceMarginRate }) => {
@@ -79,7 +88,7 @@ const pnlAt = ({ side, entryPrice, size }, price) => {
   return difference.times(size);
 };
 
-export const placeTimedOrder = async (userId, { symbol, direction, duration, amount }) => {
+export const placeTimedOrder = async (userId, { symbol, direction, duration, amount }, mode = PRACTICE) => {
   await ensureIndexes();
   const [pairs, settings] = await Promise.all([readPairs(), readPlatformSettings()]);
   const pair = findPair(pairs, symbol);
@@ -87,16 +96,17 @@ export const placeTimedOrder = async (userId, { symbol, direction, duration, amo
   if (!pair || !rule) throw new LedgerError("This market is not available.");
   if (!pair.timedEnabled) throw new LedgerError(`Options trading on ${pair.base}/USDT is paused.`);
   if (amount < rule.minAmount) throw new LedgerError(`Minimum stake for ${duration}s is ${rule.minAmount} USDT.`);
-  const forcedWin = await forcedWinFor(userId);
+  const forcedWin = await forcedWinFor(userId, mode);
   const openPrice = await latestPrice(pair.symbol);
   const openedAt = new Date();
   const orderId = new ObjectId();
   await withTransaction(async (session) => {
-    await postEntries([{ userId, wallet: "timed", asset: "USDT", type: "timed_stake", amount: -amount, refId: orderId.toString(), note: `${pair.base}/USDT ${direction}` }], session);
+    await postEntries([{ userId, mode, wallet: "timed", asset: "USDT", type: "timed_stake", amount: -amount, refId: orderId.toString(), note: `${pair.base}/USDT ${direction}` }], session);
     await collections.orders().insertOne(
       {
         _id: orderId,
         userId,
+        mode,
         symbol: pair.symbol,
         direction,
         duration,
@@ -116,6 +126,7 @@ export const placeTimedOrder = async (userId, { symbol, direction, duration, amo
 };
 
 const settleTimedOrder = async (order) => {
+  assertPracticeIfForced(order);
   if (order.forcedWin) {
     const closePrice = await forcedClosePrice(order);
     const status = "won";
@@ -125,7 +136,7 @@ const settleTimedOrder = async (order) => {
         .orders()
         .findOneAndUpdate({ _id: order._id, status: "open" }, { $set: { status, closePrice, payout, settledAt: new Date() } }, { session });
       if (!claimed || !payout) return;
-      await postEntries([{ userId: order.userId, wallet: "timed", asset: "USDT", type: "timed_payout", amount: payout, refId: order._id.toString(), note: "Payout" }], session);
+      await postEntries([{ userId: order.userId, mode: order.mode, wallet: "timed", asset: "USDT", type: "timed_payout", amount: payout, refId: order._id.toString(), note: "Payout" }], session);
     });
     invalidateOverlay(order.userId);
     return;
@@ -148,11 +159,11 @@ const settleTimedOrder = async (order) => {
       .orders()
       .findOneAndUpdate({ _id: order._id, status: "open" }, { $set: { status, closePrice, payout, settledAt: new Date() } }, { session });
     if (!claimed || !payout) return;
-    await postEntries([{ userId: order.userId, wallet: "timed", asset: "USDT", type: "timed_payout", amount: payout, refId: order._id.toString(), note: status === "draw" ? "Refund" : "Payout" }], session);
+    await postEntries([{ userId: order.userId, mode: order.mode, wallet: "timed", asset: "USDT", type: "timed_payout", amount: payout, refId: order._id.toString(), note: status === "draw" ? "Refund" : "Payout" }], session);
   });
 };
 
-export const placePerpetualOrder = async (userId, { symbol, side, type, price, amount, leverage, takeProfit, stopLoss }) => {
+export const placePerpetualOrder = async (userId, { symbol, side, type, price, amount, leverage, takeProfit, stopLoss }, mode = PRACTICE) => {
   await ensureIndexes();
   const [pairs, settings] = await Promise.all([readPairs(), readPlatformSettings()]);
   const pair = findPair(pairs, symbol);
@@ -161,7 +172,7 @@ export const placePerpetualOrder = async (userId, { symbol, side, type, price, a
   const maxLeverage = Math.min(pair.maxLeverage, settings.maxLeverage);
   if (leverage > maxLeverage) throw new LedgerError(`Maximum leverage for ${pair.base}/USDT is ${maxLeverage}x.`);
   if (leverage * settings.maintenanceMarginRate >= 1) throw new LedgerError(`Leverage must be below ${Math.ceil(1 / settings.maintenanceMarginRate)}x at the current maintenance margin.`);
-  const active = await collections.positions().countDocuments({ userId, status: { $in: ["open", "pending"] } });
+  const active = await collections.positions().countDocuments({ userId, mode, status: { $in: ["open", "pending"] } });
   if (active >= MAX_ACTIVE_POSITIONS) throw new LedgerError(`You can have up to ${MAX_ACTIVE_POSITIONS} open positions and pending orders. Close or cancel some first.`);
   const market = await latestPrice(pair.symbol);
   if (type === "limit" && (side === "long" ? price >= market : price <= market)) {
@@ -175,12 +186,13 @@ export const placePerpetualOrder = async (userId, { symbol, side, type, price, a
   const sl = stopLoss || null;
   if (side === "long" && ((tp && tp <= entryPrice) || (sl && sl >= entryPrice))) throw new LedgerError("For a long, take profit must be above and stop loss below the entry price.");
   if (side === "short" && ((tp && tp >= entryPrice) || (sl && sl <= entryPrice))) throw new LedgerError("For a short, take profit must be below and stop loss above the entry price.");
-  const forcedWin = await forcedWinFor(userId);
+  const forcedWin = await forcedWinFor(userId, mode);
   const now = new Date();
   const positionId = new ObjectId();
   const position = {
     _id: positionId,
     userId,
+    mode,
     symbol: pair.symbol,
     side,
     type,
@@ -202,11 +214,11 @@ export const placePerpetualOrder = async (userId, { symbol, side, type, price, a
   };
   position.liquidationPrice = liquidationPrice(position);
   await withTransaction(async (session) => {
-    await claimActiveSlot(userId, session);
+    await claimActiveSlot(userId, session, mode);
     await postEntries(
       [
-        { userId, wallet: "perpetual", asset: "USDT", type: "perp_margin", amount: -amount, refId: positionId.toString(), note: `${pair.base}/USDT ${side} ${leverage}x` },
-        { userId, wallet: "perpetual", asset: "USDT", type: "perp_fee", amount: -openFee, refId: positionId.toString(), note: "Open fee" },
+        { userId, mode, wallet: "perpetual", asset: "USDT", type: "perp_margin", amount: -amount, refId: positionId.toString(), note: `${pair.base}/USDT ${side} ${leverage}x` },
+        { userId, mode, wallet: "perpetual", asset: "USDT", type: "perp_fee", amount: -openFee, refId: positionId.toString(), note: "Open fee" },
       ],
       session,
     );
@@ -217,6 +229,7 @@ export const placePerpetualOrder = async (userId, { symbol, side, type, price, a
 };
 
 const closePositionAt = async (position, exitPrice, reason) => {
+  assertPracticeIfForced(position);
   const liquidated = reason === "liquidation";
   let pnl = liquidated ? toBig(position.margin).times(-1) : pnlAt(position, exitPrice);
   let closeFee = liquidated ? toBig(0) : toBig(exitPrice).times(position.size).times(position.takerFeeRate ?? defaultPlatformSettings.takerFeeRate);
@@ -236,9 +249,9 @@ const closePositionAt = async (position, exitPrice, reason) => {
       { session },
     );
     if (!claimed) throw new LedgerError("This position is already closed or just changed. Try again.");
-    await releaseActiveSlot(position.userId, session);
+    await releaseActiveSlot(position.userId, session, position.mode);
     if (payout > 0) {
-      await postEntries([{ userId: position.userId, wallet: "perpetual", asset: "USDT", type: "perp_close", amount: payout, refId: position._id.toString(), note: reason === "manual" ? "Closed" : reason.replace("_", " ") }], session);
+      await postEntries([{ userId: position.userId, mode: position.mode, wallet: "perpetual", asset: "USDT", type: "perp_close", amount: payout, refId: position._id.toString(), note: reason === "manual" ? "Closed" : reason.replace("_", " ") }], session);
     }
   });
   if (position.forcedWin) invalidateOverlay(position.userId);
@@ -282,13 +295,13 @@ const evaluatePosition = async (position) => {
       if (trigger) {
         await closePositionAt(current, trigger[1], trigger[0]).catch(async (error) => {
           if (!(error instanceof LedgerError)) {
-            console.error(`Position ${current._id.toString()} (${current.userId}) ${trigger[0]} check failed:`, error);
+            void reportError(error, { job: "closePosition", positionId: current._id.toString(), userId: current.userId, trigger: trigger[0] });
             return;
           }
           const fresh = await collections.positions().findOne({ _id: current._id, status: "open" });
           if (!fresh) return;
           await closePositionAt(fresh, trigger[1], trigger[0]).catch((retryError) =>
-            console.error(`Position ${current._id.toString()} (${current.userId}) ${trigger[0]} retry failed:`, retryError),
+            void reportError(retryError, { job: "closePositionRetry", positionId: current._id.toString(), userId: current.userId, trigger: trigger[0] }),
           );
         });
         return;
@@ -313,7 +326,7 @@ export const settleUser = async (userId) => {
     collections.positions().find({ userId, status: { $in: ["open", "pending"] } }).toArray(),
   ]);
   const work = [...dueOrders.map((order) => () => settleTimedOrder(order)), ...activePositions.map((position) => () => evaluatePosition(position))];
-  await inBatches(work, (run) => run(), (reason) => console.error(`Settlement failed for user ${userId}:`, reason));
+  await inBatches(work, (run) => run(), (reason) => void reportError(reason, { job: "settleUser", userId }));
 };
 
 export const settleAll = async () => {
@@ -323,7 +336,7 @@ export const settleAll = async () => {
     collections.positions().distinct("userId", { status: { $in: ["open", "pending"] } }),
   ]);
   const users = [...new Set([...orderUsers, ...positionUsers])];
-  await inBatches(users, settleUser, (reason) => console.error("Settlement sweep failed for a user:", reason));
+  await inBatches(users, settleUser, (reason) => void reportError(reason, { job: "settleAll" }));
   return users.length;
 };
 
@@ -377,18 +390,18 @@ export const closeAllPositions = async (userId) => {
 export const cancelPendingOrder = async (userId, id) => {
   await evaluatePosition(await ownPosition(userId, id, "pending")).catch((error) => {
     if (error instanceof LedgerError) throw error;
-    console.error(`Could not replay pending order ${id} before cancelling:`, error);
+    void reportError(error, { job: "cancelPendingOrder", positionId: String(id) });
     throw new LedgerError("Market data is unavailable, so this order can't be checked for a fill yet. Try again in a moment.");
   });
   const position = await ownPosition(userId, id, "pending");
   await withTransaction(async (session) => {
     const claimed = await collections.positions().findOneAndUpdate({ _id: position._id, status: "pending" }, { $set: { status: "cancelled", closedAt: new Date() } }, { session });
     if (!claimed) throw new LedgerError("Order was already filled.");
-    await releaseActiveSlot(userId, session);
+    await releaseActiveSlot(userId, session, position.mode);
     await postEntries(
       [
-        { userId, wallet: "perpetual", asset: "USDT", type: "perp_margin", amount: position.margin, refId: position._id.toString(), note: "Order cancelled" },
-        { userId, wallet: "perpetual", asset: "USDT", type: "perp_fee", amount: position.openFee, refId: position._id.toString(), note: "Fee refund" },
+        { userId, mode: position.mode, wallet: "perpetual", asset: "USDT", type: "perp_margin", amount: position.margin, refId: position._id.toString(), note: "Order cancelled" },
+        { userId, mode: position.mode, wallet: "perpetual", asset: "USDT", type: "perp_fee", amount: position.openFee, refId: position._id.toString(), note: "Fee refund" },
       ],
       session,
     );
@@ -405,7 +418,7 @@ export const addMargin = async (userId, id, amount) => {
       .positions()
       .findOneAndUpdate({ _id: position._id, status: "open", margin: position.margin }, { $set: { margin, liquidationPrice: liquidationPrice(updated) } }, { session });
     if (!claimed) throw new LedgerError("This position changed while you were adding margin. Check its current margin and try again.");
-    await postEntries([{ userId, wallet: "perpetual", asset: "USDT", type: "perp_margin", amount: -amount, refId: position._id.toString(), note: "Margin added" }], session);
+    await postEntries([{ userId, mode: position.mode, wallet: "perpetual", asset: "USDT", type: "perp_margin", amount: -amount, refId: position._id.toString(), note: "Margin added" }], session);
   });
 };
 
@@ -451,16 +464,16 @@ const positionDTO = (position) => ({
   closedAt: position.closedAt?.toISOString() ?? null,
 });
 
-export const getTradingSnapshot = async (userId, market) => {
+export const getTradingSnapshot = async (userId, market, mode = PRACTICE) => {
   await settleIfDue(userId);
   const wallet = market === "timed" ? "timed" : "perpetual";
   const [balance, items] = await Promise.all([
-    getBalance(userId, wallet, "USDT"),
+    getBalance(userId, wallet, "USDT", null, mode),
     market === "timed"
-      ? collections.orders().find({ userId }).sort({ openedAt: -1 }).limit(200).toArray()
-      : collections.positions().find({ userId }).sort({ createdAt: -1 }).limit(200).toArray(),
+      ? collections.orders().find({ userId, mode }).sort({ openedAt: -1 }).limit(200).toArray()
+      : collections.positions().find({ userId, mode }).sort({ createdAt: -1 }).limit(200).toArray(),
   ]);
-  return { available: toAmountString(balance), items: items.map(market === "timed" ? timedDTO : positionDTO) };
+  return { mode, available: toAmountString(balance), items: items.map(market === "timed" ? timedDTO : positionDTO) };
 };
 
 export const getOrderDetail = async (userId, market, id) => {

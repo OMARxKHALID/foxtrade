@@ -2,6 +2,7 @@ import { connection } from "next/server";
 import { getCurrentUser } from "@/lib/session";
 import { fetchTickers } from "@/lib/market/binance-rest";
 import { transformTicker } from "@/lib/market/overlay";
+import { reportError } from "@/lib/error-log";
 import { clientIp, rateLimit, rateLimitedResponse } from "@/lib/rate-limit";
 
 
@@ -27,7 +28,7 @@ export const GET = async (request) => {
     }
     return Response.json(tickers);
   } catch (error) {
-    console.error("Ticker proxy failed:", error);
+    await reportError(error, { route: "market/tickers" });
     return Response.json({ error: "Market data unavailable" }, { status: 502 });
   }
 };

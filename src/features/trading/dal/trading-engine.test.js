@@ -14,12 +14,6 @@ vi.mock("@/lib/market/binance-rest", () => ({
   fetchKlines: vi.fn(() => Promise.resolve([])),
 }));
 
-vi.mock("next/cache", () => ({
-  cacheTag: () => {},
-  cacheLife: () => {},
-  updateTag: () => {},
-}));
-
 const { fetchLatestPrices, fetchKlineRange } = await import("@/lib/market/binance-rest");
 
 const SECOND = 1000;
@@ -126,11 +120,10 @@ describe("Cancel pending order after unseen fill + liquidation", () => {
   it("keeps the order pending with a clear error when market data is unavailable", async () => {
     const userId = "u-cancel-outage";
     const { positionId, balanceAfterPlace } = await placeBackdatedLimitLong(userId);
-    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
     fetchKlineRange.mockRejectedValue(new Error("Binance request failed: 503"));
     await expect(cancelPendingOrder(userId, positionId)).rejects.toThrow("Market data is unavailable");
-    expect(logged).toHaveBeenCalledWith(expect.stringContaining("Could not replay pending order"), expect.any(Error));
-    logged.mockRestore();
+    await expect.poll(() => collections.errors().countDocuments({ "lastContext.job": "cancelPendingOrder" }), { timeout: 2000 }).toBe(1);
     const order = await collections.positions().findOne({ _id: new ObjectId(positionId) });
     expect(order.status).toBe("pending");
     const wallet = await collections.wallets().findOne({ userId, wallet: "perpetual" });
@@ -220,7 +213,7 @@ describe("Active position cap", () => {
     await postEntries([{ userId, wallet: "perpetual", asset: "USDT", type: "faucet", amount: 1000 }], null);
     const now = new Date();
     await collections.positions().insertMany(
-      Array.from({ length: 50 }, (_, index) => ({ userId, symbol: "BTCUSDT", status: index % 2 ? "open" : "pending", createdAt: now, lastCheckedAt: now })),
+      Array.from({ length: 50 }, (_, index) => ({ userId, mode: "practice", symbol: "BTCUSDT", status: index % 2 ? "open" : "pending", createdAt: now, lastCheckedAt: now })),
     );
     fetchLatestPrices.mockResolvedValue({ BTCUSDT: "65000" });
     const order = { symbol: "BTCUSDT", side: "long", type: "market", amount: 10, leverage: 5 };
@@ -234,13 +227,13 @@ describe("Active position cap", () => {
   it("never lets concurrent placements exceed the cap", async () => {
     const userId = "u-position-cap-race";
     await postEntries([{ userId, wallet: "perpetual", asset: "USDT", type: "faucet", amount: 100000 }], null);
-    await collections.positionCounters().insertOne({ _id: userId, count: 48 });
+    await collections.positionCounters().insertOne({ _id: `${userId}:practice`, count: 48 });
     fetchLatestPrices.mockResolvedValue({ BTCUSDT: "65000" });
     const order = { symbol: "BTCUSDT", side: "long", type: "market", amount: 10, leverage: 5 };
     const results = await Promise.allSettled(Array.from({ length: 5 }, () => placePerpetualOrder(userId, order)));
     const fulfilled = results.filter((result) => result.status === "fulfilled").length;
     expect(fulfilled).toBe(2);
-    expect((await collections.positionCounters().findOne({ _id: userId })).count).toBe(50);
+    expect((await collections.positionCounters().findOne({ _id: `${userId}:practice` })).count).toBe(50);
   });
 
   it("frees a slot when a position closes and reclaims it on the next order", async () => {
@@ -249,10 +242,10 @@ describe("Active position cap", () => {
     fetchLatestPrices.mockResolvedValue({ BTCUSDT: "65000" });
     const order = { symbol: "BTCUSDT", side: "long", type: "market", amount: 10, leverage: 5 };
     const positionId = await placePerpetualOrder(userId, order);
-    expect((await collections.positionCounters().findOne({ _id: userId })).count).toBe(1);
+    expect((await collections.positionCounters().findOne({ _id: `${userId}:practice` })).count).toBe(1);
     fetchKlineRange.mockResolvedValue([]);
     await closePosition(userId, positionId);
-    expect((await collections.positionCounters().findOne({ _id: userId })).count).toBe(0);
+    expect((await collections.positionCounters().findOne({ _id: `${userId}:practice` })).count).toBe(0);
     await expect(placePerpetualOrder(userId, order)).resolves.toEqual(expect.any(String));
   });
 });
@@ -372,6 +365,7 @@ describe("Force win", () => {
     await postEntries([{ userId, wallet: "timed", asset: "USDT", type: "faucet", amount: 10000 }], null);
     await collections.orders().insertOne({
       userId,
+      mode: "practice",
       symbol: "BTCUSDT",
       direction,
       duration: 30,

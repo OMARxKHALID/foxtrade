@@ -2,6 +2,7 @@ import { connection } from "next/server";
 import { getCurrentUser } from "@/lib/session";
 import { fetchKlines } from "@/lib/market/binance-rest";
 import { transformCandles } from "@/lib/market/overlay";
+import { reportError } from "@/lib/error-log";
 import { clientIp, rateLimit, rateLimitedResponse } from "@/lib/rate-limit";
 
 
@@ -37,7 +38,7 @@ export const GET = async (request) => {
     }
     return Response.json(klines);
   } catch (error) {
-    console.error(`Klines proxy failed for ${symbol}:`, error);
+    await reportError(error, { route: "market/klines", symbol, interval });
     return Response.json({ error: "Market data unavailable" }, { status: 502 });
   }
 };

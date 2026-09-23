@@ -2,6 +2,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { NextResponse, connection } from "next/server";
 import { getEnv } from "@/lib/env";
 import { settleAll } from "@/features/trading/dal/trading-engine";
+import { reportError } from "@/lib/error-log";
 
 const digest = (value) => createHash("sha256").update(value).digest();
 
@@ -19,7 +20,7 @@ export const GET = async (request) => {
     const users = await settleAll();
     return NextResponse.json({ ok: true, users });
   } catch (error) {
-    console.error("Settlement sweep failed:", error);
+    await reportError(error, { job: "settlementSweep" });
     return NextResponse.json({ error: "Settlement sweep failed" }, { status: 500 });
   }
 };

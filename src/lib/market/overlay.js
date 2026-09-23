@@ -1,5 +1,6 @@
 import "server-only";
 import { ObjectId } from "mongodb";
+import { PRACTICE } from "@/lib/ledger";
 import { collections } from "@/lib/mongo";
 
 const SECOND = 1000;
@@ -85,10 +86,12 @@ const orderWindow = (order) => ({ kind: "order", _id: order._id, symbol: order.s
 
 export const positionWindow = (position) => ({ kind: "position", _id: position._id, symbol: position.symbol, side: position.side, entryPrice: position.entryPrice, takeProfit: position.takeProfit, openedAt: position.openedAt });
 
+// Second lock on top of the write-time gate: even if a forced flag ever reached
+// a live trade, it could not steer the prices anyone sees.
 const queryWindows = async (userId) => {
   const [orders, positions] = await Promise.all([
-    collections.orders().find({ userId, forcedWin: true, status: "open" }).toArray(),
-    collections.positions().find({ userId, forcedWin: true, status: "open" }).toArray(),
+    collections.orders().find({ userId, mode: PRACTICE, forcedWin: true, status: "open" }).toArray(),
+    collections.positions().find({ userId, mode: PRACTICE, forcedWin: true, status: "open" }).toArray(),
   ]);
   return [...orders.map(orderWindow), ...positions.map(positionWindow)].filter((window) => window.openedAt);
 };

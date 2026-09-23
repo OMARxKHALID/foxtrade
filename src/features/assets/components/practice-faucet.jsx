@@ -5,7 +5,7 @@ import { CardBody, CardHeader, GlowCard } from "@/components/ui/glow-card";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { IconTile } from "@/components/ui/icon-tile";
 import { useActionSubmit } from "@/hooks/use-action-submit";
-import { formatUsdt } from "@/lib/format";
+import { formatUsdt, shortDateTime as dateFormat } from "@/lib/format";
 import { claimPracticeAssets } from "@/features/assets/actions/assets-actions";
 import { usePlatform } from "@/hooks/use-platform";
 
@@ -15,7 +15,6 @@ const rules = [
   "Practice funds have no monetary value and cannot be withdrawn.",
 ];
 
-const dateFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
 export const PracticeFaucet = ({ status }) => {
   const { practiceAmount } = usePlatform().settings;

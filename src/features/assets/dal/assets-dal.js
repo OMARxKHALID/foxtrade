@@ -2,7 +2,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { ObjectId } from "mongodb";
 import { FAUCET_COOLDOWN_MS } from "@/lib/ledger-labels";
-import { LedgerError, getBalance, getBalances, postEntries, withTransaction } from "@/lib/ledger";
+import { LedgerError, PRACTICE, getBalance, getBalances, postEntries, withTransaction } from "@/lib/ledger";
 import { fetchLatestPrices, fetchTickers } from "@/lib/market/binance-rest";
 import { readPairs } from "@/lib/market/pair-store";
 import { QUOTE, assetsOf } from "@/lib/market/pairs";
@@ -12,6 +12,8 @@ import { readPlatformSettings } from "@/lib/platform-settings";
 import { verifyPin } from "@/lib/pin";
 import { rateLimit, retryAfterText } from "@/lib/rate-limit";
 import { getCurrentUser } from "@/lib/session";
+import { requestWithdrawal } from "@/features/assets/dal/funding-dal";
+import { resolveMode } from "@/lib/trading-mode";
 
 const priceMap = async (assets, latest = false) => {
   const listed = new Set((await readPairs()).map((pair) => pair.symbol));
@@ -30,8 +32,8 @@ const ensureSecurityIndex = () => {
   return securityIndexReady;
 };
 
-export const getAssetsOverview = async (userId) => {
-  const balances = await getBalances(userId);
+export const getAssetsOverview = async (userId, mode = PRACTICE) => {
+  const balances = await getBalances(userId, null, mode);
   let prices;
   let pricesStale = false;
   try {
@@ -61,8 +63,8 @@ export const getAssetsOverview = async (userId) => {
 
 export const RECORDS_LIMIT = 500;
 
-export const listRecords = async (userId, { asset, limit = RECORDS_LIMIT } = {}) => {
-  const filter = asset ? { userId, asset } : { userId };
+export const listRecords = async (userId, { asset, limit = RECORDS_LIMIT, mode } = {}) => {
+  const filter = { userId, ...(asset ? { asset } : {}), ...(mode ? { mode } : {}) };
   const docs = await collections.ledger().find(filter).sort({ createdAt: -1 }).limit(limit).toArray();
   return docs.map((doc) => ({
     id: doc._id.toString(),
@@ -81,10 +83,10 @@ const sumField = async (collection, filter, field, session) => {
   return toBig(row?.total ?? 0);
 };
 
-const totalUsdt = async (userId, session) => {
-  const balances = await getBalances(userId, session);
-  const positionMargin = await sumField(collections.positions(), { userId, status: { $in: ["open", "pending"] } }, "margin", session);
-  const timedStakes = await sumField(collections.orders(), { userId, status: "open" }, "amount", session);
+const totalUsdt = async (userId, session, mode = PRACTICE) => {
+  const balances = await getBalances(userId, session, mode);
+  const positionMargin = await sumField(collections.positions(), { userId, mode, status: { $in: ["open", "pending"] } }, "margin", session);
+  const timedStakes = await sumField(collections.orders(), { userId, mode, status: "open" }, "amount", session);
   const wallets = balances.filter((item) => item.asset === "USDT").reduce((sum, item) => sum.plus(item.balance), toBig(0));
   return wallets.plus(positionMargin).plus(timedStakes);
 };
@@ -97,6 +99,7 @@ export const getFaucetStatus = async (userId) => {
 
 export const claimFaucet = async (userId) => {
   const { practiceAmount } = await readPlatformSettings();
+  // Always credits practice, whichever account the client is viewing.
   if ((await totalUsdt(userId)).gte(practiceAmount)) throw new LedgerError("Your wallets already hold the full practice amount of USDT.");
   await ensureSecurityIndex();
   const now = new Date();
@@ -117,11 +120,11 @@ export const claimFaucet = async (userId) => {
   await withTransaction(async (session) => {
     const topUp = toBig(practiceAmount).minus(await totalUsdt(userId, session));
     if (topUp.lte(0)) return;
-    await postEntries([{ userId, wallet: "spot", asset: "USDT", type: "faucet", amount: topUp, note: "Practice top-up" }], session);
+    await postEntries([{ userId, mode: PRACTICE, wallet: "spot", asset: "USDT", type: "faucet", amount: topUp, note: "Practice top-up" }], session);
   });
 };
 
-export const convertAssets = async (userId, { from, to, amount }) => {
+export const convertAssets = async (userId, { from, to, amount }, mode = PRACTICE) => {
   const [prices, { convertSpread }] = await Promise.all([priceMap([from, to], true), readPlatformSettings()]);
   if (!prices[from] || !prices[to]) throw new LedgerError("Live price unavailable for this pair. Try again shortly.");
   const receive = toBig(amount).times(prices[from]).div(prices[to]).times(1 - convertSpread);
@@ -130,34 +133,38 @@ export const convertAssets = async (userId, { from, to, amount }) => {
   await withTransaction((session) =>
     postEntries(
       [
-        { userId, wallet: "spot", asset: from, type: "convert", amount: toBig(amount).times(-1), refId, note: `To ${to}` },
-        { userId, wallet: "spot", asset: to, type: "convert", amount: receive, refId, note: `From ${from}` },
+        { userId, mode, wallet: "spot", asset: from, type: "convert", amount: toBig(amount).times(-1), refId, note: `To ${to}` },
+        { userId, mode, wallet: "spot", asset: to, type: "convert", amount: receive, refId, note: `From ${from}` },
       ],
       session,
     ),
   );
 };
 
-export const transferAssets = async (userId, { from, to, asset, amount }) => {
+export const transferAssets = async (userId, { from, to, asset, amount }, mode = PRACTICE) => {
   const refId = randomUUID();
   await withTransaction((session) =>
     postEntries(
       [
-        { userId, wallet: from, asset, type: "transfer", amount: toBig(amount).times(-1), refId, note: `To ${to}` },
-        { userId, wallet: to, asset, type: "transfer", amount, refId, note: `From ${from}` },
+        { userId, mode, wallet: from, asset, type: "transfer", amount: toBig(amount).times(-1), refId, note: `To ${to}` },
+        { userId, mode, wallet: to, asset, type: "transfer", amount, refId, note: `From ${from}` },
       ],
       session,
     ),
   );
 };
 
-export const checkWithdrawal = async (userId, { asset, amount, pin }) => {
+// One entry point for both accounts so the caller cannot pick the wrong one:
+// practice says no, live goes through the reviewed payout queue.
+export const submitWithdrawal = async (userId, { asset, amount, pin, address, network }, mode = PRACTICE) => {
   const limit = await rateLimit(`withdraw-pin:${userId}`, { limit: 5, windowSeconds: 900 });
-  if (!limit.allowed) throw new LedgerError(`Too many PIN attempts. Try again in ${Math.ceil(limit.retryAfter / 60)} min.`);
+  if (!limit.allowed) throw new LedgerError(`Too many PIN attempts. Try again in ${retryAfterText(limit.retryAfter)}.`);
   if (!(await verifyPin(userId, pin))) throw new LedgerError("Withdrawal PIN is incorrect or not set. Set it in Security first.");
-  const spot = await getBalance(userId, "spot", asset);
+  const spot = await getBalance(userId, "spot", asset, null, mode);
   if (spot.lt(amount)) throw new LedgerError(`Insufficient ${asset} in your Spot Wallet.`);
-  throw new LedgerError("Practice balances cannot be sent to external wallets. Your details were checked successfully.");
+  if (mode === PRACTICE) throw new LedgerError("Practice balances cannot be sent to external wallets. Your details were checked successfully.");
+  const id = await requestWithdrawal(userId, { asset, amount, address, network }, mode);
+  return { id };
 };
 
 export const listAddresses = async (userId) => {
@@ -182,10 +189,11 @@ export const deleteAddress = async (userId, id) => {
 export const loadAssetsPage = async ({ records = false, addresses = false, asset } = {}) => {
   const user = await getCurrentUser();
   if (!user) return { signedIn: false, overview: null, records: null, addresses: [] };
+  const mode = await resolveMode(user);
   const [overview, recordList, addressList] = await Promise.all([
-    getAssetsOverview(user.id),
-    records ? listRecords(user.id, { asset }) : null,
+    getAssetsOverview(user.id, mode),
+    records ? listRecords(user.id, { asset, mode }) : null,
     addresses ? listAddresses(user.id) : [],
   ]);
-  return { signedIn: true, overview, records: recordList, addresses: addressList };
+  return { signedIn: true, mode, overview, records: recordList, addresses: addressList };
 };

@@ -1,9 +1,11 @@
 "use server";
 
-import { serverFailure, signInRequired, validationFailure } from "@/lib/action-result";
+import { signInRequired, validationFailure } from "@/lib/action-result";
+import { serverFailure } from "@/lib/server-result";
 import { readPlatformSettings } from "@/lib/platform-settings";
 import { rateLimit, tooManyAttempts } from "@/lib/rate-limit";
 import { getCurrentUser } from "@/lib/session";
+import { resolveMode } from "@/lib/trading-mode";
 import {
   addMargin as addPositionMargin,
   cancelPendingOrder,
@@ -29,13 +31,13 @@ const asTrader = async (message, work) => {
 export const placeTimedOrder = async (input) => {
   const parsed = timedOrderSchemaFor((await readPlatformSettings()).timedDurations).safeParse(input);
   if (!parsed.success) return validationFailure(parsed.error);
-  return asTrader("Log in to place timed trades.", (user) => openTimed(user.id, parsed.data));
+  return asTrader("Log in to place timed trades.", async (user) => openTimed(user.id, parsed.data, await resolveMode(user)));
 };
 
 export const placePerpetualOrder = async (input) => {
   const parsed = perpetualOrderSchemaFor((await readPlatformSettings()).maxLeverage).safeParse(input);
   if (!parsed.success) return validationFailure(parsed.error);
-  return asTrader("Log in to open positions.", (user) => openPosition(user.id, parsed.data));
+  return asTrader("Log in to open positions.", async (user) => openPosition(user.id, parsed.data, await resolveMode(user)));
 };
 
 export const closePosition = async (id) => {
