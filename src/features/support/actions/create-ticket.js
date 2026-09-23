@@ -1,7 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { formFailure, serverFailure, signInRequired, validationFailure } from "@/lib/action-result";
+import { formFailure, signInRequired, validationFailure } from "@/lib/action-result";
+import { serverFailure } from "@/lib/server-result";
 import { rateLimit, tooManyAttempts } from "@/lib/rate-limit";
 import { getCurrentUser } from "@/lib/session";
 import { addTicketMessage, countOpenTickets, createTicket as insertTicket, setTicketStatus } from "@/lib/ticket-store";

@@ -1,7 +1,9 @@
 "use server";
 
 import { headers } from "next/headers";
-import { formFailure, serverFailure, signInRequired, validationFailure } from "@/lib/action-result";
+import { formFailure, signInRequired, validationFailure } from "@/lib/action-result";
+import { reportError } from "@/lib/error-log";
+import { serverFailure } from "@/lib/server-result";
 import { getAuth } from "@/lib/auth";
 import { DOCUMENT_MAX_BYTES, combinedSide, documentSides } from "@/lib/document-rules";
 import { deletePrivateImages, detectDocumentFormat, isDocumentStorageConfigured, uploadPrivateImage } from "@/lib/document-storage";
@@ -134,7 +136,7 @@ export const uploadVerificationDocument = async (formData) => {
     );
     const current = documentSides.map((item) => (targets.includes(item.value) ? stored.publicId : verification.documents?.[item.value]?.publicId));
     const stale = documentSides.map((item) => verification.documents?.[item.value]?.publicId).filter((publicId) => publicId && !current.includes(publicId));
-    await deletePrivateImages(stale).catch((error) => console.error(`Could not delete replaced KYC files for ${user.id}:`, error));
+    await deletePrivateImages(stale).catch((error) => reportError(error, { job: "deleteReplacedKycFiles", userId: user.id }));
     return { ok: true };
   } catch (error) {
     return serverFailure(error);

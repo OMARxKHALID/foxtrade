@@ -2,7 +2,9 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { serverFailure, validationFailure } from "@/lib/action-result";
+import { validationFailure } from "@/lib/action-result";
+import { reportError } from "@/lib/error-log";
+import { serverFailure } from "@/lib/server-result";
 import { getAuth } from "@/lib/auth";
 import { clientIp, rateLimit, tooManyAttempts } from "@/lib/rate-limit";
 import { recordSignup } from "@/lib/referrals";
@@ -34,7 +36,7 @@ export const signUp = async (input) => {
     const limit = await rateLimit(`register:ip:${await clientIp()}`, { limit: 5, windowSeconds: 3600 });
     if (!limit.allowed) return tooManyAttempts(limit.retryAfter);
     const created = await getAuth().api.signUpEmail({ body: { email, password, name: email.split("@")[0] }, headers: await headers() });
-    if (created?.user) await recordSignup({ userId: created.user.id, email: created.user.email, code: ref }).catch((error) => console.error(`Could not record the invite for ${created.user.id}:`, error));
+    if (created?.user) await recordSignup({ userId: created.user.id, email: created.user.email, code: ref }).catch((error) => reportError(error, { job: "recordSignupInvite", userId: created.user.id }));
   } catch (error) {
     return serverFailure(error);
   }
